@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="160" viewBox="0 0 360 160" fill="none">
+  <defs>
+    <linearGradient id="fogGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b8c6d2" stop-opacity="0.18" />
+      <stop offset="1" stop-color="#8aa0b0" stop-opacity="0.02" />
+    </linearGradient>
+  </defs>
+  <rect width="360" height="160" fill="url(#fogGrad)" />
+  <ellipse cx="60" cy="60" rx="80" ry="22" fill="#a7b9c6" opacity="0.15" />
+  <ellipse cx="190" cy="80" rx="110" ry="26" fill="#b0c3cf" opacity="0.12" />
+  <ellipse cx="310" cy="50" rx="90" ry="20" fill="#a7b9c6" opacity="0.13" />
+</svg>

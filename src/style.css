@@ -1,10 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Cinzel+Decorative:wght@400;700&family=Space+Mono:wght@400;700&display=swap');
 
 :root {
   font-family: 'Cinzel', 'Trebuchet MS', serif;
   color: #d7f5ff;
   background-color: #0a0b12;
   text-rendering: optimizeLegibility;
+  font-variant-numeric: tabular-nums;
 }
 
 * {

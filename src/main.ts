@@ -1,14 +1,14 @@
 import './style.css'
 import Phaser from 'phaser'
 import { GAME_DIMENSIONS } from './game/config'
-import { THEME } from './game/theme'
+import { PALETTE } from './game/theme'
 import { BootScene } from './game/scenes/BootScene'
 import { PlayScene } from './game/scenes/PlayScene'
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
   parent: 'app',
-  backgroundColor: THEME.ui.canvasBackground,
+  backgroundColor: PALETTE.night,
   width: GAME_DIMENSIONS.width,
   height: GAME_DIMENSIONS.height,
   scale: {

@@ -25,11 +25,14 @@ Open the URL printed by Vite.
 
 - Tap / click: flap
 - Spacebar: flap
+- H: toggle art QA hitbox overlay
+- M: toggle mute icon
+- R: toggle reduced motion
 
-## Theme: Crow in Evil Forest
+## Theme: Evil Forest (Crow)
 
-Dark, mystical reskin featuring a crow with occult accents, deadwood gate obstacles,
-and layered parallax forest silhouettes with mist and ember ambience.
+Dark, mystical reskin featuring an occult-styled crow, deadwood gate obstacles,
+layered parallax forest silhouettes with fog and ember ambience, and gothic UI.
 
 ## Tuning parameters
 
@@ -63,9 +66,15 @@ The build output is a static site in `dist/`. Deploy with any static host:
 ## Assets
 
 All sprites are original SVGs created for this project and are safe to use.
+Theme assets live under `public/assets/theme/` with a shared atlas for sprites/UI
+exported as SVG source plus PNG/WebP runtime variants.
 
 ## Attribution
 
-- Cinzel font by Natanael Gama (Google Fonts, SIL Open Font License):
+- Cinzel + Cinzel Decorative by Natanael Gama (Google Fonts, SIL Open Font License):
   https://fonts.google.com/specimen/Cinzel
+  https://fonts.google.com/specimen/Cinzel+Decorative
+  https://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL
+- Space Mono by Colophon Foundry (Google Fonts, SIL Open Font License):
+  https://fonts.google.com/specimen/Space+Mono
   https://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL
