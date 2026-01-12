@@ -1,9 +1,9 @@
-@import url('https://fonts.googleapis.com/css2?family=Bungee&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&display=swap');
 
 :root {
-  font-family: 'Bungee', 'Trebuchet MS', sans-serif;
-  color: #1f2933;
-  background-color: #cfeeff;
+  font-family: 'Cinzel', 'Trebuchet MS', serif;
+  color: #d7f5ff;
+  background-color: #0a0b12;
   text-rendering: optimizeLegibility;
 }
 

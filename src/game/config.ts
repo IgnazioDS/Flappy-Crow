@@ -7,13 +7,6 @@ export const GAME_DIMENSIONS = {
   height: 640,
 }
 
-export const ASSETS = {
-  background: 'background',
-  bird: 'bird',
-  pipe: 'pipe',
-  ground: 'ground',
-}
-
 export const GROUND_HEIGHT = 80
 
 export const BIRD_CONFIG = {
@@ -36,20 +29,3 @@ export const PIPE_CONFIG = {
   topMargin: 60,
   bottomMargin: 60,
 }
-
-export const SCORE_TEXT_STYLE = {
-  fontFamily: 'Bungee, Trebuchet MS, sans-serif',
-  fontSize: '36px',
-  color: '#1f2933',
-  stroke: '#ffffff',
-  strokeThickness: 6,
-} as const
-
-export const OVERLAY_TEXT_STYLE = {
-  fontFamily: 'Bungee, Trebuchet MS, sans-serif',
-  fontSize: '24px',
-  color: '#1f2933',
-  align: 'center',
-  stroke: '#ffffff',
-  strokeThickness: 5,
-} as const

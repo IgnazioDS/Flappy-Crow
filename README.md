@@ -26,6 +26,11 @@ Open the URL printed by Vite.
 - Tap / click: flap
 - Spacebar: flap
 
+## Theme: Crow in Evil Forest
+
+Dark, mystical reskin featuring a crow with occult accents, deadwood gate obstacles,
+and layered parallax forest silhouettes with mist and ember ambience.
+
 ## Tuning parameters
 
 All gameplay constants live in `src/game/config.ts`. Key values:
@@ -57,4 +62,10 @@ The build output is a static site in `dist/`. Deploy with any static host:
 
 ## Assets
 
-All sprites are simple SVG placeholders created for this project and are safe to use.
+All sprites are original SVGs created for this project and are safe to use.
+
+## Attribution
+
+- Cinzel font by Natanael Gama (Google Fonts, SIL Open Font License):
+  https://fonts.google.com/specimen/Cinzel
+  https://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL

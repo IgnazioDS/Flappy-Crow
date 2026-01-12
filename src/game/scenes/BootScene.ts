@@ -1,5 +1,5 @@
 import Phaser from 'phaser'
-import { ASSETS } from '../config'
+import { THEME } from '../theme'
 
 /**
  * Preloads visual assets before gameplay starts.
@@ -10,10 +10,9 @@ export class BootScene extends Phaser.Scene {
   }
 
   preload(): void {
-    this.load.image(ASSETS.background, 'assets/background.svg')
-    this.load.image(ASSETS.bird, 'assets/bird.svg')
-    this.load.image(ASSETS.pipe, 'assets/pipe.svg')
-    this.load.image(ASSETS.ground, 'assets/ground.svg')
+    Object.entries(THEME.assetPaths).forEach(([key, path]) => {
+      this.load.image(key, path)
+    })
   }
 
   create(): void {

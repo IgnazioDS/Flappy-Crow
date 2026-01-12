@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8" viewBox="0 0 8 8" fill="none">
+  <defs>
+    <radialGradient id="emberGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#ffb347" stop-opacity="0.9" />
+      <stop offset="0.6" stop-color="#ff5a3a" stop-opacity="0.6" />
+      <stop offset="1" stop-color="#ff2d2d" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <circle cx="4" cy="4" r="4" fill="url(#emberGlow)" />
+</svg>
