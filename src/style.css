@@ -1,0 +1,34 @@
+@import url('https://fonts.googleapis.com/css2?family=Bungee&display=swap');
+
+:root {
+  font-family: 'Bungee', 'Trebuchet MS', sans-serif;
+  color: #1f2933;
+  background-color: #cfeeff;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  touch-action: none;
+  overscroll-behavior: none;
+}
+
+#app {
+  width: 100%;
+  height: 100%;
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
