@@ -57,11 +57,23 @@ systems for testability and to keep gameplay logic framework-agnostic.
 
 ## Deployment
 
-The build output is a static site in `dist/`. Deploy with any static host:
+The build output is a static site in `dist/`.
+
+### GitHub Pages (recommended)
+
+This repo includes an automated Pages workflow in `.github/workflows/deploy.yml`.
+
+1. Push to `main`.
+2. In GitHub, go to Settings → Pages and set the source to **GitHub Actions**.
+3. The workflow will publish to `https://<org>.github.io/<repo>/`.
+
+The workflow sets `VITE_BASE` to the repository name so asset paths resolve under the Pages base path.
+Hashed asset filenames provide safe long-term caching, while `index.html` remains fresh on deploy.
+
+### Other hosts
 
 - Vercel: `npm run build`, then deploy the `dist/` folder
 - Netlify: set build command to `npm run build` and publish `dist/`
-- GitHub Pages: upload `dist/` to your Pages branch or use a Pages action
 
 ## Assets
 
