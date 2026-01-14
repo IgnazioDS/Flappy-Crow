@@ -53,6 +53,10 @@ export const UI = {
     strokeThickness: 2,
     alpha: 0.9,
   },
+  panelSize: {
+    small: { width: 280, height: 120 },
+    large: { width: 320, height: 180 },
+  },
   layout: {
     ready: {
       x: 180,
@@ -73,6 +77,10 @@ export const UI = {
       stroke: PALETTE.night,
       strokeThickness: 4,
     },
+  },
+  scoreFrameSize: {
+    width: 150,
+    height: 54,
   },
   icon: {
     size: 26,

@@ -9,7 +9,7 @@ import { DespawnSystem } from '../systems/DespawnSystem'
 import { InputSystem } from '../systems/InputSystem'
 import { ScoreSystem } from '../systems/ScoreSystem'
 import { SpawnSystem } from '../systems/SpawnSystem'
-import { ATLAS, FRAMES, FX, IMAGE_KEYS, UI } from '../theme'
+import { getActiveTheme, listThemes, setActiveThemeId } from '../theme'
 import { createSeededRngFromEnv } from '../utils/rng'
 import { setTelemetryOptOut, telemetry } from '../../telemetry'
 
@@ -42,10 +42,14 @@ export class PlayScene extends Phaser.Scene {
   private scoreSystem = new ScoreSystem()
   private collisionSystem = new CollisionSystem()
   private despawnSystem = new DespawnSystem()
+  private theme = getActiveTheme()
+  private ui = this.theme.ui
+  private fx = this.theme.fx
+  private themeList = listThemes()
 
   private bird!: Bird
-  private birdSprite!: Phaser.GameObjects.Sprite
-  private birdGlow!: Phaser.GameObjects.Image
+  private birdSprite!: Phaser.GameObjects.Sprite | Phaser.GameObjects.Image
+  private birdGlow: Phaser.GameObjects.Image | null = null
   private birdVisualState: BirdVisualState = 'idle'
   private birdBobTime = 0
 
@@ -53,8 +57,8 @@ export class PlayScene extends Phaser.Scene {
   private groundSprite!: Phaser.GameObjects.Image
 
   private parallaxLayers: ParallaxLayer[] = []
-  private fogLayer!: Phaser.GameObjects.TileSprite
-  private vignette!: Phaser.GameObjects.Image
+  private fogLayer: Phaser.GameObjects.TileSprite | null = null
+  private vignette: Phaser.GameObjects.Image | null = null
 
   private pipes: PipePair[] = []
   private pipeSprites: PipeSprites[] = []
@@ -63,16 +67,16 @@ export class PlayScene extends Phaser.Scene {
   private obstacleVariantIndex = 0
   private obstacleSwayClock = 0
 
-  private scoreFrame!: Phaser.GameObjects.Image
+  private scoreFrame!: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle
   private scoreText!: Phaser.GameObjects.Text
   private readyContainer!: Phaser.GameObjects.Container
   private gameOverContainer!: Phaser.GameObjects.Container
   private finalScoreText!: Phaser.GameObjects.Text
   private bestScoreText!: Phaser.GameObjects.Text
-  private medalSprite!: Phaser.GameObjects.Image
+  private medalSprite: Phaser.GameObjects.Image | null = null
 
-  private muteIcon!: Phaser.GameObjects.Image
-  private motionIcon!: Phaser.GameObjects.Image
+  private muteIcon: Phaser.GameObjects.Image | null = null
+  private motionIcon: Phaser.GameObjects.Image | null = null
 
   private debugGraphics!: Phaser.GameObjects.Graphics
 
@@ -83,6 +87,7 @@ export class PlayScene extends Phaser.Scene {
     mute: Phaser.GameObjects.Text
     motion: Phaser.GameObjects.Text
     analytics: Phaser.GameObjects.Text
+    theme?: Phaser.GameObjects.Text
     hitboxes?: Phaser.GameObjects.Text
   } | null = null
 
@@ -117,6 +122,11 @@ export class PlayScene extends Phaser.Scene {
   }
 
   create(): void {
+    this.theme = getActiveTheme()
+    this.ui = this.theme.ui
+    this.fx = this.theme.fx
+    this.themeList = listThemes()
+
     this.bestScore = this.readStoredNumber('flappy-best', 0)
     this.isMuted = this.readStoredBool('flappy-muted', false)
     this.reducedMotion = this.readStoredBool('flappy-reduced-motion', false)
@@ -131,33 +141,19 @@ export class PlayScene extends Phaser.Scene {
 
     this.ground = new Ground()
     this.groundSprite = this.add
-      .image(0, this.ground.y, IMAGE_KEYS.ground)
+      .image(0, this.ground.y, this.theme.images.ground)
       .setOrigin(0, 0)
       .setDepth(3)
     this.groundSprite.setDisplaySize(GAME_DIMENSIONS.width, GROUND_HEIGHT)
 
-    this.createCrowAnimation()
     this.bird = new Bird(BIRD_CONFIG.startY)
-    this.birdSprite = this.add
-      .sprite(this.bird.x, this.bird.y, ATLAS.key, FRAMES.crowIdle)
-      .setDepth(2)
-    this.birdSprite.setOrigin(0.45, 0.55)
-    const birdScale = (BIRD_CONFIG.radius * 2) / this.birdSprite.height
-    this.birdSprite.setScale(birdScale)
-
-    this.birdGlow = this.add
-      .image(this.bird.x, this.bird.y, ATLAS.key, FRAMES.crowGlow)
-      .setDepth(2.1)
-      .setBlendMode(Phaser.BlendModes.ADD)
-    this.birdGlow.setScale(birdScale * 0.75)
+    this.createBirdSprite()
 
     this.setBirdVisual('idle')
 
-    this.scoreFrame = this.add
-      .image(UI.score.x, UI.score.y, ATLAS.key, FRAMES.scoreFrame)
-      .setDepth(4)
+    this.scoreFrame = this.createScoreFrame()
     this.scoreText = this.add
-      .text(UI.score.x, UI.score.y + 2, '0', UI.scoreTextStyle)
+      .text(this.ui.score.x, this.ui.score.y + 2, '0', this.ui.scoreTextStyle)
       .setOrigin(0.5, 0.5)
       .setDepth(4.1)
 
@@ -213,12 +209,15 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private setupInput(): void {
-    this.input.on('pointerdown', (_pointer, currentlyOver) => {
+    this.input.on(
+      'pointerdown',
+      (_pointer: Phaser.Input.Pointer, currentlyOver: Phaser.GameObjects.GameObject[]) => {
       if (this.settingsOpen || (currentlyOver && currentlyOver.length > 0)) {
         return
       }
       this.inputSystem.requestFlap()
-    })
+      },
+    )
     this.input.keyboard?.on('keydown-SPACE', () => {
       if (!this.settingsOpen) {
         this.inputSystem.requestFlap()
@@ -232,9 +231,15 @@ export class PlayScene extends Phaser.Scene {
 
   private createParallaxLayers(): void {
     this.parallaxLayers.length = 0
-    this.createParallaxLayer(IMAGE_KEYS.bgFar, FX.parallax.far, 0)
-    this.createParallaxLayer(IMAGE_KEYS.bgMid, FX.parallax.mid, 0.35)
-    this.createParallaxLayer(IMAGE_KEYS.bgNear, FX.parallax.near, 0.7)
+    if (this.theme.images.bgFar) {
+      this.createParallaxLayer(this.theme.images.bgFar, this.fx.parallax.far, 0)
+    }
+    if (this.theme.images.bgMid) {
+      this.createParallaxLayer(this.theme.images.bgMid, this.fx.parallax.mid, 0.35)
+    }
+    if (this.theme.images.bgNear) {
+      this.createParallaxLayer(this.theme.images.bgNear, this.fx.parallax.near, 0.7)
+    }
   }
 
   private createParallaxLayer(key: string, speedFactor: number, depth: number): void {
@@ -268,28 +273,88 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private createFogLayer(): void {
+    if (!this.theme.images.fog || this.fx.fog.alpha <= 0) {
+      this.fogLayer = null
+      return
+    }
     this.fogLayer = this.add
-      .tileSprite(0, 0, GAME_DIMENSIONS.width, GAME_DIMENSIONS.height, IMAGE_KEYS.fog)
+      .tileSprite(0, 0, GAME_DIMENSIONS.width, GAME_DIMENSIONS.height, this.theme.images.fog)
       .setOrigin(0, 0)
       .setDepth(0.55)
-      .setAlpha(FX.fog.alpha)
+      .setAlpha(this.fx.fog.alpha)
   }
 
   private updateFog(dt: number): void {
-    this.fogLayer.tilePositionX += FX.fog.speedX * dt
-    this.fogLayer.tilePositionY += FX.fog.speedX * 0.3 * dt
+    if (!this.fogLayer) {
+      return
+    }
+    this.fogLayer.tilePositionX += this.fx.fog.speedX * dt
+    this.fogLayer.tilePositionY += this.fx.fog.speedX * 0.3 * dt
   }
 
   private createCrowAnimation(): void {
-    if (this.anims.exists('crow-flap')) {
+    if (this.anims.exists('flap-loop')) {
+      return
+    }
+    const bird = this.theme.visuals.bird
+    if (bird.type !== 'atlas' || !bird.flapFrames || !this.theme.assets.atlas) {
       return
     }
     this.anims.create({
-      key: 'crow-flap',
-      frames: FRAMES.crowFlap.map((frame) => ({ key: ATLAS.key, frame })),
+      key: 'flap-loop',
+      frames: bird.flapFrames.map((frame) => ({ key: bird.key, frame })),
       frameRate: 12,
       repeat: -1,
     })
+  }
+
+  private createBirdSprite(): void {
+    const bird = this.theme.visuals.bird
+
+    if (bird.type === 'atlas') {
+      this.createCrowAnimation()
+      this.birdSprite = this.add
+        .sprite(this.bird.x, this.bird.y, bird.key, bird.idleFrame)
+        .setDepth(2)
+      this.birdSprite.setOrigin(0.45, 0.55)
+    } else {
+      this.birdSprite = this.add.image(this.bird.x, this.bird.y, bird.key).setDepth(2)
+      this.birdSprite.setOrigin(0.5, 0.5)
+    }
+
+    const birdScale = (BIRD_CONFIG.radius * 2) / this.birdSprite.height
+    this.birdSprite.setScale(birdScale)
+
+    if (bird.glowFrame && this.theme.assets.atlas) {
+      this.birdGlow = this.add
+        .image(this.bird.x, this.bird.y, bird.key, bird.glowFrame)
+        .setDepth(2.1)
+        .setBlendMode(Phaser.BlendModes.ADD)
+      this.birdGlow.setScale(birdScale * 0.75)
+    } else {
+      this.birdGlow = null
+    }
+  }
+
+  private createScoreFrame(): Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle {
+    const uiAssets = this.theme.visuals.ui
+    if (uiAssets.kind === 'atlas' && uiAssets.atlasKey && uiAssets.frames?.scoreFrame) {
+      return this.add
+        .image(this.ui.score.x, this.ui.score.y, uiAssets.atlasKey, uiAssets.frames.scoreFrame)
+        .setDepth(4)
+    }
+
+    return this.add
+      .rectangle(
+        this.ui.score.x,
+        this.ui.score.y,
+        this.ui.scoreFrameSize.width,
+        this.ui.scoreFrameSize.height,
+        this.ui.panel.fill,
+        this.ui.panel.alpha,
+      )
+      .setStrokeStyle(this.ui.panel.strokeThickness, this.ui.panel.stroke)
+      .setDepth(4)
   }
 
   private setBirdVisual(state: BirdVisualState): void {
@@ -298,87 +363,164 @@ export class PlayScene extends Phaser.Scene {
     }
     this.birdVisualState = state
 
-    if (state === 'flap') {
-      this.birdSprite.play('crow-flap')
-      this.birdGlow.setAlpha(1)
+    const bird = this.theme.visuals.bird
+    if (bird.type === 'atlas' && this.birdSprite instanceof Phaser.GameObjects.Sprite) {
+      if (state === 'flap' && bird.flapFrames) {
+        this.birdSprite.play('flap-loop')
+        if (this.birdGlow) {
+          this.birdGlow.setAlpha(1)
+        }
+        return
+      }
+
+      this.birdSprite.stop()
+      if (bird.deadFrame && bird.idleFrame) {
+        this.birdSprite.setTexture(bird.key, state === 'dead' ? bird.deadFrame : bird.idleFrame)
+      }
+      if (this.birdGlow) {
+        this.birdGlow.setAlpha(state === 'dead' ? 0.2 : 1)
+      }
       return
     }
 
-    this.birdSprite.stop()
-    this.birdSprite.setTexture(ATLAS.key, state === 'dead' ? FRAMES.crowDead : FRAMES.crowIdle)
-    this.birdGlow.setAlpha(state === 'dead' ? 0.2 : 1)
+    if (this.birdGlow) {
+      this.birdGlow.setAlpha(state === 'dead' ? 0.2 : 1)
+    }
+  }
+
+  private createPanel(
+    size: 'small' | 'large',
+    widthOverride?: number,
+    heightOverride?: number,
+  ): Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle {
+    const uiAssets = this.theme.visuals.ui
+    const panelSize = this.ui.panelSize[size]
+    const panelWidth = widthOverride ?? panelSize.width
+    const panelHeight = heightOverride ?? panelSize.height
+
+    if (
+      uiAssets.kind === 'atlas' &&
+      uiAssets.atlasKey &&
+      ((size === 'small' && uiAssets.frames?.panelSmall) ||
+        (size === 'large' && uiAssets.frames?.panelLarge))
+    ) {
+      const frame = size === 'small' ? uiAssets.frames?.panelSmall : uiAssets.frames?.panelLarge
+      return this.add
+        .image(0, 0, uiAssets.atlasKey, frame)
+        .setDisplaySize(panelWidth, panelHeight)
+    }
+
+    return this.add
+      .rectangle(0, 0, panelWidth, panelHeight, this.ui.panel.fill, this.ui.panel.alpha)
+      .setStrokeStyle(this.ui.panel.strokeThickness, this.ui.panel.stroke)
+  }
+
+  private createButtonBase(scale = 1): Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle {
+    const uiAssets = this.theme.visuals.ui
+    if (uiAssets.kind === 'atlas' && uiAssets.atlasKey && uiAssets.frames?.button) {
+      const image = this.add.image(0, 0, uiAssets.atlasKey, uiAssets.frames.button)
+      image.setScale(scale)
+      return image
+    }
+
+    const width = this.ui.button.width * scale
+    const height = this.ui.button.height * scale
+    return this.add
+      .rectangle(0, 0, width, height, this.ui.panel.fill, this.ui.panel.alpha)
+      .setStrokeStyle(this.ui.panel.strokeThickness, this.ui.panel.stroke)
   }
 
   private createReadyOverlay(): void {
-    const panel = this.add.image(0, 0, ATLAS.key, FRAMES.panelSmall)
-    const title = this.add.text(0, -20, 'GET READY', UI.overlayTitleStyle).setOrigin(0.5, 0.5)
+    const panel = this.createPanel('small')
+    const title = this.add.text(0, -20, 'GET READY', this.ui.overlayTitleStyle).setOrigin(0.5, 0.5)
     const subtitle = this.add
-      .text(0, 22, 'Tap or Space to Flap', UI.overlayBodyStyle)
+      .text(0, 22, 'Tap or Space to Flap', this.ui.overlayBodyStyle)
       .setOrigin(0.5, 0.5)
 
-    this.readyContainer = this.add.container(UI.layout.ready.x, UI.layout.ready.y, [panel, title, subtitle])
+    this.readyContainer = this.add.container(this.ui.layout.ready.x, this.ui.layout.ready.y, [
+      panel,
+      title,
+      subtitle,
+    ])
     this.readyContainer.setDepth(5)
     this.readyContainer.setVisible(false)
   }
 
   private createGameOverOverlay(): void {
-    const panel = this.add.image(0, 0, ATLAS.key, FRAMES.panelLarge)
-    const title = this.add.text(0, -66, 'GAME OVER', UI.overlayTitleStyle).setOrigin(0.5, 0.5)
+    const panel = this.createPanel('large')
+    const title = this.add.text(0, -66, 'GAME OVER', this.ui.overlayTitleStyle).setOrigin(0.5, 0.5)
 
     const scoreLabel = this.add
-      .text(-20, -26, 'SCORE', UI.statLabelStyle)
+      .text(-20, -26, 'SCORE', this.ui.statLabelStyle)
       .setOrigin(0, 0.5)
     this.finalScoreText = this.add
-      .text(-20, -4, '0', UI.statValueStyle)
+      .text(-20, -4, '0', this.ui.statValueStyle)
       .setOrigin(0, 0.5)
 
     const bestLabel = this.add
-      .text(-20, 24, 'BEST', UI.statLabelStyle)
+      .text(-20, 24, 'BEST', this.ui.statLabelStyle)
       .setOrigin(0, 0.5)
     this.bestScoreText = this.add
-      .text(-20, 46, String(this.bestScore), UI.statValueStyle)
+      .text(-20, 46, String(this.bestScore), this.ui.statValueStyle)
       .setOrigin(0, 0.5)
 
-    this.medalSprite = this.add
-      .image(-110, 8, ATLAS.key, FRAMES.medalBronze)
-      .setScale(0.9)
-
-    const restartButton = this.createRestartButton()
-    restartButton.setPosition(0, 84)
-
-    this.gameOverContainer = this.add.container(UI.layout.gameOver.x, UI.layout.gameOver.y, [
+    const overlayItems: Phaser.GameObjects.GameObject[] = [
       panel,
       title,
       scoreLabel,
       this.finalScoreText,
       bestLabel,
       this.bestScoreText,
-      this.medalSprite,
-      restartButton,
-    ])
+    ]
+
+    const uiAssets = this.theme.visuals.ui
+    if (uiAssets.kind === 'atlas' && uiAssets.frames?.medalBronze && uiAssets.atlasKey) {
+      this.medalSprite = this.add
+        .image(-110, 8, uiAssets.atlasKey, uiAssets.frames.medalBronze)
+        .setScale(0.9)
+      overlayItems.push(this.medalSprite)
+    } else {
+      this.medalSprite = null
+    }
+
+    const restartButton = this.createRestartButton()
+    restartButton.setPosition(0, 84)
+    overlayItems.push(restartButton)
+
+    this.gameOverContainer = this.add.container(
+      this.ui.layout.gameOver.x,
+      this.ui.layout.gameOver.y,
+      overlayItems,
+    )
     this.gameOverContainer.setDepth(5)
     this.gameOverContainer.setVisible(false)
   }
 
   private createRestartButton(): Phaser.GameObjects.Container {
-    const buttonImage = this.add
-      .image(0, 0, ATLAS.key, FRAMES.button)
-      .setInteractive({ useHandCursor: true })
-    buttonImage.on('pointerdown', () => this.restart())
+    const uiAssets = this.theme.visuals.ui
+    const buttonBase = this.createButtonBase()
+    buttonBase.setInteractive({ useHandCursor: true })
+    buttonBase.on('pointerdown', () => this.restart())
 
-    const icon = this.add.image(-54, 0, ATLAS.key, FRAMES.iconRestart).setScale(0.9)
     const label = this.add
-      .text(18, 0, 'RESTART', UI.button.textStyle)
+      .text(0, 0, 'RESTART', this.ui.button.textStyle)
       .setOrigin(0.5, 0.5)
 
-    return this.add.container(0, 0, [buttonImage, icon, label])
+    const items: Phaser.GameObjects.GameObject[] = [buttonBase, label]
+    if (uiAssets.kind === 'atlas' && uiAssets.frames?.iconRestart && uiAssets.atlasKey) {
+      const icon = this.add.image(-54, 0, uiAssets.atlasKey, uiAssets.frames.iconRestart).setScale(0.9)
+      items.splice(1, 0, icon)
+      label.setX(18)
+    }
+
+    return this.add.container(0, 0, items)
   }
 
   private createToggles(): void {
-    const iconScale = UI.icon.size / 24
+    const iconScale = this.ui.icon.size / 24
     const topY = 28
-    const rightX = GAME_DIMENSIONS.width - UI.icon.padding - UI.icon.size / 2
-    const motionX = rightX - (UI.icon.size + 10)
+    const rightX = GAME_DIMENSIONS.width - this.ui.icon.padding - this.ui.icon.size / 2
+    const motionX = rightX - (this.ui.icon.size + 10)
     const hitArea = new Phaser.Geom.Rectangle(-22, -22, 44, 44)
     const hitConfig = {
       hitArea,
@@ -386,65 +528,93 @@ export class PlayScene extends Phaser.Scene {
       useHandCursor: true,
     }
 
-    this.motionIcon = this.add
-      .image(motionX, topY, ATLAS.key, this.reducedMotion ? FRAMES.iconMotionOff : FRAMES.iconMotionOn)
-      .setDepth(4.2)
-      .setScale(iconScale)
-      .setInteractive(hitConfig)
-    this.motionIcon.on('pointerdown', () => this.toggleReducedMotion())
+    const uiAssets = this.theme.visuals.ui
+    if (
+      uiAssets.kind === 'atlas' &&
+      uiAssets.frames?.iconMotionOn &&
+      uiAssets.frames?.iconMotionOff &&
+      uiAssets.frames?.iconMuteOn &&
+      uiAssets.frames?.iconMuteOff &&
+      uiAssets.atlasKey
+    ) {
+      this.motionIcon = this.add
+        .image(
+          motionX,
+          topY,
+          uiAssets.atlasKey,
+          this.reducedMotion ? uiAssets.frames.iconMotionOff : uiAssets.frames.iconMotionOn,
+        )
+        .setDepth(4.2)
+        .setScale(iconScale)
+        .setInteractive(hitConfig)
+      this.motionIcon.on('pointerdown', () => this.toggleReducedMotion())
 
-    this.muteIcon = this.add
-      .image(rightX, topY, ATLAS.key, this.isMuted ? FRAMES.iconMuteOff : FRAMES.iconMuteOn)
-      .setDepth(4.2)
-      .setScale(iconScale)
-      .setInteractive(hitConfig)
-    this.muteIcon.on('pointerdown', () => this.toggleMute())
+      this.muteIcon = this.add
+        .image(
+          rightX,
+          topY,
+          uiAssets.atlasKey,
+          this.isMuted ? uiAssets.frames.iconMuteOff : uiAssets.frames.iconMuteOn,
+        )
+        .setDepth(4.2)
+        .setScale(iconScale)
+        .setInteractive(hitConfig)
+      this.muteIcon.on('pointerdown', () => this.toggleMute())
+    } else {
+      this.motionIcon = null
+      this.muteIcon = null
+    }
 
     this.createSettingsButton()
   }
 
   private createSettingsButton(): void {
-    const buttonImage = this.add
-      .image(0, 0, ATLAS.key, FRAMES.button)
-      .setInteractive({ useHandCursor: true })
-    buttonImage.setScale(0.42)
+    const buttonImage = this.createButtonBase(0.42)
+    buttonImage.setInteractive({ useHandCursor: true })
 
     const labelStyle = {
-      ...UI.statLabelStyle,
+      ...this.ui.statLabelStyle,
       fontSize: '12px',
-      color: UI.statValueStyle.color,
+      color: this.ui.statValueStyle.color,
     }
     const label = this.add.text(0, 1, 'SET', labelStyle).setOrigin(0.5, 0.5)
 
-    this.settingsButton = this.add.container(UI.icon.padding + 34, 28, [buttonImage, label])
+    this.settingsButton = this.add.container(this.ui.icon.padding + 34, 28, [buttonImage, label])
     this.settingsButton.setDepth(4.2)
-    buttonImage.on('pointerdown', (_pointer, _localX, _localY, event) => {
+    buttonImage.on(
+      'pointerdown',
+      (
+        _pointer: Phaser.Input.Pointer,
+        _localX: number,
+        _localY: number,
+        event: Phaser.Types.Input.EventData,
+      ) => {
       event.stopPropagation()
       this.toggleSettingsPanel()
-    })
+      },
+    )
   }
 
   private createSettingsPanel(): void {
-    const panelWidth = 300
-    const panelHeight = 200
-    const rowWidth = 240
-    const rowHeight = 24
-    const rowStartY = -28
-    const rowGap = 28
+    const panelWidth = this.ui.panelSize.large.width
+    const panelHeight = this.ui.panelSize.large.height
+    const rowWidth = panelWidth - 60
+    const rowHeight = 22
+    const rowStartY = -40
+    const rowGap = 26
 
-    const panel = this.add.image(0, 0, ATLAS.key, FRAMES.panelLarge)
-    panel.setDisplaySize(panelWidth, panelHeight)
+    const panel = this.createPanel('large', panelWidth, panelHeight)
 
     const title = this.add
-      .text(0, -78, 'SETTINGS', UI.overlayTitleStyle)
+      .text(0, -78, 'SETTINGS', this.ui.overlayTitleStyle)
       .setOrigin(0.5, 0.5)
 
     const labelStyle = {
-      ...UI.statLabelStyle,
+      ...this.ui.statLabelStyle,
       fontSize: '14px',
     }
     const valueStyle = {
-      ...UI.statValueStyle,
+      ...this.ui.statValueStyle,
       fontSize: '16px',
     }
 
@@ -461,10 +631,18 @@ export class PlayScene extends Phaser.Scene {
       const hit = this.add
         .rectangle(0, y, rowWidth, rowHeight, 0x000000, 0)
         .setInteractive({ useHandCursor: true })
-      hit.on('pointerdown', (_pointer, _localX, _localY, event) => {
+      hit.on(
+        'pointerdown',
+        (
+          _pointer: Phaser.Input.Pointer,
+          _localX: number,
+          _localY: number,
+          event: Phaser.Types.Input.EventData,
+        ) => {
         event.stopPropagation()
         onToggle()
-      })
+        },
+      )
 
       const labelText = this.add.text(-rowWidth / 2 + 6, y, label, labelStyle).setOrigin(0, 0.5)
       const valueText = this.add
@@ -497,6 +675,7 @@ export class PlayScene extends Phaser.Scene {
       () => (this.analyticsOptOut ? 'OFF' : 'ON'),
       () => this.toggleAnalyticsOptOut(),
     )
+    const themeValue = createRow('THEME', () => this.theme.name, () => this.toggleTheme())
 
     let hitboxesValue: Phaser.GameObjects.Text | undefined
     if (this.debugToggleAllowed) {
@@ -508,33 +687,40 @@ export class PlayScene extends Phaser.Scene {
     }
 
     const closeButton = this.createSmallButton('CLOSE', () => this.toggleSettingsPanel())
-    closeButton.setPosition(0, panelHeight / 2 - 26)
+    closeButton.setPosition(0, panelHeight / 2 - 18)
     this.settingsPanel.add(closeButton)
 
     this.settingsValues = {
       mute: muteValue,
       motion: motionValue,
       analytics: analyticsValue,
+      theme: themeValue,
       hitboxes: hitboxesValue,
     }
     this.updateSettingsValues()
   }
 
   private createSmallButton(label: string, onClick: () => void): Phaser.GameObjects.Container {
-    const buttonImage = this.add
-      .image(0, 0, ATLAS.key, FRAMES.button)
-      .setInteractive({ useHandCursor: true })
-    buttonImage.setScale(0.4)
+    const buttonImage = this.createButtonBase(0.4)
+    buttonImage.setInteractive({ useHandCursor: true })
 
     const text = this.add
-      .text(0, 1, label, UI.button.textStyle)
+      .text(0, 1, label, this.ui.button.textStyle)
       .setOrigin(0.5, 0.5)
       .setScale(0.75)
 
-    buttonImage.on('pointerdown', (_pointer, _localX, _localY, event) => {
+    buttonImage.on(
+      'pointerdown',
+      (
+        _pointer: Phaser.Input.Pointer,
+        _localX: number,
+        _localY: number,
+        event: Phaser.Types.Input.EventData,
+      ) => {
       event.stopPropagation()
       onClick()
-    })
+      },
+    )
 
     return this.add.container(0, 0, [buttonImage, text])
   }
@@ -548,9 +734,19 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private createParticles(): void {
-    this.createEmitter(FRAMES.particleEmber, FX.embers, Phaser.BlendModes.ADD)
-    this.createEmitter(FRAMES.particleDust, FX.dust, Phaser.BlendModes.NORMAL)
-    this.createEmitter(FRAMES.particleLeaf, FX.leaf, Phaser.BlendModes.NORMAL)
+    const particles = this.theme.visuals.particles
+    if (!particles || !this.theme.assets.atlas) {
+      return
+    }
+    if (particles.ember) {
+      this.createEmitter(particles.ember, this.fx.embers, Phaser.BlendModes.ADD, this.theme.assets.atlas.key)
+    }
+    if (particles.dust) {
+      this.createEmitter(particles.dust, this.fx.dust, Phaser.BlendModes.NORMAL, this.theme.assets.atlas.key)
+    }
+    if (particles.leaf) {
+      this.createEmitter(particles.leaf, this.fx.leaf, Phaser.BlendModes.NORMAL, this.theme.assets.atlas.key)
+    }
   }
 
   private createEmitter(
@@ -571,6 +767,7 @@ export class PlayScene extends Phaser.Scene {
       lifespanMax: number
     },
     blendMode: Phaser.BlendModes,
+    atlasKey: string,
   ): void {
     if (!config.enabled) {
       return
@@ -591,7 +788,7 @@ export class PlayScene extends Phaser.Scene {
       },
     })
 
-    const emitter = this.add.particles(0, 0, ATLAS.key, {
+    const emitter = this.add.particles(0, 0, atlasKey, {
       frame,
       maxParticles: config.count,
       quantity: 1,
@@ -608,11 +805,15 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private createVignette(): void {
+    if (!this.theme.images.vignette || this.fx.vignette.alpha <= 0) {
+      this.vignette = null
+      return
+    }
     this.vignette = this.add
-      .image(0, 0, IMAGE_KEYS.vignette)
+      .image(0, 0, this.theme.images.vignette)
       .setOrigin(0, 0)
       .setDepth(3.9)
-      .setAlpha(FX.vignette.alpha)
+      .setAlpha(this.fx.vignette.alpha)
     this.vignette.setDisplaySize(GAME_DIMENSIONS.width, GAME_DIMENSIONS.height)
   }
 
@@ -719,7 +920,7 @@ export class PlayScene extends Phaser.Scene {
     this.showGameOverOverlay(true)
 
     if (!this.reducedMotion) {
-      this.cameras.main.shake(FX.screenShake.duration, FX.screenShake.intensity)
+      this.cameras.main.shake(this.fx.screenShake.duration, this.fx.screenShake.intensity)
     }
 
     const score = this.scoreSystem.score
@@ -748,15 +949,26 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private updateMedal(score: number): void {
-    let frame: string = FRAMES.medalBronze
-    if (score >= 25) {
-      frame = FRAMES.medalVoid
-    } else if (score >= 18) {
-      frame = FRAMES.medalGold
-    } else if (score >= 10) {
-      frame = FRAMES.medalSilver
+    if (!this.medalSprite) {
+      return
     }
-    this.medalSprite.setTexture(ATLAS.key, frame)
+    const uiAssets = this.theme.visuals.ui
+    if (uiAssets.kind !== 'atlas' || !uiAssets.frames || !uiAssets.atlasKey) {
+      return
+    }
+
+    let frame = uiAssets.frames.medalBronze
+    if (score >= 25) {
+      frame = uiAssets.frames.medalVoid
+    } else if (score >= 18) {
+      frame = uiAssets.frames.medalGold
+    } else if (score >= 10) {
+      frame = uiAssets.frames.medalSilver
+    }
+
+    if (frame) {
+      this.medalSprite.setTexture(uiAssets.atlasKey, frame)
+    }
   }
 
   private resetWorld(): void {
@@ -788,9 +1000,7 @@ export class PlayScene extends Phaser.Scene {
     this.pipes.push(pipe)
 
     const sprites = this.pipeSpritePool.pop() ?? this.createPipeSprites()
-    const variantIndex = this.nextObstacleVariant()
-    sprites.top.setTexture(ATLAS.key, FRAMES.obstaclesTop[variantIndex])
-    sprites.bottom.setTexture(ATLAS.key, FRAMES.obstaclesBottom[variantIndex])
+    this.applyObstacleVariant(sprites)
     this.pipeSprites.push(sprites)
     this.updatePipeSprites(pipe, sprites)
     sprites.top.setVisible(true)
@@ -798,26 +1008,45 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private nextObstacleVariant(): number {
+    const obstacles = this.theme.visuals.obstacles
+    const frames = obstacles.topFrames
+    if (!frames || frames.length === 0) {
+      return 0
+    }
     const next = this.obstacleVariantIndex
-    this.obstacleVariantIndex = (this.obstacleVariantIndex + 1) % FRAMES.obstaclesTop.length
+    this.obstacleVariantIndex = (this.obstacleVariantIndex + 1) % frames.length
     return next
   }
 
   private createPipeSprites(): PipeSprites {
-    const top = this.add.image(0, 0, ATLAS.key, FRAMES.obstaclesTop[0]).setOrigin(0, 1).setDepth(1)
-    const bottom = this.add
-      .image(0, 0, ATLAS.key, FRAMES.obstaclesBottom[0])
-      .setOrigin(0, 0)
-      .setDepth(1)
+    const obstacles = this.theme.visuals.obstacles
+    const top = this.add.image(0, 0, obstacles.key, obstacles.topKey ?? obstacles.topFrames?.[0])
+    const bottom = this.add.image(0, 0, obstacles.key, obstacles.bottomKey ?? obstacles.bottomFrames?.[0])
+    top.setOrigin(0, 1).setDepth(1)
+    bottom.setOrigin(0, 0).setDepth(1)
+    if (obstacles.type === 'image' && obstacles.flipTop) {
+      top.setFlipY(true)
+    }
     return { top, bottom }
+  }
+
+  private applyObstacleVariant(sprites: PipeSprites): void {
+    const obstacles = this.theme.visuals.obstacles
+    if (obstacles.type !== 'atlas' || !obstacles.topFrames || !obstacles.bottomFrames) {
+      return
+    }
+    const variantIndex = this.nextObstacleVariant()
+    sprites.top.setTexture(obstacles.key, obstacles.topFrames[variantIndex])
+    sprites.bottom.setTexture(obstacles.key, obstacles.bottomFrames[variantIndex])
   }
 
   private updatePipeSprites(pipe: PipePair, sprites: PipeSprites): void {
     const topHeight = Math.max(0, pipe.topHeight)
     const bottomHeight = Math.max(0, pipe.bottomHeight)
 
-    const swayPhase = this.reducedMotion ? 0 : this.obstacleSwayClock * FX.obstacleSway.speed
-    const sway = this.reducedMotion ? 0 : Math.sin((pipe.x + swayPhase) * 0.01) * FX.obstacleSway.amplitude
+    const swayPhase = this.reducedMotion ? 0 : this.obstacleSwayClock * this.fx.obstacleSway.speed
+    const sway =
+      this.reducedMotion ? 0 : Math.sin((pipe.x + swayPhase) * 0.01) * this.fx.obstacleSway.amplitude
 
     sprites.top.setPosition(pipe.x, topHeight)
     sprites.top.setDisplaySize(PIPE_CONFIG.width, topHeight)
@@ -832,22 +1061,26 @@ export class PlayScene extends Phaser.Scene {
 
   private updateBirdVisual(dt: number): void {
     if (this.stateMachine.state === 'READY' && !this.reducedMotion) {
-      this.birdBobTime += dt * FX.readyBob.speed
+      this.birdBobTime += dt * this.fx.readyBob.speed
     }
 
     const bobOffset =
       this.stateMachine.state === 'READY' && !this.reducedMotion
-        ? Math.sin(this.birdBobTime) * FX.readyBob.amplitude
+        ? Math.sin(this.birdBobTime) * this.fx.readyBob.amplitude
         : 0
 
     this.birdSprite.setPosition(this.bird.x, this.bird.y + bobOffset)
-    this.birdGlow.setPosition(this.bird.x + 8, this.bird.y - 2 + bobOffset)
+    if (this.birdGlow) {
+      this.birdGlow.setPosition(this.bird.x + 8, this.bird.y - 2 + bobOffset)
+    }
 
     const range = BIRD_CONFIG.maxFallSpeed - BIRD_CONFIG.maxRiseSpeed
     const t = Phaser.Math.Clamp((this.bird.velocity - BIRD_CONFIG.maxRiseSpeed) / range, 0, 1)
     const rotation = Phaser.Math.Linear(BIRD_CONFIG.rotationUp, BIRD_CONFIG.rotationDown, t)
     this.birdSprite.setRotation(rotation)
-    this.birdGlow.setRotation(rotation)
+    if (this.birdGlow) {
+      this.birdGlow.setRotation(rotation)
+    }
   }
 
   private showReadyOverlay(visible: boolean): void {
@@ -908,8 +1141,8 @@ export class PlayScene extends Phaser.Scene {
     this.scoreText.setScale(1)
     this.scorePulseTween = this.tweens.add({
       targets: [this.scoreFrame, this.scoreText],
-      scale: FX.scorePulse.scale,
-      duration: FX.scorePulse.duration,
+      scale: this.fx.scorePulse.scale,
+      duration: this.fx.scorePulse.duration,
       yoyo: true,
       ease: 'Sine.Out',
     })
@@ -917,7 +1150,19 @@ export class PlayScene extends Phaser.Scene {
 
   private toggleMute(): void {
     this.isMuted = !this.isMuted
-    this.muteIcon.setTexture(ATLAS.key, this.isMuted ? FRAMES.iconMuteOff : FRAMES.iconMuteOn)
+    const uiAssets = this.theme.visuals.ui
+    if (
+      this.muteIcon &&
+      uiAssets.kind === 'atlas' &&
+      uiAssets.atlasKey &&
+      uiAssets.frames?.iconMuteOff &&
+      uiAssets.frames?.iconMuteOn
+    ) {
+      this.muteIcon.setTexture(
+        uiAssets.atlasKey,
+        this.isMuted ? uiAssets.frames.iconMuteOff : uiAssets.frames.iconMuteOn,
+      )
+    }
     this.storeBool('flappy-muted', this.isMuted)
     telemetry.track('mute_toggle', { muted: this.isMuted })
     this.updateSettingsValues()
@@ -925,10 +1170,19 @@ export class PlayScene extends Phaser.Scene {
 
   private toggleReducedMotion(): void {
     this.reducedMotion = !this.reducedMotion
-    this.motionIcon.setTexture(
-      ATLAS.key,
-      this.reducedMotion ? FRAMES.iconMotionOff : FRAMES.iconMotionOn,
-    )
+    const uiAssets = this.theme.visuals.ui
+    if (
+      this.motionIcon &&
+      uiAssets.kind === 'atlas' &&
+      uiAssets.atlasKey &&
+      uiAssets.frames?.iconMotionOff &&
+      uiAssets.frames?.iconMotionOn
+    ) {
+      this.motionIcon.setTexture(
+        uiAssets.atlasKey,
+        this.reducedMotion ? uiAssets.frames.iconMotionOff : uiAssets.frames.iconMotionOn,
+      )
+    }
     this.storeBool('flappy-reduced-motion', this.reducedMotion)
 
     if (this.reducedMotion) {
@@ -947,6 +1201,17 @@ export class PlayScene extends Phaser.Scene {
     this.updateSettingsValues()
   }
 
+  private toggleTheme(): void {
+    if (this.themeList.length < 2) {
+      return
+    }
+    const currentIndex = this.themeList.findIndex((theme) => theme.id === this.theme.id)
+    const nextIndex = currentIndex === -1 ? 0 : (currentIndex + 1) % this.themeList.length
+    const nextTheme = this.themeList[nextIndex]
+    setActiveThemeId(nextTheme.id)
+    window.location.reload()
+  }
+
   private updateSettingsValues(): void {
     if (!this.settingsValues) {
       return
@@ -954,6 +1219,9 @@ export class PlayScene extends Phaser.Scene {
     this.settingsValues.mute.setText(this.isMuted ? 'ON' : 'OFF')
     this.settingsValues.motion.setText(this.reducedMotion ? 'REDUCED' : 'FULL')
     this.settingsValues.analytics.setText(this.analyticsOptOut ? 'OFF' : 'ON')
+    if (this.settingsValues.theme) {
+      this.settingsValues.theme.setText(this.theme.name)
+    }
     if (this.settingsValues.hitboxes) {
       this.settingsValues.hitboxes.setText(this.debugEnabled ? 'ON' : 'OFF')
     }

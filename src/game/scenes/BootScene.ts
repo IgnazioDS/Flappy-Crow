@@ -1,5 +1,5 @@
 import Phaser from 'phaser'
-import { ATLAS, IMAGE_PATHS } from '../theme'
+import { getActiveTheme } from '../theme'
 
 /**
  * Preloads visual assets before gameplay starts.
@@ -10,9 +10,14 @@ export class BootScene extends Phaser.Scene {
   }
 
   preload(): void {
-    const atlasImage = this.supportsWebp() ? ATLAS.imageWebp : ATLAS.imagePng
-    this.load.atlas(ATLAS.key, atlasImage, ATLAS.data)
-    Object.entries(IMAGE_PATHS).forEach(([key, path]) => {
+    const theme = getActiveTheme()
+    if (theme.assets.atlas) {
+      const atlasImage = this.supportsWebp()
+        ? theme.assets.atlas.imageWebp ?? theme.assets.atlas.imagePng
+        : theme.assets.atlas.imagePng
+      this.load.atlas(theme.assets.atlas.key, atlasImage, theme.assets.atlas.data)
+    }
+    Object.entries(theme.assets.images).forEach(([key, path]) => {
       this.load.image(key, path)
     })
   }

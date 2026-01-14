@@ -59,6 +59,15 @@ All gameplay constants live in `src/game/config.ts`. Key values:
 Telemetry is opt-in via environment configuration and can be disabled by players
 through the analytics opt-out flag (stored in localStorage).
 
+## Performance sanity checks
+
+See `docs/PERFORMANCE.md` for the manual memory-growth checklist.
+
+## Themes
+
+Two themes are available: Classic Sky and Evil Forest Crow. Use the Settings panel to switch themes,
+or set `VITE_THEME=classic` / `VITE_THEME=evil-forest` in your environment.
+
 Optional environment variables (see `.env.example`):
 
 - `VITE_TELEMETRY_CONSOLE=true` to log events locally
