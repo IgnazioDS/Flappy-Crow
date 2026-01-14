@@ -10,7 +10,7 @@ import { InputSystem } from '../systems/InputSystem'
 import { ScoreSystem } from '../systems/ScoreSystem'
 import { SpawnSystem } from '../systems/SpawnSystem'
 import { ATLAS, FRAMES, FX, IMAGE_KEYS, UI } from '../theme'
-import { defaultRng } from '../utils/rng'
+import { createSeededRngFromEnv } from '../utils/rng'
 import { setTelemetryOptOut, telemetry } from '../../telemetry'
 
 type PipeSprites = {
@@ -26,13 +26,19 @@ type ParallaxLayer = {
 
 type BirdVisualState = 'idle' | 'flap' | 'dead'
 
+type E2EDebugState = {
+  state: string
+  score: number
+  bestScore: number
+}
+
 /**
  * Main gameplay scene. All rules live in deterministic systems/entities.
  */
 export class PlayScene extends Phaser.Scene {
   private stateMachine = new GameStateMachine()
   private inputSystem = new InputSystem()
-  private spawnSystem = new SpawnSystem(defaultRng)
+  private spawnSystem = new SpawnSystem(createSeededRngFromEnv())
   private scoreSystem = new ScoreSystem()
   private collisionSystem = new CollisionSystem()
   private despawnSystem = new DespawnSystem()
@@ -88,6 +94,9 @@ export class PlayScene extends Phaser.Scene {
   private debugEnabled = false
   private readonly debugToggleAllowed =
     import.meta.env.DEV || import.meta.env.VITE_ART_QA === 'true'
+  private readonly e2eEnabled = String(import.meta.env.VITE_E2E).toLowerCase() === 'true'
+  private e2eAutoplay = this.e2eEnabled
+  private e2eLastFlapMs = 0
   private runStartMs: number | null = null
   private scorePulseTween?: Phaser.Tweens.Tween
   private readyTween?: Phaser.Tweens.Tween
@@ -167,6 +176,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   update(_time: number, deltaMs: number): void {
+    this.maybeAutoFlap()
     const wantsFlap = this.inputSystem.consumeFlap()
     const dtMs = Math.min(deltaMs, 50)
     const dt = dtMs / 1000
@@ -630,7 +640,13 @@ export class PlayScene extends Phaser.Scene {
     this.showReadyOverlay(true)
     this.showGameOverOverlay(false)
     this.runStartMs = null
+    this.e2eAutoplay = this.e2eEnabled
     telemetry.track('game_ready_shown')
+    this.setE2EState({
+      state: 'READY',
+      score: this.scoreSystem.score,
+      bestScore: this.bestScore,
+    })
   }
 
   private startPlaying(): void {
@@ -643,6 +659,7 @@ export class PlayScene extends Phaser.Scene {
     this.runStartMs = this.time.now
     telemetry.track('game_start')
     telemetry.track('flap')
+    this.setE2EState({ state: 'PLAYING' })
     this.bird.flap()
   }
 
@@ -677,6 +694,10 @@ export class PlayScene extends Phaser.Scene {
       this.scoreText.setText(String(this.scoreSystem.score))
       this.pulseScore()
       telemetry.track('score_increment', { score: this.scoreSystem.score })
+      this.setE2EState({ score: this.scoreSystem.score })
+      if (this.e2eAutoplay && this.scoreSystem.score >= 1) {
+        this.e2eAutoplay = false
+      }
     }
   }
 
@@ -719,6 +740,11 @@ export class PlayScene extends Phaser.Scene {
       sessionDurationMs: Math.round(sessionDurationMs),
     })
     this.runStartMs = null
+    this.setE2EState({
+      state: 'GAME_OVER',
+      score,
+      bestScore: this.bestScore,
+    })
   }
 
   private updateMedal(score: number): void {
@@ -931,6 +957,49 @@ export class PlayScene extends Phaser.Scene {
     if (this.settingsValues.hitboxes) {
       this.settingsValues.hitboxes.setText(this.debugEnabled ? 'ON' : 'OFF')
     }
+  }
+
+  private maybeAutoFlap(): void {
+    if (!this.e2eAutoplay || this.stateMachine.state !== 'PLAYING') {
+      return
+    }
+    const gapY = this.getUpcomingGapY()
+    if (gapY === null) {
+      return
+    }
+    const now = this.time.now
+    const shouldFlap = this.bird.y > gapY + 6
+    if (shouldFlap && now - this.e2eLastFlapMs > 180) {
+      this.e2eLastFlapMs = now
+      this.inputSystem.requestFlap()
+    }
+  }
+
+  private getUpcomingGapY(): number | null {
+    if (this.pipes.length === 0) {
+      return BIRD_CONFIG.startY
+    }
+    for (const pipe of this.pipes) {
+      if (pipe.x + PIPE_CONFIG.width >= this.bird.x) {
+        return pipe.gapY
+      }
+    }
+    return null
+  }
+
+  private setE2EState(partial: Partial<E2EDebugState>): void {
+    if (!this.e2eEnabled || typeof window === 'undefined') {
+      return
+    }
+    const win = window as Window & { __flappyDebug?: E2EDebugState }
+    if (!win.__flappyDebug) {
+      win.__flappyDebug = {
+        state: this.stateMachine.state,
+        score: this.scoreSystem.score,
+        bestScore: this.bestScore,
+      }
+    }
+    Object.assign(win.__flappyDebug, partial)
   }
 
   private updateDebugOverlay(): void {

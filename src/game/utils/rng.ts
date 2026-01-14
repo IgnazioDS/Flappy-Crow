@@ -20,6 +20,18 @@ export const defaultRng: RandomSource = {
   next: () => Math.random(),
 }
 
+export const createSeededRngFromEnv = (): RandomSource => {
+  const env = import.meta.env.VITE_TEST_SEED
+  if (!env) {
+    return defaultRng
+  }
+  const seed = Number(env)
+  if (!Number.isFinite(seed)) {
+    return defaultRng
+  }
+  return new SeededRng(seed)
+}
+
 export const randomRange = (rng: RandomSource, min: number, max: number): number => {
   return min + rng.next() * (max - min)
 }

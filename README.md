@@ -20,6 +20,9 @@ Open the URL printed by Vite.
 - `npm run lint` - run ESLint
 - `npm run format` - format with Prettier
 - `npm run test` - run unit tests
+- `npm run test:e2e` - run Playwright smoke tests (requires `npx playwright install chromium`)
+
+Playwright runs the dev server with `VITE_TEST_SEED` and `VITE_E2E` to make runs deterministic.
 
 ## Controls
 
