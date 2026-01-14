@@ -50,6 +50,19 @@ All gameplay constants live in `src/game/config.ts`. Key values:
 - `src/game/state` - state machine for READY/PLAYING/GAME_OVER transitions
 - `src/game/scenes` - Phaser scenes for preload and gameplay rendering
 
+## Telemetry (optional)
+
+Telemetry is opt-in via environment configuration and can be disabled by players
+through the analytics opt-out flag (stored in localStorage).
+
+Optional environment variables (see `.env.example`):
+
+- `VITE_TELEMETRY_CONSOLE=true` to log events locally
+- `VITE_PLAUSIBLE_DOMAIN=yourdomain.com`
+- `VITE_PLAUSIBLE_API_HOST=https://plausible.yourhost.com` (optional)
+- `VITE_POSTHOG_KEY=phc_...`
+- `VITE_POSTHOG_HOST=https://app.posthog.com` (optional)
+
 ## Physics note
 
 Rendering uses Phaser 3, while physics and collisions are implemented in deterministic
