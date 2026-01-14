@@ -11,7 +11,7 @@ import { ScoreSystem } from '../systems/ScoreSystem'
 import { SpawnSystem } from '../systems/SpawnSystem'
 import { ATLAS, FRAMES, FX, IMAGE_KEYS, UI } from '../theme'
 import { defaultRng } from '../utils/rng'
-import { telemetry } from '../../telemetry'
+import { setTelemetryOptOut, telemetry } from '../../telemetry'
 
 type PipeSprites = {
   top: Phaser.GameObjects.Image
@@ -70,11 +70,24 @@ export class PlayScene extends Phaser.Scene {
 
   private debugGraphics!: Phaser.GameObjects.Graphics
 
+  private settingsButton!: Phaser.GameObjects.Container
+  private settingsPanel!: Phaser.GameObjects.Container
+  private settingsOpen = false
+  private settingsValues: {
+    mute: Phaser.GameObjects.Text
+    motion: Phaser.GameObjects.Text
+    analytics: Phaser.GameObjects.Text
+    hitboxes?: Phaser.GameObjects.Text
+  } | null = null
+
   private lastScore = -1
   private bestScore = 0
   private isMuted = false
   private reducedMotion = false
-  private debugEnabled = import.meta.env.VITE_ART_QA === 'true'
+  private analyticsOptOut = false
+  private debugEnabled = false
+  private readonly debugToggleAllowed =
+    import.meta.env.DEV || import.meta.env.VITE_ART_QA === 'true'
   private runStartMs: number | null = null
   private scorePulseTween?: Phaser.Tweens.Tween
   private readyTween?: Phaser.Tweens.Tween
@@ -98,6 +111,11 @@ export class PlayScene extends Phaser.Scene {
     this.bestScore = this.readStoredNumber('flappy-best', 0)
     this.isMuted = this.readStoredBool('flappy-muted', false)
     this.reducedMotion = this.readStoredBool('flappy-reduced-motion', false)
+    this.analyticsOptOut = this.readStoredBool('flappy-analytics-optout', false)
+    this.debugEnabled = this.debugToggleAllowed
+      ? this.readStoredBool('flappy-hitboxes', false)
+      : false
+    setTelemetryOptOut(this.analyticsOptOut)
 
     this.createParallaxLayers()
     this.createFogLayer()
@@ -137,6 +155,7 @@ export class PlayScene extends Phaser.Scene {
     this.createReadyOverlay()
     this.createGameOverOverlay()
     this.createToggles()
+    this.createSettingsPanel()
 
     this.createParticles()
     this.createVignette()
@@ -184,9 +203,18 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private setupInput(): void {
-    this.input.on('pointerdown', () => this.inputSystem.requestFlap())
-    this.input.keyboard?.on('keydown-SPACE', () => this.inputSystem.requestFlap())
-    this.input.keyboard?.on('keydown-H', () => this.toggleDebug())
+    this.input.on('pointerdown', (_pointer, currentlyOver) => {
+      if (this.settingsOpen || (currentlyOver && currentlyOver.length > 0)) {
+        return
+      }
+      this.inputSystem.requestFlap()
+    })
+    this.input.keyboard?.on('keydown-SPACE', () => {
+      if (!this.settingsOpen) {
+        this.inputSystem.requestFlap()
+      }
+    })
+    this.input.keyboard?.on('keydown-H', () => this.toggleHitboxes())
     this.input.keyboard?.on('keydown-M', () => this.toggleMute())
     this.input.keyboard?.on('keydown-R', () => this.toggleReducedMotion())
     this.input.mouse?.disableContextMenu()
@@ -361,6 +389,152 @@ export class PlayScene extends Phaser.Scene {
       .setScale(iconScale)
       .setInteractive(hitConfig)
     this.muteIcon.on('pointerdown', () => this.toggleMute())
+
+    this.createSettingsButton()
+  }
+
+  private createSettingsButton(): void {
+    const buttonImage = this.add
+      .image(0, 0, ATLAS.key, FRAMES.button)
+      .setInteractive({ useHandCursor: true })
+    buttonImage.setScale(0.42)
+
+    const labelStyle = {
+      ...UI.statLabelStyle,
+      fontSize: '12px',
+      color: UI.statValueStyle.color,
+    }
+    const label = this.add.text(0, 1, 'SET', labelStyle).setOrigin(0.5, 0.5)
+
+    this.settingsButton = this.add.container(UI.icon.padding + 34, 28, [buttonImage, label])
+    this.settingsButton.setDepth(4.2)
+    buttonImage.on('pointerdown', (_pointer, _localX, _localY, event) => {
+      event.stopPropagation()
+      this.toggleSettingsPanel()
+    })
+  }
+
+  private createSettingsPanel(): void {
+    const panelWidth = 300
+    const panelHeight = 200
+    const rowWidth = 240
+    const rowHeight = 24
+    const rowStartY = -28
+    const rowGap = 28
+
+    const panel = this.add.image(0, 0, ATLAS.key, FRAMES.panelLarge)
+    panel.setDisplaySize(panelWidth, panelHeight)
+
+    const title = this.add
+      .text(0, -78, 'SETTINGS', UI.overlayTitleStyle)
+      .setOrigin(0.5, 0.5)
+
+    const labelStyle = {
+      ...UI.statLabelStyle,
+      fontSize: '14px',
+    }
+    const valueStyle = {
+      ...UI.statValueStyle,
+      fontSize: '16px',
+    }
+
+    let rowIndex = 0
+
+    const createRow = (
+      label: string,
+      getValue: () => string,
+      onToggle: () => void,
+    ): Phaser.GameObjects.Text => {
+      const y = rowStartY + rowIndex * rowGap
+      rowIndex += 1
+
+      const hit = this.add
+        .rectangle(0, y, rowWidth, rowHeight, 0x000000, 0)
+        .setInteractive({ useHandCursor: true })
+      hit.on('pointerdown', (_pointer, _localX, _localY, event) => {
+        event.stopPropagation()
+        onToggle()
+      })
+
+      const labelText = this.add.text(-rowWidth / 2 + 6, y, label, labelStyle).setOrigin(0, 0.5)
+      const valueText = this.add
+        .text(rowWidth / 2 - 6, y, getValue(), valueStyle)
+        .setOrigin(1, 0.5)
+
+      this.settingsPanel.add([hit, labelText, valueText])
+      return valueText
+    }
+
+    const items: Phaser.GameObjects.GameObject[] = [panel, title]
+    this.settingsPanel = this.add.container(
+      GAME_DIMENSIONS.width / 2,
+      140,
+      items,
+    )
+    this.settingsPanel.setDepth(6)
+    this.settingsPanel.setVisible(false)
+
+    const muteValue = createRow('MUTE', () => (this.isMuted ? 'ON' : 'OFF'), () =>
+      this.toggleMute(),
+    )
+    const motionValue = createRow(
+      'MOTION',
+      () => (this.reducedMotion ? 'REDUCED' : 'FULL'),
+      () => this.toggleReducedMotion(),
+    )
+    const analyticsValue = createRow(
+      'ANALYTICS',
+      () => (this.analyticsOptOut ? 'OFF' : 'ON'),
+      () => this.toggleAnalyticsOptOut(),
+    )
+
+    let hitboxesValue: Phaser.GameObjects.Text | undefined
+    if (this.debugToggleAllowed) {
+      hitboxesValue = createRow(
+        'HITBOXES',
+        () => (this.debugEnabled ? 'ON' : 'OFF'),
+        () => this.toggleHitboxes(),
+      )
+    }
+
+    const closeButton = this.createSmallButton('CLOSE', () => this.toggleSettingsPanel())
+    closeButton.setPosition(0, panelHeight / 2 - 26)
+    this.settingsPanel.add(closeButton)
+
+    this.settingsValues = {
+      mute: muteValue,
+      motion: motionValue,
+      analytics: analyticsValue,
+      hitboxes: hitboxesValue,
+    }
+    this.updateSettingsValues()
+  }
+
+  private createSmallButton(label: string, onClick: () => void): Phaser.GameObjects.Container {
+    const buttonImage = this.add
+      .image(0, 0, ATLAS.key, FRAMES.button)
+      .setInteractive({ useHandCursor: true })
+    buttonImage.setScale(0.4)
+
+    const text = this.add
+      .text(0, 1, label, UI.button.textStyle)
+      .setOrigin(0.5, 0.5)
+      .setScale(0.75)
+
+    buttonImage.on('pointerdown', (_pointer, _localX, _localY, event) => {
+      event.stopPropagation()
+      onClick()
+    })
+
+    return this.add.container(0, 0, [buttonImage, text])
+  }
+
+  private toggleSettingsPanel(): void {
+    this.settingsOpen = !this.settingsOpen
+    this.settingsPanel.setVisible(this.settingsOpen)
+    if (this.settingsOpen) {
+      this.updateSettingsValues()
+    }
   }
 
   private createParticles(): void {
@@ -437,12 +611,17 @@ export class PlayScene extends Phaser.Scene {
     this.debugGraphics.setVisible(this.debugEnabled)
   }
 
-  private toggleDebug(): void {
+  private toggleHitboxes(): void {
+    if (!this.debugToggleAllowed) {
+      return
+    }
     this.debugEnabled = !this.debugEnabled
     this.debugGraphics.setVisible(this.debugEnabled)
     if (!this.debugEnabled) {
       this.debugGraphics.clear()
     }
+    this.storeBool('flappy-hitboxes', this.debugEnabled)
+    this.updateSettingsValues()
   }
 
   private enterReady(): void {
@@ -458,6 +637,9 @@ export class PlayScene extends Phaser.Scene {
     this.stateMachine.transition('START')
     this.setBirdVisual('flap')
     this.showReadyOverlay(false)
+    if (this.settingsOpen) {
+      this.toggleSettingsPanel()
+    }
     this.runStartMs = this.time.now
     telemetry.track('game_start')
     telemetry.track('flap')
@@ -712,6 +894,7 @@ export class PlayScene extends Phaser.Scene {
     this.muteIcon.setTexture(ATLAS.key, this.isMuted ? FRAMES.iconMuteOff : FRAMES.iconMuteOn)
     this.storeBool('flappy-muted', this.isMuted)
     telemetry.track('mute_toggle', { muted: this.isMuted })
+    this.updateSettingsValues()
   }
 
   private toggleReducedMotion(): void {
@@ -728,6 +911,25 @@ export class PlayScene extends Phaser.Scene {
       this.scorePulseTween?.stop()
       this.scoreFrame.setScale(1)
       this.scoreText.setScale(1)
+    }
+    this.updateSettingsValues()
+  }
+
+  private toggleAnalyticsOptOut(): void {
+    this.analyticsOptOut = !this.analyticsOptOut
+    setTelemetryOptOut(this.analyticsOptOut)
+    this.updateSettingsValues()
+  }
+
+  private updateSettingsValues(): void {
+    if (!this.settingsValues) {
+      return
+    }
+    this.settingsValues.mute.setText(this.isMuted ? 'ON' : 'OFF')
+    this.settingsValues.motion.setText(this.reducedMotion ? 'REDUCED' : 'FULL')
+    this.settingsValues.analytics.setText(this.analyticsOptOut ? 'OFF' : 'ON')
+    if (this.settingsValues.hitboxes) {
+      this.settingsValues.hitboxes.setText(this.debugEnabled ? 'ON' : 'OFF')
     }
   }
 

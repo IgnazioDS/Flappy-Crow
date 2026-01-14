@@ -25,6 +25,7 @@ Open the URL printed by Vite.
 
 - Tap / click: flap
 - Spacebar: flap
+- Settings button (top-left) opens toggles for mute, reduced motion, and analytics opt-out
 - H: toggle art QA hitbox overlay
 - M: toggle mute icon
 - R: toggle reduced motion
