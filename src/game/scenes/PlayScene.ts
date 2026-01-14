@@ -11,6 +11,7 @@ import { ScoreSystem } from '../systems/ScoreSystem'
 import { SpawnSystem } from '../systems/SpawnSystem'
 import { ATLAS, FRAMES, FX, IMAGE_KEYS, UI } from '../theme'
 import { defaultRng } from '../utils/rng'
+import { telemetry } from '../../telemetry'
 
 type PipeSprites = {
   top: Phaser.GameObjects.Image
@@ -74,6 +75,7 @@ export class PlayScene extends Phaser.Scene {
   private isMuted = false
   private reducedMotion = false
   private debugEnabled = import.meta.env.VITE_ART_QA === 'true'
+  private runStartMs: number | null = null
   private scorePulseTween?: Phaser.Tweens.Tween
   private readyTween?: Phaser.Tweens.Tween
   private gameOverTween?: Phaser.Tweens.Tween
@@ -162,6 +164,7 @@ export class PlayScene extends Phaser.Scene {
         break
       case 'PLAYING':
         if (wantsFlap) {
+          telemetry.track('flap')
           this.bird.flap()
         }
         this.updatePlaying(dt, dtMs)
@@ -447,17 +450,23 @@ export class PlayScene extends Phaser.Scene {
     this.setBirdVisual('idle')
     this.showReadyOverlay(true)
     this.showGameOverOverlay(false)
+    this.runStartMs = null
+    telemetry.track('game_ready_shown')
   }
 
   private startPlaying(): void {
     this.stateMachine.transition('START')
     this.setBirdVisual('flap')
     this.showReadyOverlay(false)
+    this.runStartMs = this.time.now
+    telemetry.track('game_start')
+    telemetry.track('flap')
     this.bird.flap()
   }
 
   private restart(): void {
     this.stateMachine.transition('RESTART')
+    telemetry.track('restart')
     this.enterReady()
   }
 
@@ -485,6 +494,7 @@ export class PlayScene extends Phaser.Scene {
       this.lastScore = this.scoreSystem.score
       this.scoreText.setText(String(this.scoreSystem.score))
       this.pulseScore()
+      telemetry.track('score_increment', { score: this.scoreSystem.score })
     }
   }
 
@@ -518,6 +528,15 @@ export class PlayScene extends Phaser.Scene {
     this.finalScoreText.setText(String(score))
     this.bestScoreText.setText(String(this.bestScore))
     this.updateMedal(score)
+
+    const sessionDurationMs =
+      this.runStartMs === null ? 0 : Math.max(0, this.time.now - this.runStartMs)
+    telemetry.track('game_over', {
+      score,
+      bestScore: this.bestScore,
+      sessionDurationMs: Math.round(sessionDurationMs),
+    })
+    this.runStartMs = null
   }
 
   private updateMedal(score: number): void {
@@ -692,6 +711,7 @@ export class PlayScene extends Phaser.Scene {
     this.isMuted = !this.isMuted
     this.muteIcon.setTexture(ATLAS.key, this.isMuted ? FRAMES.iconMuteOff : FRAMES.iconMuteOn)
     this.storeBool('flappy-muted', this.isMuted)
+    telemetry.track('mute_toggle', { muted: this.isMuted })
   }
 
   private toggleReducedMotion(): void {

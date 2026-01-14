@@ -4,6 +4,9 @@ import { GAME_DIMENSIONS } from './game/config'
 import { PALETTE } from './game/theme'
 import { BootScene } from './game/scenes/BootScene'
 import { PlayScene } from './game/scenes/PlayScene'
+import { telemetry } from './telemetry'
+
+telemetry.start()
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
