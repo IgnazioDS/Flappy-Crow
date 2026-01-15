@@ -1,5 +1,6 @@
 import Phaser from 'phaser'
 import { getActiveTheme } from '../theme'
+import { getEnvironmentAssets } from '../theme/env'
 
 /**
  * Preloads visual assets before gameplay starts.
@@ -11,8 +12,9 @@ export class BootScene extends Phaser.Scene {
 
   preload(): void {
     const theme = getActiveTheme()
+    const supportsWebp = this.supportsWebp()
     if (theme.assets.atlas) {
-      const atlasImage = this.supportsWebp()
+      const atlasImage = supportsWebp
         ? theme.assets.atlas.imageWebp ?? theme.assets.atlas.imagePng
         : theme.assets.atlas.imagePng
       this.load.atlas(theme.assets.atlas.key, atlasImage, theme.assets.atlas.data)
@@ -20,6 +22,12 @@ export class BootScene extends Phaser.Scene {
     Object.entries(theme.assets.images).forEach(([key, path]) => {
       this.load.image(key, path)
     })
+    if (theme.id === 'evil-forest') {
+      getEnvironmentAssets().forEach((asset) => {
+        const path = supportsWebp ? asset.pathWebp ?? asset.path : asset.path
+        this.load.image(asset.key, path)
+      })
+    }
   }
 
   create(): void {
