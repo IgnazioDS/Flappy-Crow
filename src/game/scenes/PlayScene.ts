@@ -9,7 +9,10 @@ import { DespawnSystem } from '../systems/DespawnSystem'
 import { InputSystem } from '../systems/InputSystem'
 import { ScoreSystem } from '../systems/ScoreSystem'
 import { SpawnSystem } from '../systems/SpawnSystem'
+import { BackgroundSystem } from '../systems/BackgroundSystem'
 import { getActiveTheme, listThemes, setActiveThemeId } from '../theme'
+import { DEFAULT_ENV, ENVIRONMENTS } from '../theme/env'
+import type { EnvironmentConfig, EnvironmentKey, ParticleConfig } from '../theme/env/types'
 import { createSeededRngFromEnv } from '../utils/rng'
 import { setTelemetryOptOut, telemetry } from '../../telemetry'
 
@@ -46,6 +49,9 @@ export class PlayScene extends Phaser.Scene {
   private ui = this.theme.ui
   private fx = this.theme.fx
   private themeList = listThemes()
+  private backgroundSystem: BackgroundSystem | null = null
+  private environmentKey: EnvironmentKey | null = null
+  private environmentConfig: EnvironmentConfig | null = null
 
   private bird!: Bird
   private birdSprite!: Phaser.GameObjects.Sprite | Phaser.GameObjects.Image
@@ -79,6 +85,10 @@ export class PlayScene extends Phaser.Scene {
   private motionIcon: Phaser.GameObjects.Image | null = null
 
   private debugGraphics!: Phaser.GameObjects.Graphics
+  private envDebugText: Phaser.GameObjects.Text | null = null
+  private envDebugEnabled = false
+
+  private particleManagers: Phaser.GameObjects.Particles.ParticleEmitter[] = []
 
   private settingsButton!: Phaser.GameObjects.Container
   private settingsPanel!: Phaser.GameObjects.Container
@@ -134,10 +144,25 @@ export class PlayScene extends Phaser.Scene {
     this.debugEnabled = this.debugToggleAllowed
       ? this.readStoredBool('flappy-hitboxes', false)
       : false
+    this.envDebugEnabled = this.debugToggleAllowed
+      ? this.readStoredBool('flappy-env-debug', false)
+      : false
     setTelemetryOptOut(this.analyticsOptOut)
 
-    this.createParallaxLayers()
-    this.createFogLayer()
+    const envDebugParam = this.readQueryParam('envDebug')
+    if (this.debugToggleAllowed && envDebugParam !== null) {
+      const enabled = envDebugParam !== '0'
+      this.envDebugEnabled = enabled
+      this.storeBool('flappy-env-debug', enabled)
+    }
+
+    this.environmentKey = this.resolveEnvironmentKey()
+    this.environmentConfig =
+      this.environmentKey && this.theme.id === 'evil-forest'
+        ? ENVIRONMENTS[this.environmentKey]
+        : null
+
+    this.createBackground()
 
     this.ground = new Ground()
     this.groundSprite = this.add
@@ -165,6 +190,7 @@ export class PlayScene extends Phaser.Scene {
     this.createParticles()
     this.createVignette()
     this.createDebugOverlay()
+    this.createEnvDebugOverlay()
 
     this.stateMachine.transition('BOOT_COMPLETE')
     this.enterReady()
@@ -179,6 +205,7 @@ export class PlayScene extends Phaser.Scene {
 
     this.updateParallax(dt)
     this.updateFog(dt)
+    this.backgroundSystem?.update(dt)
 
     switch (this.stateMachine.state) {
       case 'READY':
@@ -206,6 +233,7 @@ export class PlayScene extends Phaser.Scene {
     }
 
     this.updateDebugOverlay()
+    this.updateEnvDebugOverlay()
   }
 
   private setupInput(): void {
@@ -224,8 +252,10 @@ export class PlayScene extends Phaser.Scene {
       }
     })
     this.input.keyboard?.on('keydown-H', () => this.toggleHitboxes())
+    this.input.keyboard?.on('keydown-D', () => this.toggleEnvDebugOverlay())
     this.input.keyboard?.on('keydown-M', () => this.toggleMute())
     this.input.keyboard?.on('keydown-R', () => this.toggleReducedMotion())
+    this.input.keyboard?.on('keydown-E', () => this.toggleEnvironment())
     this.input.mouse?.disableContextMenu()
   }
 
@@ -254,6 +284,21 @@ export class PlayScene extends Phaser.Scene {
       speed: PIPE_CONFIG.speed * speedFactor,
       width,
     })
+  }
+
+  private createBackground(): void {
+    if (this.theme.id !== 'evil-forest') {
+      this.createParallaxLayers()
+      this.createFogLayer()
+      return
+    }
+
+    const envKey = this.environmentKey ?? DEFAULT_ENV
+    this.environmentKey = envKey
+    this.environmentConfig = ENVIRONMENTS[envKey]
+    this.backgroundSystem = new BackgroundSystem(this, this.environmentConfig)
+    this.backgroundSystem.setReducedMotion(this.reducedMotion)
+    this.backgroundSystem.create()
   }
 
   private updateParallax(dt: number): void {
@@ -290,6 +335,68 @@ export class PlayScene extends Phaser.Scene {
     }
     this.fogLayer.tilePositionX += this.fx.fog.speedX * dt
     this.fogLayer.tilePositionY += this.fx.fog.speedX * 0.3 * dt
+  }
+
+  private resolveEnvironmentKey(): EnvironmentKey | null {
+    if (this.theme.id !== 'evil-forest') {
+      return null
+    }
+    const envParam = this.readQueryParam('env')
+    if (envParam && this.isEnvironmentKey(envParam)) {
+      this.storeEnvironmentKey(envParam)
+      return envParam
+    }
+    const stored = this.readStoredEnvironmentKey()
+    if (stored) {
+      return stored
+    }
+    return DEFAULT_ENV
+  }
+
+  private isEnvironmentKey(value: string): value is EnvironmentKey {
+    return value in ENVIRONMENTS
+  }
+
+  private readStoredEnvironmentKey(): EnvironmentKey | null {
+    const raw = window.localStorage.getItem('flappy-env')
+    if (!raw) {
+      return null
+    }
+    return this.isEnvironmentKey(raw) ? raw : null
+  }
+
+  private storeEnvironmentKey(key: EnvironmentKey): void {
+    window.localStorage.setItem('flappy-env', key)
+  }
+
+  private toggleEnvironment(): void {
+    if (this.theme.id !== 'evil-forest') {
+      return
+    }
+    if (!this.debugToggleAllowed) {
+      return
+    }
+    const keys = Object.keys(ENVIRONMENTS) as EnvironmentKey[]
+    const current = this.environmentKey ?? DEFAULT_ENV
+    const currentIndex = keys.indexOf(current)
+    const next = keys[(currentIndex + 1) % keys.length] ?? DEFAULT_ENV
+    this.applyEnvironment(next)
+  }
+
+  private applyEnvironment(envKey: EnvironmentKey): void {
+    this.environmentKey = envKey
+    this.environmentConfig = ENVIRONMENTS[envKey]
+    this.storeEnvironmentKey(envKey)
+    if (this.backgroundSystem) {
+      this.backgroundSystem.setEnvironment(this.environmentConfig)
+      this.backgroundSystem.setReducedMotion(this.reducedMotion)
+    } else {
+      this.backgroundSystem = new BackgroundSystem(this, this.environmentConfig)
+      this.backgroundSystem.setReducedMotion(this.reducedMotion)
+      this.backgroundSystem.create()
+    }
+    this.createParticles()
+    this.updateEnvDebugOverlay()
   }
 
   private createCrowAnimation(): void {
@@ -734,10 +841,29 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private createParticles(): void {
+    this.clearParticles()
     const particles = this.theme.visuals.particles
     if (!particles || !this.theme.assets.atlas) {
       return
     }
+
+    if (this.theme.id === 'evil-forest' && this.environmentConfig) {
+      const envParticles = this.environmentConfig.particles
+      if (envParticles.embers && particles.ember) {
+        this.createEmitterFromEnv(particles.ember, envParticles.embers, this.theme.assets.atlas.key)
+      }
+      if (envParticles.dust && particles.dust) {
+        this.createEmitterFromEnv(particles.dust, envParticles.dust, this.theme.assets.atlas.key)
+      }
+      if (envParticles.leaf && particles.leaf) {
+        this.createEmitterFromEnv(particles.leaf, envParticles.leaf, this.theme.assets.atlas.key)
+      }
+      if (envParticles.fireflies && particles.ember) {
+        this.createEmitterFromEnv(particles.ember, envParticles.fireflies, this.theme.assets.atlas.key)
+      }
+      return
+    }
+
     if (particles.ember) {
       this.createEmitter(particles.ember, this.fx.embers, Phaser.BlendModes.ADD, this.theme.assets.atlas.key)
     }
@@ -802,6 +928,67 @@ export class PlayScene extends Phaser.Scene {
       blendMode,
     })
     emitter.setDepth(1.1)
+    this.particleManagers.push(emitter)
+  }
+
+  private createEmitterFromEnv(frame: string, config: ParticleConfig, atlasKey: string): void {
+    if (!config.enabled) {
+      return
+    }
+
+    const zoneRect = new Phaser.Geom.Rectangle(
+      0,
+      0,
+      GAME_DIMENSIONS.width,
+      GAME_DIMENSIONS.height - GROUND_HEIGHT,
+    )
+    const scratchPoint = new Phaser.Geom.Point()
+    const areaRects = config.areas
+      ? config.areas.map(
+          (area) => new Phaser.Geom.Rectangle(area.x, area.y, area.width, area.height),
+        )
+      : null
+    const emitZone = new Phaser.GameObjects.Particles.Zones.RandomZone({
+      getRandomPoint: (point) => {
+        const rect =
+          areaRects && areaRects.length
+            ? areaRects[Math.floor(Math.random() * areaRects.length)]
+            : zoneRect
+        rect.getRandomPoint(scratchPoint)
+        point.x = scratchPoint.x
+        point.y = scratchPoint.y
+      },
+    })
+
+    let blendMode = Phaser.BlendModes.NORMAL
+    if (config.blendMode === 'add') {
+      blendMode = Phaser.BlendModes.ADD
+    }
+
+    const emitter = this.add.particles(0, 0, atlasKey, {
+      frame,
+      maxParticles: config.maxParticles,
+      quantity: 1,
+      frequency: config.frequency,
+      lifespan: { min: config.lifespanMin, max: config.lifespanMax },
+      speedX: { min: -config.speedMax, max: -config.speedMin },
+      speedY: { min: config.driftMin, max: config.driftMax },
+      scale: { min: config.scaleMin, max: config.scaleMax },
+      alpha: { min: config.alphaMin, max: config.alphaMax },
+      emitZone,
+      blendMode,
+      tint: config.tint,
+    })
+    emitter.setDepth(1.1)
+    this.particleManagers.push(emitter)
+  }
+
+  private clearParticles(): void {
+    if (!this.particleManagers.length) {
+      return
+    }
+    this.particleManagers.forEach((manager) => manager.destroy())
+    this.particleManagers = []
   }
 
   private createVignette(): void {
@@ -822,6 +1009,22 @@ export class PlayScene extends Phaser.Scene {
     this.debugGraphics.setVisible(this.debugEnabled)
   }
 
+  private createEnvDebugOverlay(): void {
+    if (!this.debugToggleAllowed) {
+      return
+    }
+    const style = {
+      ...this.ui.statLabelStyle,
+      fontSize: '11px',
+      color: this.ui.statValueStyle.color,
+    }
+    this.envDebugText = this.add.text(8, 8, '', style).setDepth(10)
+    this.envDebugText.setBackgroundColor('rgba(6, 8, 14, 0.55)')
+    this.envDebugText.setPadding(6, 4, 6, 4)
+    this.envDebugText.setVisible(this.envDebugEnabled)
+    this.updateEnvDebugOverlay()
+  }
+
   private toggleHitboxes(): void {
     if (!this.debugToggleAllowed) {
       return
@@ -833,6 +1036,17 @@ export class PlayScene extends Phaser.Scene {
     }
     this.storeBool('flappy-hitboxes', this.debugEnabled)
     this.updateSettingsValues()
+  }
+
+  private toggleEnvDebugOverlay(): void {
+    if (!this.debugToggleAllowed) {
+      return
+    }
+    this.envDebugEnabled = !this.envDebugEnabled
+    if (this.envDebugText) {
+      this.envDebugText.setVisible(this.envDebugEnabled)
+    }
+    this.storeBool('flappy-env-debug', this.envDebugEnabled)
   }
 
   private enterReady(): void {
@@ -1184,6 +1398,7 @@ export class PlayScene extends Phaser.Scene {
       )
     }
     this.storeBool('flappy-reduced-motion', this.reducedMotion)
+    this.backgroundSystem?.setReducedMotion(this.reducedMotion)
 
     if (this.reducedMotion) {
       this.readyTween?.stop()
@@ -1297,6 +1512,35 @@ export class PlayScene extends Phaser.Scene {
       this.debugGraphics.strokeRect(pipe.x, 0, PIPE_CONFIG.width, pipe.topHeight)
       this.debugGraphics.strokeRect(pipe.x, pipe.bottomY, PIPE_CONFIG.width, pipe.bottomHeight)
       this.debugGraphics.lineBetween(pipe.x, pipe.gapY, pipe.x + PIPE_CONFIG.width, pipe.gapY)
+    }
+  }
+
+  private updateEnvDebugOverlay(): void {
+    if (!this.envDebugEnabled || !this.envDebugText) {
+      return
+    }
+
+    const fps = this.game.loop?.actualFps ? Math.round(this.game.loop.actualFps) : 0
+    const lines = [
+      `ENV: ${this.environmentConfig ? this.environmentConfig.label : this.theme.name}`,
+      `FPS: ${fps}`,
+      `PIPES: ${this.pipes.length}`,
+    ]
+    if (this.backgroundSystem) {
+      lines.push(...this.backgroundSystem.getDebugLines())
+    }
+    this.envDebugText.setText(lines.join('\n'))
+  }
+
+  private readQueryParam(key: string): string | null {
+    if (typeof window === 'undefined') {
+      return null
+    }
+    try {
+      const params = new URLSearchParams(window.location.search)
+      return params.get(key)
+    } catch {
+      return null
     }
   }
 

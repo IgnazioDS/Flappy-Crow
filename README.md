@@ -63,6 +63,12 @@ through the analytics opt-out flag (stored in localStorage).
 
 See `docs/PERFORMANCE.md` for the manual memory-growth checklist.
 
+## Docs
+
+- `docs/RELEASE.md` - release checklist and tagging
+- `docs/DEPLOYMENT.md` - deployment workflow and base path notes
+- `docs/TELEMETRY.md` - tracked events and privacy details
+
 ## Themes
 
 Two themes are available: Classic Sky and Evil Forest Crow. Use the Settings panel to switch themes,
