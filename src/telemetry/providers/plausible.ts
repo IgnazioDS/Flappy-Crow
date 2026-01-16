@@ -27,7 +27,10 @@ export const createPlausibleProvider = (options: PlausibleOptions): TelemetryPro
           name: event.name,
           url,
           domain: options.domain,
-          props: event.props ?? {},
+          props: {
+            schemaVersion: event.schemaVersion,
+            ...(event.props ?? {}),
+          },
         }
         try {
           await fetch(endpoint, {

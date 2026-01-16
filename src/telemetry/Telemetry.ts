@@ -17,6 +17,7 @@ export type TelemetryEventName = keyof TelemetryEventProps
 export type TelemetryEvent<Name extends TelemetryEventName = TelemetryEventName> = {
   name: Name
   timestamp: number
+  schemaVersion: number
   props?: TelemetryEventProps[Name]
 }
 

@@ -15,6 +15,7 @@ type TelemetryClientOptions = {
 
 const DEFAULT_FLUSH_INTERVAL_MS = 4000
 const DEFAULT_MAX_BATCH_SIZE = 12
+const TELEMETRY_SCHEMA_VERSION = 1
 
 export class TelemetryClient implements Telemetry {
   private providers: TelemetryProvider[]
@@ -70,6 +71,7 @@ export class TelemetryClient implements Telemetry {
     this.queue.push({
       name,
       timestamp: Date.now(),
+      schemaVersion: TELEMETRY_SCHEMA_VERSION,
       props,
     })
     if (this.queue.length >= this.maxBatchSize) {

@@ -41,6 +41,7 @@ export const createPosthogProvider = (options: PosthogOptions): TelemetryProvide
           event: event.name,
           properties: {
             distinct_id: sessionId,
+            schemaVersion: event.schemaVersion,
             ...event.props,
           },
           timestamp: new Date(event.timestamp).toISOString(),

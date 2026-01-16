@@ -94,6 +94,7 @@ export class PlayScene extends Phaser.Scene {
   private gameOverContainer!: Phaser.GameObjects.Container
   private finalScoreText!: Phaser.GameObjects.Text
   private bestScoreText!: Phaser.GameObjects.Text
+  private bestLabelText!: Phaser.GameObjects.Text
   private medalSprite: Phaser.GameObjects.Image | null = null
 
   private muteIcon: Phaser.GameObjects.Image | null = null
@@ -618,7 +619,7 @@ export class PlayScene extends Phaser.Scene {
       .text(-20, -4, '0', this.ui.statValueStyle)
       .setOrigin(0, 0.5)
 
-    const bestLabel = this.add
+    this.bestLabelText = this.add
       .text(-20, 24, 'BEST', this.ui.statLabelStyle)
       .setOrigin(0, 0.5)
     this.bestScoreText = this.add
@@ -630,7 +631,7 @@ export class PlayScene extends Phaser.Scene {
       title,
       scoreLabel,
       this.finalScoreText,
-      bestLabel,
+      this.bestLabelText,
       this.bestScoreText,
     ]
 
@@ -1189,13 +1190,15 @@ export class PlayScene extends Phaser.Scene {
     }
 
     const score = this.scoreSystem.score
-    if (score > this.bestScore) {
+    const isNewBest = score > this.bestScore
+    if (isNewBest) {
       this.bestScore = score
       storeNumber('flappy-best', score)
     }
 
     this.finalScoreText.setText(String(score))
     this.bestScoreText.setText(String(this.bestScore))
+    this.bestLabelText.setText(isNewBest ? 'NEW BEST' : 'BEST')
     this.updateMedal(score)
 
     const sessionDurationMs =
