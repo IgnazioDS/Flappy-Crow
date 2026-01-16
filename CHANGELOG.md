@@ -3,6 +3,18 @@
 All notable changes to this project will be documented in this file.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [2.0.0] - 2026-01-16
+
+### Added
+- Evil Forest v2 environment scaffolding with scene debug support.
+- Difficulty ramping plus daily/custom seed modes for deterministic runs.
+- Telemetry consent prompt and opt-in toggle in settings.
+
+### Changed
+- Reduced-motion behavior now disables non-essential animation.
+- Gameplay pauses on tab hidden and resumes on focus.
+- PlayScene UI and persistence refactored into shared modules.
+
 ## [1.1.0] - 2026-01-14
 
 ### Added
