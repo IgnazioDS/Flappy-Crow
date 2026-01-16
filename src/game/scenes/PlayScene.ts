@@ -1,5 +1,5 @@
 import Phaser from 'phaser'
-import { BIRD_CONFIG, GAME_DIMENSIONS, GROUND_HEIGHT, PIPE_CONFIG } from '../config'
+import { BIRD_CONFIG, DIFFICULTY_CONFIG, GAME_DIMENSIONS, GROUND_HEIGHT, PIPE_CONFIG } from '../config'
 import { Bird } from '../entities/Bird'
 import { Ground } from '../entities/Ground'
 import { PipePair } from '../entities/PipePair'
@@ -13,7 +13,7 @@ import { BackgroundSystem } from '../systems/BackgroundSystem'
 import { getActiveTheme, listThemes, setActiveThemeId } from '../theme'
 import { DEFAULT_ENV, ENVIRONMENTS } from '../theme/env'
 import type { EnvironmentConfig, EnvironmentKey, ParticleConfig } from '../theme/env/types'
-import { createSeededRngFromEnv } from '../utils/rng'
+import { createSeededRngFromEnvOverride, getDailySeed, seedFromString } from '../utils/rng'
 import {
   getTelemetryConsent,
   setTelemetryConsent,
@@ -28,7 +28,7 @@ type PipeSprites = {
 
 type ParallaxLayer = {
   sprites: Phaser.GameObjects.Image[]
-  speed: number
+  speedFactor: number
   width: number
 }
 
@@ -46,7 +46,7 @@ type E2EDebugState = {
 export class PlayScene extends Phaser.Scene {
   private stateMachine = new GameStateMachine()
   private inputSystem = new InputSystem()
-  private spawnSystem = new SpawnSystem(createSeededRngFromEnv())
+  private spawnSystem!: SpawnSystem
   private scoreSystem = new ScoreSystem()
   private collisionSystem = new CollisionSystem()
   private despawnSystem = new DespawnSystem()
@@ -102,6 +102,7 @@ export class PlayScene extends Phaser.Scene {
     mute: Phaser.GameObjects.Text
     motion: Phaser.GameObjects.Text
     analytics: Phaser.GameObjects.Text
+    seedMode?: Phaser.GameObjects.Text
     theme?: Phaser.GameObjects.Text
     hitboxes?: Phaser.GameObjects.Text
   } | null = null
@@ -113,6 +114,10 @@ export class PlayScene extends Phaser.Scene {
   private isMuted = false
   private reducedMotion = false
   private analyticsConsent: 'granted' | 'denied' | null = null
+  private speedScale = 1
+  private currentGap = PIPE_CONFIG.gap
+  private seedMode: 'normal' | 'daily' | 'custom' = 'normal'
+  private seedLabel = 'NORMAL'
   private debugEnabled = false
   private readonly debugToggleAllowed =
     import.meta.env.DEV || import.meta.env.VITE_ART_QA === 'true'
@@ -173,6 +178,11 @@ export class PlayScene extends Phaser.Scene {
       setTelemetryConsent(this.analyticsConsent)
     }
 
+    const seedConfig = this.resolveSeedConfig()
+    this.seedMode = seedConfig.mode
+    this.seedLabel = seedConfig.label
+    this.spawnSystem = new SpawnSystem(createSeededRngFromEnvOverride(seedConfig.seed))
+
     const envDebugParam = this.readQueryParam('envDebug')
     if (this.debugToggleAllowed && envDebugParam !== null) {
       const enabled = envDebugParam !== '0'
@@ -229,10 +239,6 @@ export class PlayScene extends Phaser.Scene {
     const dtMs = Math.min(deltaMs, 50)
     const dt = dtMs / 1000
 
-    this.updateParallax(dt)
-    this.updateFog(dt)
-    this.backgroundSystem?.update(dt)
-
     switch (this.stateMachine.state) {
       case 'READY':
         this.updateBirdVisual(dt)
@@ -257,6 +263,16 @@ export class PlayScene extends Phaser.Scene {
       default:
         break
     }
+
+    if (this.stateMachine.state !== 'PLAYING') {
+      this.speedScale = 1
+      this.currentGap = PIPE_CONFIG.gap
+      this.backgroundSystem?.setSpeedScale(1)
+    }
+
+    this.updateParallax(dt)
+    this.updateFog(dt)
+    this.backgroundSystem?.update(dt)
 
     this.updateDebugOverlay()
     this.updateEnvDebugOverlay()
@@ -299,6 +315,42 @@ export class PlayScene extends Phaser.Scene {
     })
   }
 
+  private getDifficultyTuning(): { speedScale: number; gap: number } {
+    if (this.e2eEnabled) {
+      return { speedScale: 1, gap: PIPE_CONFIG.gap }
+    }
+    const score = this.scoreSystem.score
+    const speedScale = Math.min(
+      DIFFICULTY_CONFIG.maxSpeedScale,
+      1 + score * DIFFICULTY_CONFIG.speedScalePerScore,
+    )
+    const gap = Math.max(
+      DIFFICULTY_CONFIG.minGap,
+      PIPE_CONFIG.gap - score * DIFFICULTY_CONFIG.gapReductionPerScore,
+    )
+    return { speedScale, gap }
+  }
+
+  private resolveSeedConfig(): {
+    seed: number | null
+    mode: 'normal' | 'daily' | 'custom'
+    label: string
+  } {
+    const seedParam = this.readQueryParam('seed')
+    if (seedParam) {
+      const seed = seedFromString(seedParam)
+      return { seed, mode: 'custom', label: seedParam }
+    }
+
+    const dailyParam = this.readQueryParam('daily')
+    if (dailyParam !== null && dailyParam !== '0') {
+      const daily = getDailySeed()
+      return { seed: daily.seed, mode: 'daily', label: daily.label }
+    }
+
+    return { seed: null, mode: 'normal', label: 'NORMAL' }
+  }
+
   private createParallaxLayers(): void {
     this.parallaxLayers.length = 0
     if (this.theme.images.bgFar) {
@@ -321,7 +373,7 @@ export class PlayScene extends Phaser.Scene {
     second.setDisplaySize(width, height)
     this.parallaxLayers.push({
       sprites: [first, second],
-      speed: PIPE_CONFIG.speed * speedFactor,
+      speedFactor,
       width,
     })
   }
@@ -347,7 +399,7 @@ export class PlayScene extends Phaser.Scene {
     }
 
     for (const layer of this.parallaxLayers) {
-      const shift = layer.speed * dt
+      const shift = PIPE_CONFIG.speed * this.speedScale * layer.speedFactor * dt
       for (const sprite of layer.sprites) {
         sprite.x -= shift
         if (sprite.x <= -layer.width) {
@@ -430,9 +482,11 @@ export class PlayScene extends Phaser.Scene {
     if (this.backgroundSystem) {
       this.backgroundSystem.setEnvironment(this.environmentConfig)
       this.backgroundSystem.setReducedMotion(this.reducedMotion)
+      this.backgroundSystem.setSpeedScale(this.speedScale)
     } else {
       this.backgroundSystem = new BackgroundSystem(this, this.environmentConfig)
       this.backgroundSystem.setReducedMotion(this.reducedMotion)
+      this.backgroundSystem.setSpeedScale(this.speedScale)
       this.backgroundSystem.create()
     }
     this.createParticles()
@@ -744,7 +798,7 @@ export class PlayScene extends Phaser.Scene {
 
   private createSettingsPanel(): void {
     const panelWidth = this.ui.panelSize.large.width
-    const panelHeight = this.ui.panelSize.large.height
+    const panelHeight = this.ui.panelSize.large.height + 30
     const rowWidth = panelWidth - 60
     const rowHeight = 22
     const rowStartY = -40
@@ -822,6 +876,11 @@ export class PlayScene extends Phaser.Scene {
       () => this.getAnalyticsLabel(),
       () => this.toggleAnalyticsConsent(),
     )
+    const seedModeValue = createRow(
+      'MODE',
+      () => this.getSeedModeLabel(),
+      () => this.toggleSeedMode(),
+    )
     const themeValue = createRow('THEME', () => this.theme.name, () => this.toggleTheme())
 
     let hitboxesValue: Phaser.GameObjects.Text | undefined
@@ -841,6 +900,7 @@ export class PlayScene extends Phaser.Scene {
       mute: muteValue,
       motion: motionValue,
       analytics: analyticsValue,
+      seedMode: seedModeValue,
       theme: themeValue,
       hitboxes: hitboxesValue,
     }
@@ -1195,12 +1255,17 @@ export class PlayScene extends Phaser.Scene {
     const hitGround = this.bird.update(dt, this.ground.y)
     this.updateBirdVisual(dt)
 
-    this.spawnSystem.update(dtMs, this.handleSpawn)
+    const tuning = this.getDifficultyTuning()
+    this.speedScale = tuning.speedScale
+    this.currentGap = tuning.gap
+    this.backgroundSystem?.setSpeedScale(this.speedScale)
+
+    this.spawnSystem.update(dtMs, this.handleSpawn, this.currentGap)
 
     this.obstacleSwayClock += dtMs
 
     for (let i = 0; i < this.pipes.length; i += 1) {
-      this.pipes[i].update(dt)
+      this.pipes[i].update(dt, PIPE_CONFIG.speed * this.speedScale)
       this.updatePipeSprites(this.pipes[i], this.pipeSprites[i])
     }
 
@@ -1297,6 +1362,9 @@ export class PlayScene extends Phaser.Scene {
     this.birdBobTime = 0
     this.obstacleSwayClock = 0
     this.updateBirdVisual(0)
+    this.speedScale = 1
+    this.currentGap = PIPE_CONFIG.gap
+    this.backgroundSystem?.setSpeedScale(1)
 
     for (let i = this.pipes.length - 1; i >= 0; i -= 1) {
       this.pipePool.push(this.pipes[i])
@@ -1317,7 +1385,7 @@ export class PlayScene extends Phaser.Scene {
   private spawnPipePair(gapCenterY: number): void {
     const spawnX = GAME_DIMENSIONS.width + PIPE_CONFIG.width
     const pipe = this.pipePool.pop() ?? new PipePair(spawnX, gapCenterY)
-    pipe.reset(spawnX, gapCenterY)
+    pipe.reset(spawnX, gapCenterY, this.currentGap)
     this.pipes.push(pipe)
 
     const sprites = this.pipeSpritePool.pop() ?? this.createPipeSprites()
@@ -1527,6 +1595,38 @@ export class PlayScene extends Phaser.Scene {
     this.showTelemetryConsentOverlay(false)
   }
 
+  private toggleSeedMode(): void {
+    if (typeof window === 'undefined') {
+      return
+    }
+    const url = new URL(window.location.href)
+    if (this.seedMode === 'daily') {
+      url.searchParams.delete('daily')
+    } else {
+      url.searchParams.set('daily', '1')
+      url.searchParams.delete('seed')
+    }
+    window.location.href = url.toString()
+  }
+
+  private getSeedModeLabel(): string {
+    if (this.seedMode === 'daily') {
+      return 'DAILY'
+    }
+    if (this.seedMode === 'custom') {
+      return this.formatSeedLabel(this.seedLabel)
+    }
+    return 'NORMAL'
+  }
+
+  private formatSeedLabel(label: string): string {
+    const max = 10
+    if (label.length <= max) {
+      return label
+    }
+    return `${label.slice(0, max - 3)}...`
+  }
+
   private getAnalyticsLabel(): string {
     if (!telemetryHasProviders) {
       return 'OFF'
@@ -1566,6 +1666,9 @@ export class PlayScene extends Phaser.Scene {
     this.settingsValues.mute.setText(this.isMuted ? 'ON' : 'OFF')
     this.settingsValues.motion.setText(this.reducedMotion ? 'REDUCED' : 'FULL')
     this.settingsValues.analytics.setText(this.getAnalyticsLabel())
+    if (this.settingsValues.seedMode) {
+      this.settingsValues.seedMode.setText(this.getSeedModeLabel())
+    }
     if (this.settingsValues.theme) {
       this.settingsValues.theme.setText(this.theme.name)
     }

@@ -29,3 +29,10 @@ export const PIPE_CONFIG = {
   topMargin: 60,
   bottomMargin: 60,
 }
+
+export const DIFFICULTY_CONFIG = {
+  maxSpeedScale: 1.3,
+  speedScalePerScore: 0.0125,
+  minGap: 110,
+  gapReductionPerScore: 1.2,
+}

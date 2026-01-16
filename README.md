@@ -33,6 +33,11 @@ Playwright runs the dev server with `VITE_TEST_SEED` and `VITE_E2E` to make runs
 - M: toggle mute icon
 - R: toggle reduced motion
 
+## Query params
+
+- `?daily=1` enables the daily seed mode (deterministic pipes).
+- `?seed=your-seed` forces a custom seed for deterministic runs.
+
 ## Theme: Evil Forest (Crow)
 
 Dark, mystical reskin featuring an occult-styled crow, deadwood gate obstacles,

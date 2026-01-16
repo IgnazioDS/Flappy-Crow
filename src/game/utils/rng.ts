@@ -21,6 +21,13 @@ export const defaultRng: RandomSource = {
 }
 
 export const createSeededRngFromEnv = (): RandomSource => {
+  return createSeededRngFromEnvOverride(null)
+}
+
+export const createSeededRngFromEnvOverride = (overrideSeed: number | null): RandomSource => {
+  if (overrideSeed !== null) {
+    return new SeededRng(overrideSeed)
+  }
   const env = import.meta.env.VITE_TEST_SEED
   if (!env) {
     return defaultRng
@@ -30,6 +37,29 @@ export const createSeededRngFromEnv = (): RandomSource => {
     return defaultRng
   }
   return new SeededRng(seed)
+}
+
+export const seedFromString = (value: string): number => {
+  const parsed = Number(value)
+  if (Number.isFinite(parsed)) {
+    return Math.floor(parsed) >>> 0
+  }
+  let hash = 2166136261
+  for (let i = 0; i < value.length; i += 1) {
+    hash ^= value.charCodeAt(i)
+    hash = Math.imul(hash, 16777619)
+  }
+  return hash >>> 0
+}
+
+export const getDailySeed = (): { seed: number; label: string } => {
+  const now = new Date()
+  const year = now.getUTCFullYear()
+  const month = String(now.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(now.getUTCDate()).padStart(2, '0')
+  const label = `${year}-${month}-${day}`
+  const seed = Number(`${year}${month}${day}`)
+  return { seed, label }
 }
 
 export const randomRange = (rng: RandomSource, min: number, max: number): number => {

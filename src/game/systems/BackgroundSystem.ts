@@ -36,6 +36,7 @@ type ReflectionInstance = {
 export class BackgroundSystem {
   private scene: Phaser.Scene
   private env: EnvironmentConfig
+  private speedScale = 1
   private layers: LayerInstance[] = []
   private fogLayers: LayerInstance[] = []
   private foregroundLayers: LayerInstance[] = []
@@ -63,6 +64,10 @@ export class BackgroundSystem {
 
   setReducedMotion(reduced: boolean): void {
     this.reducedMotion = reduced
+  }
+
+  setSpeedScale(scale: number): void {
+    this.speedScale = Math.max(0, scale)
   }
 
   create(): void {
@@ -178,7 +183,7 @@ export class BackgroundSystem {
     if (layers.length === 0) {
       return
     }
-    const baseSpeed = PIPE_CONFIG.speed * dt
+    const baseSpeed = PIPE_CONFIG.speed * this.speedScale * dt
     for (const layer of layers) {
       layer.sprite.tilePositionX += baseSpeed * layer.speed
     }
@@ -246,7 +251,7 @@ export class BackgroundSystem {
     },
     dt: number,
   ): void {
-    const baseSpeed = PIPE_CONFIG.speed * dt
+    const baseSpeed = PIPE_CONFIG.speed * this.speedScale * dt
     const ripple =
       this.reducedMotion ? 0 : Math.sin(this.elapsed * reflection.config.rippleSpeed) *
         reflection.config.rippleAmplitude
