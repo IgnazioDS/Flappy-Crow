@@ -13,6 +13,16 @@ import { BackgroundSystem } from '../systems/BackgroundSystem'
 import { getActiveTheme, listThemes, setActiveThemeId } from '../theme'
 import { DEFAULT_ENV, ENVIRONMENTS } from '../theme/env'
 import type { EnvironmentConfig, EnvironmentKey, ParticleConfig } from '../theme/env/types'
+import {
+  readStoredBool,
+  readStoredNumber,
+  readStoredString,
+  storeBool,
+  storeNumber,
+  storeString,
+} from '../persistence/storage'
+import { createButtonBase, createPanel, createSmallButton } from '../ui/uiFactory'
+import { createSettingsPanel, type SettingsPanelHandle } from '../ui/settingsPanel'
 import { createSeededRngFromEnvOverride, getDailySeed, seedFromString } from '../utils/rng'
 import {
   getTelemetryConsent,
@@ -96,16 +106,8 @@ export class PlayScene extends Phaser.Scene {
   private particleManagers: Phaser.GameObjects.Particles.ParticleEmitter[] = []
 
   private settingsButton!: Phaser.GameObjects.Container
-  private settingsPanel!: Phaser.GameObjects.Container
+  private settingsPanel!: SettingsPanelHandle
   private settingsOpen = false
-  private settingsValues: {
-    mute: Phaser.GameObjects.Text
-    motion: Phaser.GameObjects.Text
-    analytics: Phaser.GameObjects.Text
-    seedMode?: Phaser.GameObjects.Text
-    theme?: Phaser.GameObjects.Text
-    hitboxes?: Phaser.GameObjects.Text
-  } | null = null
   private telemetryConsentPanel: Phaser.GameObjects.Container | null = null
   private telemetryConsentOpen = false
 
@@ -164,15 +166,15 @@ export class PlayScene extends Phaser.Scene {
     this.fx = this.theme.fx
     this.themeList = listThemes()
 
-    this.bestScore = this.readStoredNumber('flappy-best', 0)
-    this.isMuted = this.readStoredBool('flappy-muted', false)
-    this.reducedMotion = this.readStoredBool('flappy-reduced-motion', false)
+    this.bestScore = readStoredNumber('flappy-best', 0)
+    this.isMuted = readStoredBool('flappy-muted', false)
+    this.reducedMotion = readStoredBool('flappy-reduced-motion', false)
     this.analyticsConsent = getTelemetryConsent()
     this.debugEnabled = this.debugToggleAllowed
-      ? this.readStoredBool('flappy-hitboxes', false)
+      ? readStoredBool('flappy-hitboxes', false)
       : false
     this.envDebugEnabled = this.debugToggleAllowed
-      ? this.readStoredBool('flappy-env-debug', false)
+      ? readStoredBool('flappy-env-debug', false)
       : false
     if (this.analyticsConsent) {
       setTelemetryConsent(this.analyticsConsent)
@@ -187,7 +189,7 @@ export class PlayScene extends Phaser.Scene {
     if (this.debugToggleAllowed && envDebugParam !== null) {
       const enabled = envDebugParam !== '0'
       this.envDebugEnabled = enabled
-      this.storeBool('flappy-env-debug', enabled)
+      storeBool('flappy-env-debug', enabled)
     }
 
     this.environmentKey = this.resolveEnvironmentKey()
@@ -450,7 +452,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private readStoredEnvironmentKey(): EnvironmentKey | null {
-    const raw = window.localStorage.getItem('flappy-env')
+    const raw = readStoredString('flappy-env')
     if (!raw) {
       return null
     }
@@ -458,7 +460,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private storeEnvironmentKey(key: EnvironmentKey): void {
-    window.localStorage.setItem('flappy-env', key)
+    storeString('flappy-env', key)
   }
 
   private toggleEnvironment(): void {
@@ -589,50 +591,8 @@ export class PlayScene extends Phaser.Scene {
     }
   }
 
-  private createPanel(
-    size: 'small' | 'large',
-    widthOverride?: number,
-    heightOverride?: number,
-  ): Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle {
-    const uiAssets = this.theme.visuals.ui
-    const panelSize = this.ui.panelSize[size]
-    const panelWidth = widthOverride ?? panelSize.width
-    const panelHeight = heightOverride ?? panelSize.height
-
-    if (
-      uiAssets.kind === 'atlas' &&
-      uiAssets.atlasKey &&
-      ((size === 'small' && uiAssets.frames?.panelSmall) ||
-        (size === 'large' && uiAssets.frames?.panelLarge))
-    ) {
-      const frame = size === 'small' ? uiAssets.frames?.panelSmall : uiAssets.frames?.panelLarge
-      return this.add
-        .image(0, 0, uiAssets.atlasKey, frame)
-        .setDisplaySize(panelWidth, panelHeight)
-    }
-
-    return this.add
-      .rectangle(0, 0, panelWidth, panelHeight, this.ui.panel.fill, this.ui.panel.alpha)
-      .setStrokeStyle(this.ui.panel.strokeThickness, this.ui.panel.stroke)
-  }
-
-  private createButtonBase(scale = 1): Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle {
-    const uiAssets = this.theme.visuals.ui
-    if (uiAssets.kind === 'atlas' && uiAssets.atlasKey && uiAssets.frames?.button) {
-      const image = this.add.image(0, 0, uiAssets.atlasKey, uiAssets.frames.button)
-      image.setScale(scale)
-      return image
-    }
-
-    const width = this.ui.button.width * scale
-    const height = this.ui.button.height * scale
-    return this.add
-      .rectangle(0, 0, width, height, this.ui.panel.fill, this.ui.panel.alpha)
-      .setStrokeStyle(this.ui.panel.strokeThickness, this.ui.panel.stroke)
-  }
-
   private createReadyOverlay(): void {
-    const panel = this.createPanel('small')
+    const panel = createPanel(this, this.ui, this.theme, 'small')
     const title = this.add.text(0, -20, 'GET READY', this.ui.overlayTitleStyle).setOrigin(0.5, 0.5)
     const subtitle = this.add
       .text(0, 22, 'Tap or Space to Flap', this.ui.overlayBodyStyle)
@@ -648,7 +608,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private createGameOverOverlay(): void {
-    const panel = this.createPanel('large')
+    const panel = createPanel(this, this.ui, this.theme, 'large')
     const title = this.add.text(0, -66, 'GAME OVER', this.ui.overlayTitleStyle).setOrigin(0.5, 0.5)
 
     const scoreLabel = this.add
@@ -699,7 +659,7 @@ export class PlayScene extends Phaser.Scene {
 
   private createRestartButton(): Phaser.GameObjects.Container {
     const uiAssets = this.theme.visuals.ui
-    const buttonBase = this.createButtonBase()
+    const buttonBase = createButtonBase(this, this.ui, this.theme)
     buttonBase.setInteractive({ useHandCursor: true })
     buttonBase.on('pointerdown', () => this.restart())
 
@@ -770,7 +730,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private createSettingsButton(): void {
-    const buttonImage = this.createButtonBase(0.42)
+    const buttonImage = createButtonBase(this, this.ui, this.theme, 0.42)
     buttonImage.setInteractive({ useHandCursor: true })
 
     const labelStyle = {
@@ -797,113 +757,53 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private createSettingsPanel(): void {
-    const panelWidth = this.ui.panelSize.large.width
-    const panelHeight = this.ui.panelSize.large.height + 30
-    const rowWidth = panelWidth - 60
-    const rowHeight = 22
-    const rowStartY = -40
-    const rowGap = 26
+    const rows = [
+      {
+        label: 'MUTE',
+        getValue: () => (this.isMuted ? 'ON' : 'OFF'),
+        onToggle: () => this.toggleMute(),
+      },
+      {
+        label: 'MOTION',
+        getValue: () => (this.reducedMotion ? 'REDUCED' : 'FULL'),
+        onToggle: () => this.toggleReducedMotion(),
+      },
+      {
+        label: 'ANALYTICS',
+        getValue: () => this.getAnalyticsLabel(),
+        onToggle: () => this.toggleAnalyticsConsent(),
+      },
+      {
+        label: 'MODE',
+        getValue: () => this.getSeedModeLabel(),
+        onToggle: () => this.toggleSeedMode(),
+      },
+      {
+        label: 'THEME',
+        getValue: () => this.theme.name,
+        onToggle: () => this.toggleTheme(),
+      },
+    ]
 
-    const panel = this.createPanel('large', panelWidth, panelHeight)
-
-    const title = this.add
-      .text(0, -78, 'SETTINGS', this.ui.overlayTitleStyle)
-      .setOrigin(0.5, 0.5)
-
-    const labelStyle = {
-      ...this.ui.statLabelStyle,
-      fontSize: '14px',
-    }
-    const valueStyle = {
-      ...this.ui.statValueStyle,
-      fontSize: '16px',
-    }
-
-    let rowIndex = 0
-
-    const createRow = (
-      label: string,
-      getValue: () => string,
-      onToggle: () => void,
-    ): Phaser.GameObjects.Text => {
-      const y = rowStartY + rowIndex * rowGap
-      rowIndex += 1
-
-      const hit = this.add
-        .rectangle(0, y, rowWidth, rowHeight, 0x000000, 0)
-        .setInteractive({ useHandCursor: true })
-      hit.on(
-        'pointerdown',
-        (
-          _pointer: Phaser.Input.Pointer,
-          _localX: number,
-          _localY: number,
-          event: Phaser.Types.Input.EventData,
-        ) => {
-        event.stopPropagation()
-        onToggle()
-        },
-      )
-
-      const labelText = this.add.text(-rowWidth / 2 + 6, y, label, labelStyle).setOrigin(0, 0.5)
-      const valueText = this.add
-        .text(rowWidth / 2 - 6, y, getValue(), valueStyle)
-        .setOrigin(1, 0.5)
-
-      this.settingsPanel.add([hit, labelText, valueText])
-      return valueText
-    }
-
-    const items: Phaser.GameObjects.GameObject[] = [panel, title]
-    this.settingsPanel = this.add.container(
-      GAME_DIMENSIONS.width / 2,
-      140,
-      items,
-    )
-    this.settingsPanel.setDepth(6)
-    this.settingsPanel.setVisible(false)
-
-    const muteValue = createRow('MUTE', () => (this.isMuted ? 'ON' : 'OFF'), () =>
-      this.toggleMute(),
-    )
-    const motionValue = createRow(
-      'MOTION',
-      () => (this.reducedMotion ? 'REDUCED' : 'FULL'),
-      () => this.toggleReducedMotion(),
-    )
-    const analyticsValue = createRow(
-      'ANALYTICS',
-      () => this.getAnalyticsLabel(),
-      () => this.toggleAnalyticsConsent(),
-    )
-    const seedModeValue = createRow(
-      'MODE',
-      () => this.getSeedModeLabel(),
-      () => this.toggleSeedMode(),
-    )
-    const themeValue = createRow('THEME', () => this.theme.name, () => this.toggleTheme())
-
-    let hitboxesValue: Phaser.GameObjects.Text | undefined
     if (this.debugToggleAllowed) {
-      hitboxesValue = createRow(
-        'HITBOXES',
-        () => (this.debugEnabled ? 'ON' : 'OFF'),
-        () => this.toggleHitboxes(),
-      )
+      rows.push({
+        label: 'HITBOXES',
+        getValue: () => (this.debugEnabled ? 'ON' : 'OFF'),
+        onToggle: () => this.toggleHitboxes(),
+      })
     }
 
-    const closeButton = this.createSmallButton('CLOSE', () => this.toggleSettingsPanel())
-    closeButton.setPosition(0, panelHeight / 2 - 18)
-    this.settingsPanel.add(closeButton)
-
-    this.settingsValues = {
-      mute: muteValue,
-      motion: motionValue,
-      analytics: analyticsValue,
-      seedMode: seedModeValue,
-      theme: themeValue,
-      hitboxes: hitboxesValue,
-    }
+    this.settingsPanel = createSettingsPanel({
+      scene: this,
+      ui: this.ui,
+      theme: this.theme,
+      position: {
+        x: GAME_DIMENSIONS.width / 2,
+        y: 140,
+      },
+      rows,
+      onClose: () => this.toggleSettingsPanel(),
+    })
     this.updateSettingsValues()
   }
 
@@ -931,7 +831,7 @@ export class PlayScene extends Phaser.Scene {
       },
     )
 
-    const panel = this.createPanel('large', panelWidth, panelHeight)
+    const panel = createPanel(this, this.ui, this.theme, 'large', panelWidth, panelHeight)
 
     const title = this.add
       .text(0, -50, 'ANALYTICS', this.ui.overlayTitleStyle)
@@ -942,8 +842,12 @@ export class PlayScene extends Phaser.Scene {
       .setOrigin(0.5, 0.5)
     body.setWordWrapWidth(panelWidth - 30)
 
-    const allowButton = this.createSmallButton('ALLOW', () => this.setAnalyticsConsent('granted'))
-    const declineButton = this.createSmallButton('DECLINE', () => this.setAnalyticsConsent('denied'))
+    const allowButton = createSmallButton(this, this.ui, this.theme, 'ALLOW', () =>
+      this.setAnalyticsConsent('granted'),
+    )
+    const declineButton = createSmallButton(this, this.ui, this.theme, 'DECLINE', () =>
+      this.setAnalyticsConsent('denied'),
+    )
     allowButton.setPosition(-70, 48)
     declineButton.setPosition(70, 48)
 
@@ -969,31 +873,6 @@ export class PlayScene extends Phaser.Scene {
     if (visible && this.settingsOpen) {
       this.toggleSettingsPanel()
     }
-  }
-
-  private createSmallButton(label: string, onClick: () => void): Phaser.GameObjects.Container {
-    const buttonImage = this.createButtonBase(0.4)
-    buttonImage.setInteractive({ useHandCursor: true })
-
-    const text = this.add
-      .text(0, 1, label, this.ui.button.textStyle)
-      .setOrigin(0.5, 0.5)
-      .setScale(0.75)
-
-    buttonImage.on(
-      'pointerdown',
-      (
-        _pointer: Phaser.Input.Pointer,
-        _localX: number,
-        _localY: number,
-        event: Phaser.Types.Input.EventData,
-      ) => {
-      event.stopPropagation()
-      onClick()
-      },
-    )
-
-    return this.add.container(0, 0, [buttonImage, text])
   }
 
   private toggleSettingsPanel(): void {
@@ -1201,7 +1080,7 @@ export class PlayScene extends Phaser.Scene {
     if (!this.debugEnabled) {
       this.debugGraphics.clear()
     }
-    this.storeBool('flappy-hitboxes', this.debugEnabled)
+    storeBool('flappy-hitboxes', this.debugEnabled)
     this.updateSettingsValues()
   }
 
@@ -1213,7 +1092,7 @@ export class PlayScene extends Phaser.Scene {
     if (this.envDebugText) {
       this.envDebugText.setVisible(this.envDebugEnabled)
     }
-    this.storeBool('flappy-env-debug', this.envDebugEnabled)
+    storeBool('flappy-env-debug', this.envDebugEnabled)
   }
 
   private enterReady(): void {
@@ -1312,7 +1191,7 @@ export class PlayScene extends Phaser.Scene {
     const score = this.scoreSystem.score
     if (score > this.bestScore) {
       this.bestScore = score
-      this.storeNumber('flappy-best', score)
+      storeNumber('flappy-best', score)
     }
 
     this.finalScoreText.setText(String(score))
@@ -1552,7 +1431,7 @@ export class PlayScene extends Phaser.Scene {
         this.isMuted ? uiAssets.frames.iconMuteOff : uiAssets.frames.iconMuteOn,
       )
     }
-    this.storeBool('flappy-muted', this.isMuted)
+    storeBool('flappy-muted', this.isMuted)
     telemetry.track('mute_toggle', { muted: this.isMuted })
     this.updateSettingsValues()
   }
@@ -1572,7 +1451,7 @@ export class PlayScene extends Phaser.Scene {
         this.reducedMotion ? uiAssets.frames.iconMotionOff : uiAssets.frames.iconMotionOn,
       )
     }
-    this.storeBool('flappy-reduced-motion', this.reducedMotion)
+    storeBool('flappy-reduced-motion', this.reducedMotion)
     this.backgroundSystem?.setReducedMotion(this.reducedMotion)
 
     if (this.reducedMotion) {
@@ -1660,21 +1539,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private updateSettingsValues(): void {
-    if (!this.settingsValues) {
-      return
-    }
-    this.settingsValues.mute.setText(this.isMuted ? 'ON' : 'OFF')
-    this.settingsValues.motion.setText(this.reducedMotion ? 'REDUCED' : 'FULL')
-    this.settingsValues.analytics.setText(this.getAnalyticsLabel())
-    if (this.settingsValues.seedMode) {
-      this.settingsValues.seedMode.setText(this.getSeedModeLabel())
-    }
-    if (this.settingsValues.theme) {
-      this.settingsValues.theme.setText(this.theme.name)
-    }
-    if (this.settingsValues.hitboxes) {
-      this.settingsValues.hitboxes.setText(this.debugEnabled ? 'ON' : 'OFF')
-    }
+    this.settingsPanel.updateValues()
   }
 
   private maybeAutoFlap(): void {
@@ -1779,44 +1644,4 @@ export class PlayScene extends Phaser.Scene {
     }
   }
 
-  private readStoredNumber(key: string, fallback: number): number {
-    try {
-      const raw = window.localStorage.getItem(key)
-      if (!raw) {
-        return fallback
-      }
-      const parsed = Number(raw)
-      return Number.isFinite(parsed) ? parsed : fallback
-    } catch {
-      return fallback
-    }
-  }
-
-  private readStoredBool(key: string, fallback: boolean): boolean {
-    try {
-      const raw = window.localStorage.getItem(key)
-      if (raw === null) {
-        return fallback
-      }
-      return raw === 'true'
-    } catch {
-      return fallback
-    }
-  }
-
-  private storeNumber(key: string, value: number): void {
-    try {
-      window.localStorage.setItem(key, String(value))
-    } catch {
-      // Ignore storage errors.
-    }
-  }
-
-  private storeBool(key: string, value: boolean): void {
-    try {
-      window.localStorage.setItem(key, String(value))
-    } catch {
-      // Ignore storage errors.
-    }
-  }
 }
