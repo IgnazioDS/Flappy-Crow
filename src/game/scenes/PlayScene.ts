@@ -14,7 +14,12 @@ import { getActiveTheme, listThemes, setActiveThemeId } from '../theme'
 import { DEFAULT_ENV, ENVIRONMENTS } from '../theme/env'
 import type { EnvironmentConfig, EnvironmentKey, ParticleConfig } from '../theme/env/types'
 import { createSeededRngFromEnv } from '../utils/rng'
-import { setTelemetryOptOut, telemetry } from '../../telemetry'
+import {
+  getTelemetryConsent,
+  setTelemetryConsent,
+  telemetry,
+  telemetryHasProviders,
+} from '../../telemetry'
 
 type PipeSprites = {
   top: Phaser.GameObjects.Image
@@ -100,22 +105,39 @@ export class PlayScene extends Phaser.Scene {
     theme?: Phaser.GameObjects.Text
     hitboxes?: Phaser.GameObjects.Text
   } | null = null
+  private telemetryConsentPanel: Phaser.GameObjects.Container | null = null
+  private telemetryConsentOpen = false
 
   private lastScore = -1
   private bestScore = 0
   private isMuted = false
   private reducedMotion = false
-  private analyticsOptOut = false
+  private analyticsConsent: 'granted' | 'denied' | null = null
   private debugEnabled = false
   private readonly debugToggleAllowed =
     import.meta.env.DEV || import.meta.env.VITE_ART_QA === 'true'
-  private readonly e2eEnabled = String(import.meta.env.VITE_E2E).toLowerCase() === 'true'
+  private readonly e2eEnabled =
+    import.meta.env.DEV && String(import.meta.env.VITE_E2E).toLowerCase() === 'true'
   private e2eAutoplay = this.e2eEnabled
   private e2eLastFlapMs = 0
   private runStartMs: number | null = null
   private scorePulseTween?: Phaser.Tweens.Tween
   private readyTween?: Phaser.Tweens.Tween
   private gameOverTween?: Phaser.Tweens.Tween
+  private visibilityPaused = false
+  private readonly handleVisibilityChange = () => {
+    if (typeof document === 'undefined') {
+      return
+    }
+    const hidden = document.visibilityState === 'hidden'
+    if (hidden && !this.visibilityPaused) {
+      this.visibilityPaused = true
+      this.scene.pause()
+    } else if (!hidden && this.visibilityPaused) {
+      this.visibilityPaused = false
+      this.scene.resume()
+    }
+  }
 
   private readonly handleSpawn = (gapCenterY: number) => {
     this.spawnPipePair(gapCenterY)
@@ -140,14 +162,16 @@ export class PlayScene extends Phaser.Scene {
     this.bestScore = this.readStoredNumber('flappy-best', 0)
     this.isMuted = this.readStoredBool('flappy-muted', false)
     this.reducedMotion = this.readStoredBool('flappy-reduced-motion', false)
-    this.analyticsOptOut = this.readStoredBool('flappy-analytics-optout', false)
+    this.analyticsConsent = getTelemetryConsent()
     this.debugEnabled = this.debugToggleAllowed
       ? this.readStoredBool('flappy-hitboxes', false)
       : false
     this.envDebugEnabled = this.debugToggleAllowed
       ? this.readStoredBool('flappy-env-debug', false)
       : false
-    setTelemetryOptOut(this.analyticsOptOut)
+    if (this.analyticsConsent) {
+      setTelemetryConsent(this.analyticsConsent)
+    }
 
     const envDebugParam = this.readQueryParam('envDebug')
     if (this.debugToggleAllowed && envDebugParam !== null) {
@@ -186,6 +210,7 @@ export class PlayScene extends Phaser.Scene {
     this.createGameOverOverlay()
     this.createToggles()
     this.createSettingsPanel()
+    this.createTelemetryConsentOverlay()
 
     this.createParticles()
     this.createVignette()
@@ -195,6 +220,7 @@ export class PlayScene extends Phaser.Scene {
     this.stateMachine.transition('BOOT_COMPLETE')
     this.enterReady()
     this.setupInput()
+    this.setupVisibilityHandlers()
   }
 
   update(_time: number, deltaMs: number): void {
@@ -240,14 +266,18 @@ export class PlayScene extends Phaser.Scene {
     this.input.on(
       'pointerdown',
       (_pointer: Phaser.Input.Pointer, currentlyOver: Phaser.GameObjects.GameObject[]) => {
-      if (this.settingsOpen || (currentlyOver && currentlyOver.length > 0)) {
+      if (
+        this.settingsOpen ||
+        this.telemetryConsentOpen ||
+        (currentlyOver && currentlyOver.length > 0)
+      ) {
         return
       }
       this.inputSystem.requestFlap()
       },
     )
     this.input.keyboard?.on('keydown-SPACE', () => {
-      if (!this.settingsOpen) {
+      if (!this.settingsOpen && !this.telemetryConsentOpen) {
         this.inputSystem.requestFlap()
       }
     })
@@ -257,6 +287,16 @@ export class PlayScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-R', () => this.toggleReducedMotion())
     this.input.keyboard?.on('keydown-E', () => this.toggleEnvironment())
     this.input.mouse?.disableContextMenu()
+  }
+
+  private setupVisibilityHandlers(): void {
+    if (typeof document === 'undefined') {
+      return
+    }
+    document.addEventListener('visibilitychange', this.handleVisibilityChange)
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      document.removeEventListener('visibilitychange', this.handleVisibilityChange)
+    })
   }
 
   private createParallaxLayers(): void {
@@ -302,7 +342,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private updateParallax(dt: number): void {
-    if (!this.parallaxLayers.length) {
+    if (this.reducedMotion || !this.parallaxLayers.length) {
       return
     }
 
@@ -330,7 +370,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private updateFog(dt: number): void {
-    if (!this.fogLayer) {
+    if (this.reducedMotion || !this.fogLayer) {
       return
     }
     this.fogLayer.tilePositionX += this.fx.fog.speedX * dt
@@ -779,8 +819,8 @@ export class PlayScene extends Phaser.Scene {
     )
     const analyticsValue = createRow(
       'ANALYTICS',
-      () => (this.analyticsOptOut ? 'OFF' : 'ON'),
-      () => this.toggleAnalyticsOptOut(),
+      () => this.getAnalyticsLabel(),
+      () => this.toggleAnalyticsConsent(),
     )
     const themeValue = createRow('THEME', () => this.theme.name, () => this.toggleTheme())
 
@@ -805,6 +845,70 @@ export class PlayScene extends Phaser.Scene {
       hitboxes: hitboxesValue,
     }
     this.updateSettingsValues()
+  }
+
+  private createTelemetryConsentOverlay(): void {
+    if (import.meta.env.DEV || !telemetryHasProviders || this.analyticsConsent !== null) {
+      return
+    }
+
+    const panelWidth = this.ui.panelSize.large.width
+    const panelHeight = 160
+
+    const blocker = this.add
+      .rectangle(0, 0, GAME_DIMENSIONS.width, GAME_DIMENSIONS.height, 0x000000, 0.35)
+      .setOrigin(0, 0)
+      .setInteractive()
+    blocker.on(
+      'pointerdown',
+      (
+        _pointer: Phaser.Input.Pointer,
+        _localX: number,
+        _localY: number,
+        event: Phaser.Types.Input.EventData,
+      ) => {
+        event.stopPropagation()
+      },
+    )
+
+    const panel = this.createPanel('large', panelWidth, panelHeight)
+
+    const title = this.add
+      .text(0, -50, 'ANALYTICS', this.ui.overlayTitleStyle)
+      .setOrigin(0.5, 0.5)
+
+    const body = this.add
+      .text(0, -12, 'Help improve the game with anonymous gameplay events.', this.ui.overlayBodyStyle)
+      .setOrigin(0.5, 0.5)
+    body.setWordWrapWidth(panelWidth - 30)
+
+    const allowButton = this.createSmallButton('ALLOW', () => this.setAnalyticsConsent('granted'))
+    const declineButton = this.createSmallButton('DECLINE', () => this.setAnalyticsConsent('denied'))
+    allowButton.setPosition(-70, 48)
+    declineButton.setPosition(70, 48)
+
+    const content = this.add.container(GAME_DIMENSIONS.width / 2, GAME_DIMENSIONS.height / 2, [
+      panel,
+      title,
+      body,
+      allowButton,
+      declineButton,
+    ])
+
+    this.telemetryConsentPanel = this.add.container(0, 0, [blocker, content])
+    this.telemetryConsentPanel.setDepth(7)
+    this.showTelemetryConsentOverlay(true)
+  }
+
+  private showTelemetryConsentOverlay(visible: boolean): void {
+    if (!this.telemetryConsentPanel) {
+      return
+    }
+    this.telemetryConsentOpen = visible
+    this.telemetryConsentPanel.setVisible(visible)
+    if (visible && this.settingsOpen) {
+      this.toggleSettingsPanel()
+    }
   }
 
   private createSmallButton(label: string, onClick: () => void): Phaser.GameObjects.Container {
@@ -842,6 +946,9 @@ export class PlayScene extends Phaser.Scene {
 
   private createParticles(): void {
     this.clearParticles()
+    if (this.reducedMotion) {
+      return
+    }
     const particles = this.theme.visuals.particles
     if (!particles || !this.theme.assets.atlas) {
       return
@@ -1406,14 +1513,39 @@ export class PlayScene extends Phaser.Scene {
       this.scorePulseTween?.stop()
       this.scoreFrame.setScale(1)
       this.scoreText.setScale(1)
+      this.clearParticles()
+    } else {
+      this.createParticles()
     }
     this.updateSettingsValues()
   }
 
-  private toggleAnalyticsOptOut(): void {
-    this.analyticsOptOut = !this.analyticsOptOut
-    setTelemetryOptOut(this.analyticsOptOut)
+  private setAnalyticsConsent(consent: 'granted' | 'denied'): void {
+    this.analyticsConsent = consent
+    setTelemetryConsent(consent)
     this.updateSettingsValues()
+    this.showTelemetryConsentOverlay(false)
+  }
+
+  private getAnalyticsLabel(): string {
+    if (!telemetryHasProviders) {
+      return 'OFF'
+    }
+    if (this.analyticsConsent === 'granted') {
+      return 'ON'
+    }
+    if (this.analyticsConsent === 'denied') {
+      return 'OFF'
+    }
+    return 'ASK'
+  }
+
+  private toggleAnalyticsConsent(): void {
+    if (!telemetryHasProviders) {
+      return
+    }
+    const next = this.analyticsConsent === 'granted' ? 'denied' : 'granted'
+    this.setAnalyticsConsent(next)
   }
 
   private toggleTheme(): void {
@@ -1433,7 +1565,7 @@ export class PlayScene extends Phaser.Scene {
     }
     this.settingsValues.mute.setText(this.isMuted ? 'ON' : 'OFF')
     this.settingsValues.motion.setText(this.reducedMotion ? 'REDUCED' : 'FULL')
-    this.settingsValues.analytics.setText(this.analyticsOptOut ? 'OFF' : 'ON')
+    this.settingsValues.analytics.setText(this.getAnalyticsLabel())
     if (this.settingsValues.theme) {
       this.settingsValues.theme.setText(this.theme.name)
     }
@@ -1545,27 +1677,43 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private readStoredNumber(key: string, fallback: number): number {
-    const raw = window.localStorage.getItem(key)
-    if (!raw) {
+    try {
+      const raw = window.localStorage.getItem(key)
+      if (!raw) {
+        return fallback
+      }
+      const parsed = Number(raw)
+      return Number.isFinite(parsed) ? parsed : fallback
+    } catch {
       return fallback
     }
-    const parsed = Number(raw)
-    return Number.isFinite(parsed) ? parsed : fallback
   }
 
   private readStoredBool(key: string, fallback: boolean): boolean {
-    const raw = window.localStorage.getItem(key)
-    if (raw === null) {
+    try {
+      const raw = window.localStorage.getItem(key)
+      if (raw === null) {
+        return fallback
+      }
+      return raw === 'true'
+    } catch {
       return fallback
     }
-    return raw === 'true'
   }
 
   private storeNumber(key: string, value: number): void {
-    window.localStorage.setItem(key, String(value))
+    try {
+      window.localStorage.setItem(key, String(value))
+    } catch {
+      // Ignore storage errors.
+    }
   }
 
   private storeBool(key: string, value: boolean): void {
-    window.localStorage.setItem(key, String(value))
+    try {
+      window.localStorage.setItem(key, String(value))
+    } catch {
+      // Ignore storage errors.
+    }
   }
 }

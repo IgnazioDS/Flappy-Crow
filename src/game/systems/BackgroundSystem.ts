@@ -89,19 +89,21 @@ export class BackgroundSystem {
   update(dt: number): void {
     this.elapsed += dt
 
-    this.updateLayers(this.layers, dt)
-    this.updateLayers(this.fogLayers, dt)
-    this.updateLayers(this.foregroundLayers, dt)
+    if (!this.reducedMotion) {
+      this.updateLayers(this.layers, dt)
+      this.updateLayers(this.fogLayers, dt)
+      this.updateLayers(this.foregroundLayers, dt)
+    }
 
     if (this.lightRays) {
       this.updateLightRays(this.lightRays)
     }
 
-    if (this.reflection) {
+    if (this.reflection && !this.reducedMotion) {
       this.updateReflection(this.reflection, dt)
     }
 
-    if (this.biolume.length > 0) {
+    if (this.biolume.length > 0 && !this.reducedMotion) {
       this.updateBiolume(this.biolume)
     }
   }

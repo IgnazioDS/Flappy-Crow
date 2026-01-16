@@ -4,19 +4,47 @@ import { createConsoleProvider } from './providers/console'
 import { createPlausibleProvider } from './providers/plausible'
 import { createPosthogProvider } from './providers/posthog'
 
-const readStoredBool = (key: string, fallback: boolean): boolean => {
+type TelemetryConsent = 'granted' | 'denied'
+
+const CONSENT_KEY = 'flappy-analytics-consent'
+const LEGACY_OPTOUT_KEY = 'flappy-analytics-optout'
+
+const readStoredBool = (key: string): boolean | null => {
   if (typeof window === 'undefined') {
-    return fallback
+    return null
   }
   try {
     const raw = window.localStorage.getItem(key)
     if (raw === null) {
-      return fallback
+      return null
     }
     return raw === 'true'
   } catch {
-    return fallback
+    return null
   }
+}
+
+const readStoredString = (key: string): string | null => {
+  if (typeof window === 'undefined') {
+    return null
+  }
+  try {
+    return window.localStorage.getItem(key)
+  } catch {
+    return null
+  }
+}
+
+const readConsent = (): TelemetryConsent | null => {
+  const raw = readStoredString(CONSENT_KEY)
+  if (raw === 'granted' || raw === 'denied') {
+    return raw
+  }
+  const legacyOptOut = readStoredBool(LEGACY_OPTOUT_KEY)
+  if (legacyOptOut === null) {
+    return null
+  }
+  return legacyOptOut ? 'denied' : 'granted'
 }
 
 const buildProviders = (): TelemetryProvider[] => {
@@ -47,17 +75,27 @@ const buildProviders = (): TelemetryProvider[] => {
   return providers
 }
 
-const telemetryEnabled = !readStoredBool('flappy-analytics-optout', false)
+const telemetryEnabled = readConsent() === 'granted'
+const providers = buildProviders()
 
 export const telemetry = new TelemetryClient({
-  providers: buildProviders(),
+  providers,
   enabled: telemetryEnabled,
 })
 
-export const setTelemetryOptOut = (optOut: boolean): void => {
+export const telemetryHasProviders = providers.length > 0
+
+export const getTelemetryConsent = (): TelemetryConsent | null => readConsent()
+
+export const setTelemetryConsent = (consent: TelemetryConsent): void => {
   if (typeof window === 'undefined') {
     return
   }
-  window.localStorage.setItem('flappy-analytics-optout', String(optOut))
-  telemetry.setEnabled(!optOut)
+  try {
+    window.localStorage.setItem(CONSENT_KEY, consent)
+    window.localStorage.setItem(LEGACY_OPTOUT_KEY, String(consent !== 'granted'))
+  } catch {
+    // Ignore storage errors.
+  }
+  telemetry.setEnabled(consent === 'granted')
 }
