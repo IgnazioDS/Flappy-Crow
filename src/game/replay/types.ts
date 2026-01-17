@@ -1,3 +1,5 @@
+import type { GameModeId } from '../modes/modeConfig'
+
 export type ReplaySeedMode = 'normal' | 'daily' | 'custom'
 
 export type ReplayData = {
@@ -6,6 +8,7 @@ export type ReplayData = {
   seed: number | null
   seedLabel: string
   mode: ReplaySeedMode
+  preset?: GameModeId
   score: number
   durationMs: number
   flaps: number[]

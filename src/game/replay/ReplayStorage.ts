@@ -1,7 +1,10 @@
+import { DEFAULT_GAME_MODE, isGameModeId, type GameModeId } from '../modes/modeConfig'
 import type { ReplayData } from './types'
 
 const BEST_REPLAY_KEY = 'flappy-replay-best'
 const MAX_FLAPS = 5000
+
+const getReplayKey = (modeId: GameModeId): string => `flappy-replay-best-${modeId}`
 
 const isReplayData = (value: unknown): value is ReplayData => {
   if (!value || typeof value !== 'object') {
@@ -23,6 +26,9 @@ const isReplayData = (value: unknown): value is ReplayData => {
   if (replay.mode !== 'normal' && replay.mode !== 'daily' && replay.mode !== 'custom') {
     return false
   }
+  if (replay.preset !== undefined && !isGameModeId(replay.preset)) {
+    return false
+  }
   if (typeof replay.score !== 'number' || !Number.isFinite(replay.score)) {
     return false
   }
@@ -40,12 +46,15 @@ const isReplayData = (value: unknown): value is ReplayData => {
   return true
 }
 
-export const loadBestReplay = (): ReplayData | null => {
+export const loadBestReplay = (modeId: GameModeId = DEFAULT_GAME_MODE): ReplayData | null => {
   if (typeof window === 'undefined') {
     return null
   }
   try {
-    const raw = window.localStorage.getItem(BEST_REPLAY_KEY)
+    const primary = window.localStorage.getItem(getReplayKey(modeId))
+    const raw =
+      primary ??
+      (modeId === DEFAULT_GAME_MODE ? window.localStorage.getItem(BEST_REPLAY_KEY) : null)
     if (!raw) {
       return null
     }
@@ -56,12 +65,15 @@ export const loadBestReplay = (): ReplayData | null => {
   }
 }
 
-export const saveBestReplay = (replay: ReplayData): void => {
+export const saveBestReplay = (modeId: GameModeId, replay: ReplayData): void => {
   if (typeof window === 'undefined') {
     return
   }
   try {
-    window.localStorage.setItem(BEST_REPLAY_KEY, JSON.stringify(replay))
+    window.localStorage.setItem(getReplayKey(modeId), JSON.stringify(replay))
+    if (modeId === DEFAULT_GAME_MODE) {
+      window.localStorage.setItem(BEST_REPLAY_KEY, JSON.stringify(replay))
+    }
   } catch {
     // Ignore storage errors.
   }

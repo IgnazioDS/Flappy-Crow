@@ -24,6 +24,14 @@ import {
 import { createButtonBase, createPanel, createSmallButton } from '../ui/uiFactory'
 import { createSettingsPanel, type SettingsPanelHandle } from '../ui/settingsPanel'
 import { createSeededRngFromEnvOverride, getDailySeed, seedFromString } from '../utils/rng'
+import {
+  DEFAULT_GAME_MODE,
+  getGameModeConfig,
+  getNextGameModeId,
+  normalizeGameModeId,
+  type GameModeConfig,
+  type GameModeId,
+} from '../modes/modeConfig'
 import { ReplayRecorder } from '../replay/ReplayRecorder'
 import { ReplayPlayer } from '../replay/ReplayPlayer'
 import { loadBestReplay, saveBestReplay } from '../replay/ReplayStorage'
@@ -121,6 +129,8 @@ export class PlayScene extends Phaser.Scene {
   private isMuted = false
   private reducedMotion = false
   private analyticsConsent: 'granted' | 'denied' | null = null
+  private gameModeId: GameModeId = DEFAULT_GAME_MODE
+  private gameMode: GameModeConfig = getGameModeConfig(DEFAULT_GAME_MODE)
   private ghostEnabled = true
   private bestReplay: ReplayData | null = null
   private replayRecorder: ReplayRecorder | null = null
@@ -176,12 +186,15 @@ export class PlayScene extends Phaser.Scene {
     this.fx = this.theme.fx
     this.themeList = listThemes()
 
-    this.bestScore = readStoredNumber('flappy-best', 0)
+    const storedMode = readStoredString('flappy-mode')
+    this.gameModeId = normalizeGameModeId(storedMode)
+    this.gameMode = getGameModeConfig(this.gameModeId)
+    this.bestScore = this.readBestScore()
     this.isMuted = readStoredBool('flappy-muted', false)
     this.reducedMotion = readStoredBool('flappy-reduced-motion', false)
     this.analyticsConsent = getTelemetryConsent()
     this.ghostEnabled = readStoredBool('flappy-ghost', true)
-    this.bestReplay = loadBestReplay()
+    this.bestReplay = loadBestReplay(this.gameModeId)
     this.debugEnabled = this.debugToggleAllowed
       ? readStoredBool('flappy-hitboxes', false)
       : false
@@ -337,14 +350,16 @@ export class PlayScene extends Phaser.Scene {
       return { speedScale: 1, gap: PIPE_CONFIG.gap }
     }
     const score = this.scoreSystem.score
-    const speedScale = Math.min(
-      DIFFICULTY_CONFIG.maxSpeedScale,
-      1 + score * DIFFICULTY_CONFIG.speedScalePerScore,
-    )
-    const gap = Math.max(
-      DIFFICULTY_CONFIG.minGap,
-      PIPE_CONFIG.gap - score * DIFFICULTY_CONFIG.gapReductionPerScore,
-    )
+    const tuning = this.gameMode.tuning
+    const speedScalePerScore = tuning.speedScalePerScore ?? DIFFICULTY_CONFIG.speedScalePerScore
+    const maxSpeedScale = tuning.maxSpeedScale ?? DIFFICULTY_CONFIG.maxSpeedScale
+    const rawSpeedScale = (1 + score * speedScalePerScore) * tuning.speedMultiplier
+    const speedScale = Math.min(maxSpeedScale, rawSpeedScale)
+
+    const gapReductionPerScore = tuning.gapReductionPerScore ?? DIFFICULTY_CONFIG.gapReductionPerScore
+    const minGap = tuning.minGap ?? DIFFICULTY_CONFIG.minGap
+    const baseGap = PIPE_CONFIG.gap * tuning.gapMultiplier
+    const gap = Math.max(minGap, baseGap - score * gapReductionPerScore)
     return { speedScale, gap }
   }
 
@@ -794,6 +809,11 @@ export class PlayScene extends Phaser.Scene {
         onToggle: () => this.toggleSeedMode(),
       },
       {
+        label: 'DIFFICULTY',
+        getValue: () => this.getGameModeLabel(),
+        onToggle: () => this.toggleGameMode(),
+      },
+      {
         label: 'GHOST',
         getValue: () => (this.ghostEnabled ? 'ON' : 'OFF'),
         onToggle: () => this.toggleGhost(),
@@ -1220,7 +1240,7 @@ export class PlayScene extends Phaser.Scene {
     const isNewBest = score > this.bestScore
     if (isNewBest) {
       this.bestScore = score
-      storeNumber('flappy-best', score)
+      this.storeBestScore(score)
     }
     this.finishReplayRecording(isNewBest)
     this.ghostPlayer?.stop()
@@ -1520,6 +1540,34 @@ export class PlayScene extends Phaser.Scene {
     window.location.href = url.toString()
   }
 
+  private toggleGameMode(): void {
+    if (this.stateMachine.state === 'PLAYING') {
+      return
+    }
+    const next = getNextGameModeId(this.gameModeId)
+    this.applyGameMode(next)
+    if (this.stateMachine.state === 'GAME_OVER') {
+      this.restart()
+    } else if (this.stateMachine.state === 'READY') {
+      this.enterReady()
+    }
+  }
+
+  private applyGameMode(modeId: GameModeId): void {
+    this.gameModeId = modeId
+    this.gameMode = getGameModeConfig(modeId)
+    storeString('flappy-mode', modeId)
+    this.bestScore = this.readBestScore()
+    if (this.bestScoreText) {
+      this.bestScoreText.setText(String(this.bestScore))
+    }
+    if (this.bestLabelText) {
+      this.bestLabelText.setText('BEST')
+    }
+    this.bestReplay = loadBestReplay(this.gameModeId)
+    this.updateSettingsValues()
+  }
+
   private getSeedModeLabel(): string {
     if (this.seedMode === 'daily') {
       return 'DAILY'
@@ -1528,6 +1576,10 @@ export class PlayScene extends Phaser.Scene {
       return this.formatSeedLabel(this.seedLabel)
     }
     return 'NORMAL'
+  }
+
+  private getGameModeLabel(): string {
+    return this.gameMode.label
   }
 
   private formatSeedLabel(label: string): string {
@@ -1685,11 +1737,37 @@ export class PlayScene extends Phaser.Scene {
     }
   }
 
+  private getBestScoreKey(modeId: GameModeId = this.gameModeId): string {
+    return `flappy-best-${modeId}`
+  }
+
+  private readBestScore(): number {
+    const raw = readStoredString(this.getBestScoreKey())
+    if (raw !== null) {
+      const parsed = Number(raw)
+      if (Number.isFinite(parsed)) {
+        return parsed
+      }
+    }
+    if (this.gameModeId === DEFAULT_GAME_MODE) {
+      return readStoredNumber('flappy-best', 0)
+    }
+    return 0
+  }
+
+  private storeBestScore(score: number): void {
+    storeNumber(this.getBestScoreKey(), score)
+    if (this.gameModeId === DEFAULT_GAME_MODE) {
+      storeNumber('flappy-best', score)
+    }
+  }
+
   private startReplayRecording(): void {
     this.replayRecorder = new ReplayRecorder({
       seed: this.seedValue,
       seedLabel: this.seedLabel,
       mode: this.seedMode,
+      preset: this.gameModeId,
     })
     this.replayRecorder.start(this.time.now)
     this.replayRecorder.recordFlap(this.time.now)
@@ -1705,7 +1783,7 @@ export class PlayScene extends Phaser.Scene {
       return
     }
     if (isNewBest || !this.bestReplay || replay.score >= this.bestReplay.score) {
-      saveBestReplay(replay)
+      saveBestReplay(this.gameModeId, replay)
       this.bestReplay = replay
     }
   }
@@ -1721,6 +1799,10 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private isReplayCompatible(replay: ReplayData): boolean {
+    const preset = replay.preset ?? DEFAULT_GAME_MODE
+    if (preset !== this.gameModeId) {
+      return false
+    }
     if (replay.mode !== this.seedMode) {
       return false
     }

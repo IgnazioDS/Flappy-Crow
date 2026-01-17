@@ -1,9 +1,11 @@
+import type { GameModeId } from '../modes/modeConfig'
 import type { ReplayData, ReplaySeedMode } from './types'
 
 type ReplayRecorderOptions = {
   seed: number | null
   seedLabel: string
   mode: ReplaySeedMode
+  preset: GameModeId
 }
 
 export class ReplayRecorder {
@@ -12,11 +14,13 @@ export class ReplayRecorder {
   private seed: number | null
   private seedLabel: string
   private mode: ReplaySeedMode
+  private preset: GameModeId
 
   constructor(options: ReplayRecorderOptions) {
     this.seed = options.seed
     this.seedLabel = options.seedLabel
     this.mode = options.mode
+    this.preset = options.preset
   }
 
   start(nowMs: number): void {
@@ -43,6 +47,7 @@ export class ReplayRecorder {
       seed: this.seed,
       seedLabel: this.seedLabel,
       mode: this.mode,
+      preset: this.preset,
       score,
       durationMs,
       flaps: [...this.flaps],
