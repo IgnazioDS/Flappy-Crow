@@ -1,5 +1,5 @@
 import Phaser from 'phaser'
-import { BIRD_CONFIG, DIFFICULTY_CONFIG, GAME_DIMENSIONS, GROUND_HEIGHT, PIPE_CONFIG } from '../config'
+import { BIRD_CONFIG, GAME_DIMENSIONS, GROUND_HEIGHT, PIPE_CONFIG } from '../config'
 import { Bird } from '../entities/Bird'
 import { Ground } from '../entities/Ground'
 import { PipePair } from '../entities/PipePair'
@@ -23,7 +23,13 @@ import {
 } from '../persistence/storage'
 import { createButtonBase, createPanel, createSmallButton } from '../ui/uiFactory'
 import { createSettingsPanel, type SettingsPanelHandle } from '../ui/settingsPanel'
-import { createSeededRngFromEnvOverride, getDailySeed, seedFromString } from '../utils/rng'
+import {
+  SeededRng,
+  createSeededRngFromEnvOverride,
+  defaultRng,
+  getDailySeed,
+  seedFromString,
+} from '../utils/rng'
 import {
   DEFAULT_GAME_MODE,
   getGameModeConfig,
@@ -33,6 +39,8 @@ import {
   type GameModeId,
 } from '../modes/modeConfig'
 import { PRACTICE_CONFIG } from '../modes/practiceConfig'
+import { computeDifficultyTuning } from '../modes/tuning'
+import { ObstacleVariantSystem, type ObstacleVariant } from '../obstacles/ObstacleVariantSystem'
 import { ReplayRecorder } from '../replay/ReplayRecorder'
 import { ReplayPlayer } from '../replay/ReplayPlayer'
 import { loadBestReplay, saveBestReplay } from '../replay/ReplayStorage'
@@ -96,8 +104,10 @@ export class PlayScene extends Phaser.Scene {
 
   private pipes: PipePair[] = []
   private pipeSprites: PipeSprites[] = []
+  private pipeVariants: ObstacleVariant[] = []
   private pipePool: PipePair[] = []
   private pipeSpritePool: PipeSprites[] = []
+  private obstacleVariantSystem: ObstacleVariantSystem | null = null
   private obstacleVariantIndex = 0
   private obstacleSwayClock = 0
 
@@ -178,6 +188,7 @@ export class PlayScene extends Phaser.Scene {
     sprites.top.setVisible(false)
     sprites.bottom.setVisible(false)
     this.pipeSpritePool.push(sprites)
+    this.pipeVariants.splice(index, 1)
   }
 
   constructor() {
@@ -215,6 +226,10 @@ export class PlayScene extends Phaser.Scene {
     this.seedLabel = seedConfig.label
     this.seedValue = seedConfig.seed
     this.spawnSystem = new SpawnSystem(createSeededRngFromEnvOverride(seedConfig.seed))
+    const variantSeed =
+      this.seedValue === null ? null : (this.seedValue ^ 0x9e3779b9) >>> 0
+    const variantRng = variantSeed === null ? defaultRng : new SeededRng(variantSeed)
+    this.obstacleVariantSystem = new ObstacleVariantSystem(variantRng)
 
     const envDebugParam = this.readQueryParam('envDebug')
     if (this.debugToggleAllowed && envDebugParam !== null) {
@@ -354,22 +369,11 @@ export class PlayScene extends Phaser.Scene {
     if (this.e2eEnabled) {
       return { speedScale: 1, gap: PIPE_CONFIG.gap }
     }
-    const score = this.scoreSystem.score
-    const tuning = this.gameMode.tuning
-    const speedScalePerScore = tuning.speedScalePerScore ?? DIFFICULTY_CONFIG.speedScalePerScore
-    const maxSpeedScale = tuning.maxSpeedScale ?? DIFFICULTY_CONFIG.maxSpeedScale
-    const rawSpeedScale = (1 + score * speedScalePerScore) * tuning.speedMultiplier
-    let speedScale = Math.min(maxSpeedScale, rawSpeedScale)
-
-    const gapReductionPerScore = tuning.gapReductionPerScore ?? DIFFICULTY_CONFIG.gapReductionPerScore
-    const minGap = tuning.minGap ?? DIFFICULTY_CONFIG.minGap
-    const baseGap = PIPE_CONFIG.gap * tuning.gapMultiplier
-    let gap = Math.max(minGap, baseGap - score * gapReductionPerScore)
-    if (this.practiceEnabled) {
-      speedScale *= PRACTICE_CONFIG.speedMultiplier
-      gap *= PRACTICE_CONFIG.gapMultiplier
-    }
-    return { speedScale, gap }
+    return computeDifficultyTuning(
+      this.scoreSystem.score,
+      this.gameMode.tuning,
+      this.practiceEnabled ? PRACTICE_CONFIG : null,
+    )
   }
 
   private resolveSeedConfig(): {
@@ -1207,10 +1211,17 @@ export class PlayScene extends Phaser.Scene {
     this.ghostPlayer?.update(dtMs, this.ground.y)
 
     this.obstacleSwayClock += dtMs
+    this.obstacleVariantSystem?.update(dtMs)
 
     for (let i = 0; i < this.pipes.length; i += 1) {
-      this.pipes[i].update(dt, PIPE_CONFIG.speed * this.speedScale)
-      this.updatePipeSprites(this.pipes[i], this.pipeSprites[i])
+      const pipe = this.pipes[i]
+      const sprites = this.pipeSprites[i]
+      const variant = this.pipeVariants[i]
+      if (variant && this.obstacleVariantSystem) {
+        this.obstacleVariantSystem.applyVariant(pipe, variant, this.currentGap)
+      }
+      pipe.update(dt, PIPE_CONFIG.speed * this.speedScale)
+      this.updatePipeSprites(pipe, sprites)
     }
 
     this.despawnSystem.update(this.pipes, this.pipePool, this.handleDespawn)
@@ -1323,6 +1334,7 @@ export class PlayScene extends Phaser.Scene {
     this.bird.reset(BIRD_CONFIG.startY)
     this.birdBobTime = 0
     this.obstacleSwayClock = 0
+    this.obstacleVariantSystem?.reset()
     this.practiceInvulnMs = 0
     this.practiceCheckpointY = BIRD_CONFIG.startY
     this.updateBirdVisual(0)
@@ -1339,6 +1351,7 @@ export class PlayScene extends Phaser.Scene {
     }
     this.pipes.length = 0
     this.pipeSprites.length = 0
+    this.pipeVariants.length = 0
 
     this.spawnSystem.reset()
     this.scoreSystem.reset()
@@ -1351,6 +1364,20 @@ export class PlayScene extends Phaser.Scene {
     const pipe = this.pipePool.pop() ?? new PipePair(spawnX, gapCenterY)
     pipe.reset(spawnX, gapCenterY, this.currentGap)
     this.pipes.push(pipe)
+
+    const variant =
+      this.obstacleVariantSystem?.createVariant(gapCenterY) ?? {
+        kind: 'static',
+        baseGapY: gapCenterY,
+        gapMultiplier: 1,
+        amplitude: 0,
+        speed: 0,
+        phase: 0,
+      }
+    this.pipeVariants.push(variant)
+    if (this.obstacleVariantSystem) {
+      this.obstacleVariantSystem.applyVariant(pipe, variant, this.currentGap)
+    }
 
     const sprites = this.pipeSpritePool.pop() ?? this.createPipeSprites()
     this.applyObstacleVariant(sprites)
