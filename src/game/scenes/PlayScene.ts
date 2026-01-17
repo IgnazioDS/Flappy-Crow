@@ -24,6 +24,24 @@ import {
 import { createButtonBase, createPanel, createSmallButton } from '../ui/uiFactory'
 import { createSettingsPanel, type SettingsPanelHandle } from '../ui/settingsPanel'
 import {
+  buildShareUrl,
+  copyShareUrl,
+  createShareCardCanvas,
+  downloadShareCard,
+} from '../ui/shareCard'
+import {
+  applyAccessibilityTheme,
+  getNextContrastMode,
+  getNextHandedness,
+  getNextTextScale,
+  readAccessibilitySettings,
+  storeContrastMode,
+  storeHandedness,
+  storeTextScale,
+  type ContrastMode,
+  type Handedness,
+} from '../ui/accessibility'
+import {
   SeededRng,
   createSeededRngFromEnvOverride,
   defaultRng,
@@ -145,6 +163,9 @@ export class PlayScene extends Phaser.Scene {
   private practiceEnabled = false
   private practiceInvulnMs = 0
   private practiceCheckpointY = BIRD_CONFIG.startY
+  private handMode: Handedness = 'normal'
+  private contrastMode: ContrastMode = 'normal'
+  private textScale = 1
   private ghostEnabled = true
   private bestReplay: ReplayData | null = null
   private replayRecorder: ReplayRecorder | null = null
@@ -196,9 +217,14 @@ export class PlayScene extends Phaser.Scene {
   }
 
   create(): void {
-    this.theme = getActiveTheme()
+    const accessibility = readAccessibilitySettings()
+    this.handMode = accessibility.hand
+    this.contrastMode = accessibility.contrast
+    this.textScale = accessibility.textScale
+    this.theme = applyAccessibilityTheme(getActiveTheme(), accessibility)
     this.ui = this.theme.ui
     this.fx = this.theme.fx
+    this.applyDocumentTheme()
     this.themeList = listThemes()
 
     const storedMode = readStoredString('flappy-mode')
@@ -363,6 +389,14 @@ export class PlayScene extends Phaser.Scene {
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       document.removeEventListener('visibilitychange', this.handleVisibilityChange)
     })
+  }
+
+  private applyDocumentTheme(): void {
+    if (typeof document !== 'undefined') {
+      document.documentElement.style.backgroundColor = this.theme.palette.background
+      document.body.style.backgroundColor = this.theme.palette.background
+    }
+    this.cameras.main.setBackgroundColor(this.theme.palette.background)
   }
 
   private getDifficultyTuning(): { speedScale: number; gap: number } {
@@ -691,6 +725,12 @@ export class PlayScene extends Phaser.Scene {
     restartButton.setPosition(0, 84)
     overlayItems.push(restartButton)
 
+    const shareButton = createSmallButton(this, this.ui, this.theme, 'SHARE', () =>
+      this.shareRunCard(),
+    )
+    shareButton.setPosition(0, 62)
+    overlayItems.push(shareButton)
+
     this.gameOverContainer = this.add.container(
       this.ui.layout.gameOver.x,
       this.ui.layout.gameOver.y,
@@ -770,6 +810,7 @@ export class PlayScene extends Phaser.Scene {
     }
 
     this.createSettingsButton()
+    this.applyHandednessLayout()
   }
 
   private createSettingsButton(): void {
@@ -799,6 +840,38 @@ export class PlayScene extends Phaser.Scene {
     )
   }
 
+  private applyHandednessLayout(): void {
+    if (!this.settingsButton) {
+      return
+    }
+    const iconSize = this.ui.icon.size
+    const padding = this.ui.icon.padding
+    const spacing = iconSize + 10
+    const topY = 28
+    const bottomY = GAME_DIMENSIONS.height - GROUND_HEIGHT - 26
+    const leftX = padding + iconSize / 2
+    const rightX = GAME_DIMENSIONS.width - padding - iconSize / 2
+    const settingsOffset = spacing * 2.4
+
+    if (this.handMode === 'normal') {
+      this.settingsButton.setPosition(padding + 34, topY)
+      this.motionIcon?.setPosition(rightX - spacing, topY)
+      this.muteIcon?.setPosition(rightX, topY)
+      return
+    }
+
+    const y = bottomY
+    if (this.handMode === 'left') {
+      this.settingsButton.setPosition(leftX + settingsOffset, y)
+      this.motionIcon?.setPosition(leftX, y)
+      this.muteIcon?.setPosition(leftX + spacing, y)
+    } else {
+      this.settingsButton.setPosition(rightX - settingsOffset, y)
+      this.motionIcon?.setPosition(rightX - spacing, y)
+      this.muteIcon?.setPosition(rightX, y)
+    }
+  }
+
   private createSettingsPanel(): void {
     const rows = [
       {
@@ -810,6 +883,21 @@ export class PlayScene extends Phaser.Scene {
         label: 'MOTION',
         getValue: () => (this.reducedMotion ? 'REDUCED' : 'FULL'),
         onToggle: () => this.toggleReducedMotion(),
+      },
+      {
+        label: 'HAND',
+        getValue: () => this.getHandednessLabel(),
+        onToggle: () => this.toggleHandedness(),
+      },
+      {
+        label: 'TEXT',
+        getValue: () => this.getTextScaleLabel(),
+        onToggle: () => this.toggleTextScale(),
+      },
+      {
+        label: 'CONTRAST',
+        getValue: () => this.getContrastLabel(),
+        onToggle: () => this.toggleContrastMode(),
       },
       {
         label: 'ANALYTICS',
@@ -1579,6 +1667,31 @@ export class PlayScene extends Phaser.Scene {
     this.updateSettingsValues()
   }
 
+  private toggleHandedness(): void {
+    this.handMode = getNextHandedness(this.handMode)
+    storeHandedness(this.handMode)
+    this.applyHandednessLayout()
+    this.updateSettingsValues()
+  }
+
+  private toggleTextScale(): void {
+    if (typeof window === 'undefined') {
+      return
+    }
+    this.textScale = getNextTextScale(this.textScale)
+    storeTextScale(this.textScale)
+    window.location.reload()
+  }
+
+  private toggleContrastMode(): void {
+    if (typeof window === 'undefined') {
+      return
+    }
+    this.contrastMode = getNextContrastMode(this.contrastMode)
+    storeContrastMode(this.contrastMode)
+    window.location.reload()
+  }
+
   private setAnalyticsConsent(consent: 'granted' | 'denied'): void {
     this.analyticsConsent = consent
     setTelemetryConsent(consent)
@@ -1658,6 +1771,24 @@ export class PlayScene extends Phaser.Scene {
     return this.gameMode.label
   }
 
+  private getHandednessLabel(): string {
+    if (this.handMode === 'left') {
+      return 'LEFT'
+    }
+    if (this.handMode === 'right') {
+      return 'RIGHT'
+    }
+    return 'NORMAL'
+  }
+
+  private getTextScaleLabel(): string {
+    return `${Math.round(this.textScale * 100)}%`
+  }
+
+  private getContrastLabel(): string {
+    return this.contrastMode === 'high' ? 'HIGH' : 'NORMAL'
+  }
+
   private handlePracticeHit(): void {
     this.practiceInvulnMs = PRACTICE_CONFIG.invulnerabilityMs
     this.bird.reset(this.practiceCheckpointY)
@@ -1723,6 +1854,40 @@ export class PlayScene extends Phaser.Scene {
     const nextTheme = this.themeList[nextIndex]
     setActiveThemeId(nextTheme.id)
     window.location.reload()
+  }
+
+  private shareRunCard(): void {
+    if (typeof window === 'undefined') {
+      return
+    }
+    const sourceCanvas = this.game.canvas
+    if (!sourceCanvas) {
+      return
+    }
+
+    const shareUrl = buildShareUrl(window.location.href, this.seedMode, this.seedLabel)
+    const card = createShareCardCanvas({
+      sourceCanvas,
+      theme: this.theme,
+      score: this.scoreSystem.score,
+      bestScore: this.bestScore,
+      seedLabel: this.seedLabel,
+      seedMode: this.seedMode,
+      gameModeLabel: this.gameMode.label,
+      practiceEnabled: this.practiceEnabled,
+      shareUrl,
+    })
+    if (!card) {
+      return
+    }
+
+    downloadShareCard(card, this.buildShareFilename())
+    void copyShareUrl(shareUrl)
+  }
+
+  private buildShareFilename(): string {
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-')
+    return `flappy-run-${timestamp}.png`
   }
 
   private updateSettingsValues(): void {
