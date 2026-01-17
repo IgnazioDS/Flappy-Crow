@@ -24,6 +24,10 @@ import {
 import { createButtonBase, createPanel, createSmallButton } from '../ui/uiFactory'
 import { createSettingsPanel, type SettingsPanelHandle } from '../ui/settingsPanel'
 import { createSeededRngFromEnvOverride, getDailySeed, seedFromString } from '../utils/rng'
+import { ReplayRecorder } from '../replay/ReplayRecorder'
+import { ReplayPlayer } from '../replay/ReplayPlayer'
+import { loadBestReplay, saveBestReplay } from '../replay/ReplayStorage'
+import type { ReplayData } from '../replay/types'
 import {
   getTelemetryConsent,
   setTelemetryConsent,
@@ -117,9 +121,14 @@ export class PlayScene extends Phaser.Scene {
   private isMuted = false
   private reducedMotion = false
   private analyticsConsent: 'granted' | 'denied' | null = null
+  private ghostEnabled = true
+  private bestReplay: ReplayData | null = null
+  private replayRecorder: ReplayRecorder | null = null
+  private ghostPlayer: ReplayPlayer | null = null
   private speedScale = 1
   private currentGap = PIPE_CONFIG.gap
   private seedMode: 'normal' | 'daily' | 'custom' = 'normal'
+  private seedValue: number | null = null
   private seedLabel = 'NORMAL'
   private debugEnabled = false
   private readonly debugToggleAllowed =
@@ -171,6 +180,8 @@ export class PlayScene extends Phaser.Scene {
     this.isMuted = readStoredBool('flappy-muted', false)
     this.reducedMotion = readStoredBool('flappy-reduced-motion', false)
     this.analyticsConsent = getTelemetryConsent()
+    this.ghostEnabled = readStoredBool('flappy-ghost', true)
+    this.bestReplay = loadBestReplay()
     this.debugEnabled = this.debugToggleAllowed
       ? readStoredBool('flappy-hitboxes', false)
       : false
@@ -184,6 +195,7 @@ export class PlayScene extends Phaser.Scene {
     const seedConfig = this.resolveSeedConfig()
     this.seedMode = seedConfig.mode
     this.seedLabel = seedConfig.label
+    this.seedValue = seedConfig.seed
     this.spawnSystem = new SpawnSystem(createSeededRngFromEnvOverride(seedConfig.seed))
 
     const envDebugParam = this.readQueryParam('envDebug')
@@ -210,6 +222,7 @@ export class PlayScene extends Phaser.Scene {
 
     this.bird = new Bird(BIRD_CONFIG.startY)
     this.createBirdSprite()
+    this.ghostPlayer = new ReplayPlayer(this, this.theme)
 
     this.setBirdVisual('idle')
 
@@ -252,6 +265,7 @@ export class PlayScene extends Phaser.Scene {
       case 'PLAYING':
         if (wantsFlap) {
           telemetry.track('flap')
+          this.replayRecorder?.recordFlap(this.time.now)
           this.bird.flap()
         }
         this.updatePlaying(dt, dtMs)
@@ -780,6 +794,11 @@ export class PlayScene extends Phaser.Scene {
         onToggle: () => this.toggleSeedMode(),
       },
       {
+        label: 'GHOST',
+        getValue: () => (this.ghostEnabled ? 'ON' : 'OFF'),
+        onToggle: () => this.toggleGhost(),
+      },
+      {
         label: 'THEME',
         getValue: () => this.theme.name,
         onToggle: () => this.toggleTheme(),
@@ -794,6 +813,8 @@ export class PlayScene extends Phaser.Scene {
       })
     }
 
+    const panelHeightOffset = Math.max(30, (rows.length - 5) * 26)
+
     this.settingsPanel = createSettingsPanel({
       scene: this,
       ui: this.ui,
@@ -804,6 +825,7 @@ export class PlayScene extends Phaser.Scene {
       },
       rows,
       onClose: () => this.toggleSettingsPanel(),
+      panelHeightOffset,
     })
     this.updateSettingsValues()
   }
@@ -1103,6 +1125,8 @@ export class PlayScene extends Phaser.Scene {
     this.showGameOverOverlay(false)
     this.runStartMs = null
     this.e2eAutoplay = this.e2eEnabled
+    this.ghostPlayer?.stop()
+    this.replayRecorder = null
     telemetry.track('game_ready_shown')
     this.setE2EState({
       state: 'READY',
@@ -1119,6 +1143,8 @@ export class PlayScene extends Phaser.Scene {
       this.toggleSettingsPanel()
     }
     this.runStartMs = this.time.now
+    this.startReplayRecording()
+    this.startGhostPlayback()
     telemetry.track('game_start')
     telemetry.track('flap')
     this.setE2EState({ state: 'PLAYING' })
@@ -1141,6 +1167,7 @@ export class PlayScene extends Phaser.Scene {
     this.backgroundSystem?.setSpeedScale(this.speedScale)
 
     this.spawnSystem.update(dtMs, this.handleSpawn, this.currentGap)
+    this.ghostPlayer?.update(dtMs, this.ground.y)
 
     this.obstacleSwayClock += dtMs
 
@@ -1195,6 +1222,8 @@ export class PlayScene extends Phaser.Scene {
       this.bestScore = score
       storeNumber('flappy-best', score)
     }
+    this.finishReplayRecording(isNewBest)
+    this.ghostPlayer?.stop()
 
     this.finalScoreText.setText(String(score))
     this.bestScoreText.setText(String(this.bestScore))
@@ -1530,6 +1559,15 @@ export class PlayScene extends Phaser.Scene {
     this.setAnalyticsConsent(next)
   }
 
+  private toggleGhost(): void {
+    this.ghostEnabled = !this.ghostEnabled
+    storeBool('flappy-ghost', this.ghostEnabled)
+    if (!this.ghostEnabled) {
+      this.ghostPlayer?.stop()
+    }
+    this.updateSettingsValues()
+  }
+
   private toggleTheme(): void {
     if (this.themeList.length < 2) {
       return
@@ -1645,6 +1683,51 @@ export class PlayScene extends Phaser.Scene {
     } catch {
       return null
     }
+  }
+
+  private startReplayRecording(): void {
+    this.replayRecorder = new ReplayRecorder({
+      seed: this.seedValue,
+      seedLabel: this.seedLabel,
+      mode: this.seedMode,
+    })
+    this.replayRecorder.start(this.time.now)
+    this.replayRecorder.recordFlap(this.time.now)
+  }
+
+  private finishReplayRecording(isNewBest: boolean): void {
+    if (!this.replayRecorder) {
+      return
+    }
+    const replay = this.replayRecorder.finish(this.time.now, this.scoreSystem.score)
+    this.replayRecorder = null
+    if (!replay) {
+      return
+    }
+    if (isNewBest || !this.bestReplay || replay.score >= this.bestReplay.score) {
+      saveBestReplay(replay)
+      this.bestReplay = replay
+    }
+  }
+
+  private startGhostPlayback(): void {
+    if (!this.ghostEnabled || !this.bestReplay || !this.ghostPlayer) {
+      return
+    }
+    if (!this.isReplayCompatible(this.bestReplay)) {
+      return
+    }
+    this.ghostPlayer.start(this.bestReplay)
+  }
+
+  private isReplayCompatible(replay: ReplayData): boolean {
+    if (replay.mode !== this.seedMode) {
+      return false
+    }
+    if (replay.seed === null) {
+      return true
+    }
+    return replay.seed === this.seedValue
   }
 
 }
