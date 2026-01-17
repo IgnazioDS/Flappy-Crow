@@ -22,23 +22,23 @@ npm run preview
 ```bash
 git add package.json package-lock.json CHANGELOG.md
 
-git commit -m "I release v1.1.0"
+git commit -m "I release vX.Y.Z"
 ```
 
 6) Tag the release and push commits + tags:
 
 ```bash
-git tag -a v1.1.0 -m "v1.1.0"
+git tag -a vX.Y.Z -m "vX.Y.Z"
 git push origin main --tags
 ```
 
-7) Create a GitHub Release using the `v1.1.0` tag and paste the notes from `CHANGELOG.md`.
+7) Create a GitHub Release using the `vX.Y.Z` tag and paste the notes from `CHANGELOG.md`.
 8) Verify the GitHub Pages deploy and run a quick smoke test in the live build.
 
 ## Release Notes Template
 
 ```markdown
-## v1.1.0
+## vX.Y.Z
 
 ### Added
 - ...
