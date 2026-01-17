@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [3.0.0] - 2026-01-17
+
+### Added
+- Telemetry schema versioning for event payloads.
+- "NEW BEST" callout in the game over panel when a run beats the high score.
+
 ## [2.0.0] - 2026-01-16
 
 ### Added
