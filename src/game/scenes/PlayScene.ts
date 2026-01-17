@@ -32,6 +32,7 @@ import {
   type GameModeConfig,
   type GameModeId,
 } from '../modes/modeConfig'
+import { PRACTICE_CONFIG } from '../modes/practiceConfig'
 import { ReplayRecorder } from '../replay/ReplayRecorder'
 import { ReplayPlayer } from '../replay/ReplayPlayer'
 import { loadBestReplay, saveBestReplay } from '../replay/ReplayStorage'
@@ -131,6 +132,9 @@ export class PlayScene extends Phaser.Scene {
   private analyticsConsent: 'granted' | 'denied' | null = null
   private gameModeId: GameModeId = DEFAULT_GAME_MODE
   private gameMode: GameModeConfig = getGameModeConfig(DEFAULT_GAME_MODE)
+  private practiceEnabled = false
+  private practiceInvulnMs = 0
+  private practiceCheckpointY = BIRD_CONFIG.startY
   private ghostEnabled = true
   private bestReplay: ReplayData | null = null
   private replayRecorder: ReplayRecorder | null = null
@@ -193,6 +197,7 @@ export class PlayScene extends Phaser.Scene {
     this.isMuted = readStoredBool('flappy-muted', false)
     this.reducedMotion = readStoredBool('flappy-reduced-motion', false)
     this.analyticsConsent = getTelemetryConsent()
+    this.practiceEnabled = readStoredBool('flappy-practice', false)
     this.ghostEnabled = readStoredBool('flappy-ghost', true)
     this.bestReplay = loadBestReplay(this.gameModeId)
     this.debugEnabled = this.debugToggleAllowed
@@ -354,12 +359,16 @@ export class PlayScene extends Phaser.Scene {
     const speedScalePerScore = tuning.speedScalePerScore ?? DIFFICULTY_CONFIG.speedScalePerScore
     const maxSpeedScale = tuning.maxSpeedScale ?? DIFFICULTY_CONFIG.maxSpeedScale
     const rawSpeedScale = (1 + score * speedScalePerScore) * tuning.speedMultiplier
-    const speedScale = Math.min(maxSpeedScale, rawSpeedScale)
+    let speedScale = Math.min(maxSpeedScale, rawSpeedScale)
 
     const gapReductionPerScore = tuning.gapReductionPerScore ?? DIFFICULTY_CONFIG.gapReductionPerScore
     const minGap = tuning.minGap ?? DIFFICULTY_CONFIG.minGap
     const baseGap = PIPE_CONFIG.gap * tuning.gapMultiplier
-    const gap = Math.max(minGap, baseGap - score * gapReductionPerScore)
+    let gap = Math.max(minGap, baseGap - score * gapReductionPerScore)
+    if (this.practiceEnabled) {
+      speedScale *= PRACTICE_CONFIG.speedMultiplier
+      gap *= PRACTICE_CONFIG.gapMultiplier
+    }
     return { speedScale, gap }
   }
 
@@ -814,6 +823,11 @@ export class PlayScene extends Phaser.Scene {
         onToggle: () => this.toggleGameMode(),
       },
       {
+        label: 'PRACTICE',
+        getValue: () => (this.practiceEnabled ? 'ON' : 'OFF'),
+        onToggle: () => this.togglePracticeMode(),
+      },
+      {
         label: 'GHOST',
         getValue: () => (this.ghostEnabled ? 'ON' : 'OFF'),
         onToggle: () => this.toggleGhost(),
@@ -1180,6 +1194,9 @@ export class PlayScene extends Phaser.Scene {
   private updatePlaying(dt: number, dtMs: number): void {
     const hitGround = this.bird.update(dt, this.ground.y)
     this.updateBirdVisual(dt)
+    if (this.practiceInvulnMs > 0) {
+      this.practiceInvulnMs = Math.max(0, this.practiceInvulnMs - dtMs)
+    }
 
     const tuning = this.getDifficultyTuning()
     this.speedScale = tuning.speedScale
@@ -1198,12 +1215,26 @@ export class PlayScene extends Phaser.Scene {
 
     this.despawnSystem.update(this.pipes, this.pipePool, this.handleDespawn)
 
-    if (hitGround || this.collisionSystem.check(this.bird, this.pipes, this.ground.y)) {
-      this.triggerGameOver()
+    const canCollide = !this.practiceEnabled || this.practiceInvulnMs <= 0
+    const hitObstacle =
+      canCollide && this.collisionSystem.check(this.bird, this.pipes, this.ground.y)
+    if (canCollide && (hitGround || hitObstacle)) {
+      if (this.practiceEnabled) {
+        // Practice mode keeps the run alive and repositions the bird.
+        this.handlePracticeHit()
+      } else {
+        this.triggerGameOver()
+      }
     }
 
     this.scoreSystem.update(this.bird.x, this.pipes)
     if (this.scoreSystem.score !== this.lastScore) {
+      if (this.practiceEnabled && this.practiceInvulnMs <= 0) {
+        const checkpoint = this.getLatestScoredGapY()
+        if (checkpoint !== null) {
+          this.practiceCheckpointY = checkpoint
+        }
+      }
       this.lastScore = this.scoreSystem.score
       this.scoreText.setText(String(this.scoreSystem.score))
       this.pulseScore()
@@ -1292,6 +1323,8 @@ export class PlayScene extends Phaser.Scene {
     this.bird.reset(BIRD_CONFIG.startY)
     this.birdBobTime = 0
     this.obstacleSwayClock = 0
+    this.practiceInvulnMs = 0
+    this.practiceCheckpointY = BIRD_CONFIG.startY
     this.updateBirdVisual(0)
     this.speedScale = 1
     this.currentGap = PIPE_CONFIG.gap
@@ -1553,6 +1586,22 @@ export class PlayScene extends Phaser.Scene {
     }
   }
 
+  private togglePracticeMode(): void {
+    this.practiceEnabled = !this.practiceEnabled
+    storeBool('flappy-practice', this.practiceEnabled)
+    this.practiceInvulnMs = 0
+    this.practiceCheckpointY = BIRD_CONFIG.startY
+    if (this.practiceEnabled) {
+      this.ghostPlayer?.stop()
+      this.replayRecorder = null
+    }
+    if (this.stateMachine.state === 'PLAYING' || this.stateMachine.state === 'GAME_OVER') {
+      this.enterReady()
+      return
+    }
+    this.updateSettingsValues()
+  }
+
   private applyGameMode(modeId: GameModeId): void {
     this.gameModeId = modeId
     this.gameMode = getGameModeConfig(modeId)
@@ -1580,6 +1629,24 @@ export class PlayScene extends Phaser.Scene {
 
   private getGameModeLabel(): string {
     return this.gameMode.label
+  }
+
+  private handlePracticeHit(): void {
+    this.practiceInvulnMs = PRACTICE_CONFIG.invulnerabilityMs
+    this.bird.reset(this.practiceCheckpointY)
+    this.setBirdVisual('flap')
+  }
+
+  private getLatestScoredGapY(): number | null {
+    let latestX = Number.NEGATIVE_INFINITY
+    let gapY: number | null = null
+    for (const pipe of this.pipes) {
+      if (pipe.scored && pipe.x > latestX) {
+        latestX = pipe.x
+        gapY = pipe.gapY
+      }
+    }
+    return gapY
   }
 
   private formatSeedLabel(label: string): string {
@@ -1763,6 +1830,10 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private startReplayRecording(): void {
+    if (this.practiceEnabled) {
+      this.replayRecorder = null
+      return
+    }
     this.replayRecorder = new ReplayRecorder({
       seed: this.seedValue,
       seedLabel: this.seedLabel,
@@ -1774,6 +1845,10 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private finishReplayRecording(isNewBest: boolean): void {
+    if (this.practiceEnabled) {
+      this.replayRecorder = null
+      return
+    }
     if (!this.replayRecorder) {
       return
     }
@@ -1789,7 +1864,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private startGhostPlayback(): void {
-    if (!this.ghostEnabled || !this.bestReplay || !this.ghostPlayer) {
+    if (this.practiceEnabled || !this.ghostEnabled || !this.bestReplay || !this.ghostPlayer) {
       return
     }
     if (!this.isReplayCompatible(this.bestReplay)) {
