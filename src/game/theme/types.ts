@@ -120,6 +120,25 @@ export type ThemeFx = {
     duration: number
     intensity: number
   }
+  screenFlash: {
+    enabled: boolean
+    color: number
+    alpha: number
+    durationMs: number
+  }
+  impactBurst: {
+    enabled: boolean
+    count: number
+    speedMin: number
+    speedMax: number
+    scaleMin: number
+    scaleMax: number
+    alphaStart: number
+    alphaEnd: number
+    lifespanMin: number
+    lifespanMax: number
+    tint?: number
+  }
   vignette: {
     alpha: number
   }

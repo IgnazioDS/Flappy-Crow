@@ -29,6 +29,8 @@ import {
   createShareCardCanvas,
   downloadShareCard,
 } from '../ui/shareCard'
+import { ImpactBurst } from '../effects/ImpactBurst'
+import { ScreenFlash } from '../effects/ScreenFlash'
 import {
   applyAccessibilityTheme,
   getNextContrastMode,
@@ -119,6 +121,8 @@ export class PlayScene extends Phaser.Scene {
   private parallaxLayers: ParallaxLayer[] = []
   private fogLayer: Phaser.GameObjects.TileSprite | null = null
   private vignette: Phaser.GameObjects.Image | null = null
+  private screenFlash: ScreenFlash | null = null
+  private impactBurst: ImpactBurst | null = null
 
   private pipes: PipePair[] = []
   private pipeSprites: PipeSprites[] = []
@@ -299,6 +303,7 @@ export class PlayScene extends Phaser.Scene {
 
     this.createParticles()
     this.createVignette()
+    this.createImpactFx()
     this.createDebugOverlay()
     this.createEnvDebugOverlay()
 
@@ -1199,6 +1204,25 @@ export class PlayScene extends Phaser.Scene {
     this.vignette.setDisplaySize(GAME_DIMENSIONS.width, GAME_DIMENSIONS.height)
   }
 
+  private createImpactFx(): void {
+    this.screenFlash?.destroy()
+    this.impactBurst?.destroy()
+
+    this.screenFlash = new ScreenFlash(this, this.fx.screenFlash)
+    this.screenFlash.setEnabled(!this.reducedMotion)
+
+    const particles = this.theme.visuals.particles
+    const particleFrame = particles?.ember ?? particles?.dust ?? particles?.leaf
+    const atlasKey = this.theme.assets.atlas?.key
+
+    this.impactBurst = new ImpactBurst(this, this.fx.impactBurst, {
+      atlasKey,
+      frame: particleFrame,
+      blendMode: Phaser.BlendModes.ADD,
+    })
+    this.impactBurst.setEnabled(!this.reducedMotion)
+  }
+
   private createDebugOverlay(): void {
     this.debugGraphics = this.add.graphics().setDepth(10)
     this.debugGraphics.setVisible(this.debugEnabled)
@@ -1337,6 +1361,7 @@ export class PlayScene extends Phaser.Scene {
       this.lastScore = this.scoreSystem.score
       this.scoreText.setText(String(this.scoreSystem.score))
       this.pulseScore()
+      this.screenFlash?.flash(0.4)
       telemetry.track('score_increment', { score: this.scoreSystem.score })
       this.setE2EState({ score: this.scoreSystem.score })
       if (this.e2eAutoplay && this.scoreSystem.score >= 1) {
@@ -1365,6 +1390,8 @@ export class PlayScene extends Phaser.Scene {
     if (!this.reducedMotion) {
       this.cameras.main.shake(this.fx.screenShake.duration, this.fx.screenShake.intensity)
     }
+    this.screenFlash?.flash(1)
+    this.impactBurst?.burst(this.bird.x, this.bird.y)
 
     const score = this.scoreSystem.score
     const isNewBest = score > this.bestScore
@@ -1661,8 +1688,12 @@ export class PlayScene extends Phaser.Scene {
       this.scoreFrame.setScale(1)
       this.scoreText.setScale(1)
       this.clearParticles()
+      this.screenFlash?.setEnabled(false)
+      this.impactBurst?.setEnabled(false)
     } else {
       this.createParticles()
+      this.screenFlash?.setEnabled(true)
+      this.impactBurst?.setEnabled(true)
     }
     this.updateSettingsValues()
   }
