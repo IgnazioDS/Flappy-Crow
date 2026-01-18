@@ -67,6 +67,24 @@ export default config
 - Privacy policy must be accessible in-app.
 - Add a privacy manifest if any third-party SDKs are included in the iOS build.
 
+## In-app privacy policy access plan
+
+Goal: Make the privacy policy reachable in 2 taps without leaving the app shell.
+
+Plan:
+- Add a "Privacy Policy" row to the Settings panel that opens an in-app web view.
+- Provide a fallback: open the policy in the system browser if web view fails.
+- Keep the URL in a single config constant to avoid drift between web/iOS builds.
+
+Placement:
+- Settings panel, below Analytics and above Theme.
+- Use existing button styling and tap targets.
+
+Requirements:
+- Policy URL must be HTTPS and hosted on a stable domain.
+- Policy is readable on mobile (no tiny fonts or hidden sections).
+- No tracking occurs before consent, regardless of policy view.
+
 ## No-backend best practices
 
 - Offline-first: local storage only; no required network calls.
