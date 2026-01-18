@@ -35,6 +35,23 @@ npx cap sync ios
 npx cap open ios
 ```
 
+## Capacitor config template
+
+Create `capacitor.config.ts` at the repo root:
+
+```ts
+import { CapacitorConfig } from '@capacitor/cli'
+
+const config: CapacitorConfig = {
+  appId: 'com.yourorg.flappycrow',
+  appName: 'Flappy Crow',
+  webDir: 'dist',
+  bundledWebRuntime: false,
+}
+
+export default config
+```
+
 ## iOS UX checklist
 
 - Safe areas: ensure score, settings, and overlays respect notches.
@@ -54,4 +71,3 @@ npx cap open ios
 
 - Offline-first: local storage only; no required network calls.
 - Replay storage should be bounded to prevent large local data growth.
-
