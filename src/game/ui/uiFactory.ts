@@ -51,6 +51,36 @@ export const createButtonBase = (
     .setStrokeStyle(ui.panel.strokeThickness, ui.panel.stroke)
 }
 
+export const applyButtonFeedback = (
+  button: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle,
+): void => {
+  const baseScaleX = button.scaleX
+  const baseScaleY = button.scaleY
+  const hoverScaleX = baseScaleX * 1.04
+  const hoverScaleY = baseScaleY * 1.04
+  const pressScaleX = baseScaleX * 0.98
+  const pressScaleY = baseScaleY * 0.98
+  let isOver = false
+
+  button.on('pointerover', () => {
+    isOver = true
+    button.setScale(hoverScaleX, hoverScaleY)
+  })
+  button.on('pointerout', () => {
+    isOver = false
+    button.setScale(baseScaleX, baseScaleY)
+  })
+  button.on('pointerdown', () => {
+    button.setScale(pressScaleX, pressScaleY)
+  })
+  button.on('pointerup', () => {
+    button.setScale(isOver ? hoverScaleX : baseScaleX, isOver ? hoverScaleY : baseScaleY)
+  })
+  button.on('pointerupoutside', () => {
+    button.setScale(baseScaleX, baseScaleY)
+  })
+}
+
 export const createSmallButton = (
   scene: Phaser.Scene,
   ui: ThemeUI,
@@ -60,6 +90,7 @@ export const createSmallButton = (
 ): Phaser.GameObjects.Container => {
   const buttonImage = createButtonBase(scene, ui, theme, 0.4)
   buttonImage.setInteractive({ useHandCursor: true })
+  applyButtonFeedback(buttonImage)
 
   const text = scene.add
     .text(0, 1, label, ui.button.textStyle)

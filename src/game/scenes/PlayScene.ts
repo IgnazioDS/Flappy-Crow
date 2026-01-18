@@ -27,7 +27,7 @@ import {
   storeNumber,
   storeString,
 } from '../persistence/storage'
-import { createButtonBase, createPanel, createSmallButton } from '../ui/uiFactory'
+import { applyButtonFeedback, createButtonBase, createPanel, createSmallButton } from '../ui/uiFactory'
 import { createSettingsPanel, type SettingsPanelHandle } from '../ui/settingsPanel'
 import {
   buildShareUrl,
@@ -164,6 +164,7 @@ export class PlayScene extends Phaser.Scene {
 
   private settingsButton!: Phaser.GameObjects.Container
   private settingsPanel!: SettingsPanelHandle
+  private settingsBackdrop: Phaser.GameObjects.Rectangle | null = null
   private settingsOpen = false
   private telemetryConsentPanel: Phaser.GameObjects.Container | null = null
   private telemetryConsentOpen = false
@@ -380,14 +381,14 @@ export class PlayScene extends Phaser.Scene {
     this.input.on(
       'pointerdown',
       (_pointer: Phaser.Input.Pointer, currentlyOver: Phaser.GameObjects.GameObject[]) => {
-      if (
-        this.settingsOpen ||
-        this.telemetryConsentOpen ||
-        (currentlyOver && currentlyOver.length > 0)
-      ) {
-        return
-      }
-      this.inputSystem.requestFlap()
+        if (
+          this.settingsOpen ||
+          this.telemetryConsentOpen ||
+          (currentlyOver && currentlyOver.length > 0)
+        ) {
+          return
+        }
+        this.inputSystem.requestFlap()
       },
     )
     this.input.keyboard?.on('keydown-SPACE', () => {
@@ -400,6 +401,11 @@ export class PlayScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-M', () => this.toggleMute())
     this.input.keyboard?.on('keydown-R', () => this.toggleReducedMotion())
     this.input.keyboard?.on('keydown-E', () => this.toggleEnvironment())
+    this.input.keyboard?.on('keydown-ESC', () => {
+      if (this.settingsOpen) {
+        this.toggleSettingsPanel()
+      }
+    })
     this.input.mouse?.disableContextMenu()
   }
 
@@ -827,6 +833,7 @@ export class PlayScene extends Phaser.Scene {
     const uiAssets = this.theme.visuals.ui
     const buttonBase = createButtonBase(this, this.ui, this.theme)
     buttonBase.setInteractive({ useHandCursor: true })
+    applyButtonFeedback(buttonBase)
     buttonBase.on('pointerdown', () => this.restart())
 
     const label = this.add
@@ -899,6 +906,7 @@ export class PlayScene extends Phaser.Scene {
   private createSettingsButton(): void {
     const buttonImage = createButtonBase(this, this.ui, this.theme, 0.42)
     buttonImage.setInteractive({ useHandCursor: true })
+    applyButtonFeedback(buttonImage)
 
     const labelStyle = {
       ...this.ui.statLabelStyle,
@@ -917,8 +925,8 @@ export class PlayScene extends Phaser.Scene {
         _localY: number,
         event: Phaser.Types.Input.EventData,
       ) => {
-      event.stopPropagation()
-      this.toggleSettingsPanel()
+        event.stopPropagation()
+        this.toggleSettingsPanel()
       },
     )
   }
@@ -1022,6 +1030,31 @@ export class PlayScene extends Phaser.Scene {
       })
     }
 
+    if (!this.settingsBackdrop) {
+      const backdrop = this.add
+        .rectangle(0, 0, GAME_DIMENSIONS.width, GAME_DIMENSIONS.height, this.theme.paletteNum.shadow, 0.35)
+        .setOrigin(0, 0)
+        .setDepth(5.5)
+        .setVisible(false)
+      backdrop.setInteractive()
+      backdrop.on(
+        'pointerdown',
+        (
+          _pointer: Phaser.Input.Pointer,
+          _localX: number,
+          _localY: number,
+          event: Phaser.Types.Input.EventData,
+        ) => {
+          event.stopPropagation()
+          if (this.settingsOpen) {
+            this.toggleSettingsPanel()
+          }
+        },
+      )
+      backdrop.disableInteractive()
+      this.settingsBackdrop = backdrop
+    }
+
     this.settingsPanel = createSettingsPanel({
       scene: this,
       ui: this.ui,
@@ -1107,6 +1140,14 @@ export class PlayScene extends Phaser.Scene {
   private toggleSettingsPanel(): void {
     this.settingsOpen = !this.settingsOpen
     this.settingsPanel.setVisible(this.settingsOpen)
+    if (this.settingsBackdrop) {
+      this.settingsBackdrop.setVisible(this.settingsOpen)
+      if (this.settingsOpen) {
+        this.settingsBackdrop.setInteractive()
+      } else {
+        this.settingsBackdrop.disableInteractive()
+      }
+    }
     if (this.settingsOpen) {
       this.updateSettingsValues()
     }

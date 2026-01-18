@@ -31,6 +31,10 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
   const rowWidth = panelWidth - 60
   const rowHeight = 22
   const rowGap = 26
+  const badgeHeight = rowHeight - 6
+  const badgeRightX = rowWidth / 2 - 6
+  const badgeMinWidth = 54
+  const badgePaddingX = 12
   const headerHeight = 86
   const footerHeight = 62
   const basePanelHeight = ui.panelSize.large.height + panelHeightOffset
@@ -38,6 +42,18 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
   const panelHeight = Math.max(basePanelHeight, rowsHeight + headerHeight + footerHeight)
 
   const panel = createPanel(scene, ui, theme, 'large', panelWidth, panelHeight)
+  panel.setInteractive()
+  panel.on(
+    'pointerdown',
+    (
+      _pointer: Phaser.Input.Pointer,
+      _localX: number,
+      _localY: number,
+      event: Phaser.Types.Input.EventData,
+    ) => {
+      event.stopPropagation()
+    },
+  )
 
   const titleY = -panelHeight / 2 + 34
   const title = scene.add.text(0, titleY, 'SETTINGS', ui.overlayTitleStyle).setOrigin(0.5, 0.5)
@@ -47,7 +63,7 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
     fontSize: scaleFontSize(ui.statLabelStyle.fontSize, 0.85),
   }
   const hint = scene.add
-    .text(0, titleY + 26, 'Tap a row to toggle. Saved automatically.', hintStyle)
+    .text(0, titleY + 26, 'Tap a row to toggle. Tap outside to close.', hintStyle)
     .setOrigin(0.5, 0.5)
   hint.setWordWrapWidth(panelWidth - 80)
 
@@ -62,6 +78,7 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
 
   let rowIndex = 0
   const valueTexts: Phaser.GameObjects.Text[] = []
+  const valueBadges: Phaser.GameObjects.Rectangle[] = []
   let settingsPanel: Phaser.GameObjects.Container
 
   const rowsTop = titleY + 50
@@ -70,6 +87,65 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
   const rowsAreaHeight = rowsBottom - rowsTop
   const rowStartY =
     rowsTop + rowHeight / 2 + Math.max(0, (rowsAreaHeight - rowsHeight) / 2)
+
+  const resolveBadgeTone = (value: string): 'on' | 'off' | 'neutral' => {
+    const upper = value.trim().toUpperCase()
+    if (upper === 'ON') {
+      return 'on'
+    }
+    if (upper === 'OFF') {
+      return 'off'
+    }
+    return 'neutral'
+  }
+
+  const getBadgeFill = (tone: 'on' | 'off' | 'neutral'): number => {
+    if (tone === 'on') {
+      return theme.paletteNum.panelStroke
+    }
+    if (tone === 'off') {
+      return theme.paletteNum.shadow
+    }
+    return theme.paletteNum.panel
+  }
+
+  const getBadgeAlpha = (tone: 'on' | 'off' | 'neutral'): number => {
+    if (tone === 'on') {
+      return 0.22
+    }
+    if (tone === 'off') {
+      return 0.18
+    }
+    return 0.2
+  }
+
+  const getBadgeStrokeAlpha = (tone: 'on' | 'off' | 'neutral'): number => {
+    if (tone === 'on') {
+      return 0.7
+    }
+    if (tone === 'off') {
+      return 0.4
+    }
+    return 0.55
+  }
+
+  const computeBadgeWidth = (text: Phaser.GameObjects.Text): number =>
+    Math.max(badgeMinWidth, text.width + badgePaddingX * 2)
+
+  const applyBadgeStyle = (
+    badge: Phaser.GameObjects.Rectangle,
+    valueText: Phaser.GameObjects.Text,
+    value: string,
+  ): void => {
+    const tone = resolveBadgeTone(value)
+    badge.setFillStyle(getBadgeFill(tone), getBadgeAlpha(tone))
+    badge.setStrokeStyle(1, theme.paletteNum.panelStroke, getBadgeStrokeAlpha(tone))
+    if (tone === 'off') {
+      valueText.setColor(ui.statLabelStyle.color)
+    } else {
+      valueText.setColor(ui.statValueStyle.color)
+    }
+  }
 
   const createRow = (row: SettingsRow): void => {
     const y = rowStartY + rowIndex * rowGap
@@ -97,12 +173,22 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
     )
 
     const labelText = scene.add.text(-rowWidth / 2 + 6, y, row.label, labelStyle).setOrigin(0, 0.5)
-    const valueText = scene.add
-      .text(rowWidth / 2 - 6, y, row.getValue(), valueStyle)
-      .setOrigin(1, 0.5)
+    const valueText = scene.add.text(0, y, row.getValue(), valueStyle).setOrigin(0.5, 0.5)
+    const badgeWidth = computeBadgeWidth(valueText)
+    const badge = scene.add.rectangle(
+      badgeRightX - badgeWidth / 2,
+      y,
+      badgeWidth,
+      badgeHeight,
+      theme.paletteNum.panel,
+      0.2,
+    )
+    valueText.setPosition(badgeRightX - badgeWidth / 2, y)
+    applyBadgeStyle(badge, valueText, row.getValue())
 
     valueTexts.push(valueText)
-    settingsPanel.add([hit, labelText, valueText])
+    valueBadges.push(badge)
+    settingsPanel.add([hit, labelText, badge, valueText])
   }
 
   const items: Phaser.GameObjects.GameObject[] = [panel, title, hint]
@@ -118,7 +204,16 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
 
   const updateValues = (): void => {
     for (let i = 0; i < rows.length; i += 1) {
-      valueTexts[i].setText(rows[i].getValue())
+      const value = rows[i].getValue()
+      const valueText = valueTexts[i]
+      const badge = valueBadges[i]
+      valueText.setText(value)
+      const badgeWidth = computeBadgeWidth(valueText)
+      const badgeX = badgeRightX - badgeWidth / 2
+      badge.setSize(badgeWidth, badgeHeight)
+      badge.setPosition(badgeX, valueText.y)
+      valueText.setPosition(badgeX, valueText.y)
+      applyBadgeStyle(badge, valueText, value)
     }
   }
 
