@@ -1572,9 +1572,12 @@ export class PlayScene extends Phaser.Scene {
         kind: 'static',
         baseGapY: gapCenterY,
         gapMultiplier: 1,
-        amplitude: 0,
-        speed: 0,
-        phase: 0,
+        offsetAmplitude: 0,
+        offsetSpeed: 0,
+        offsetPhase: 0,
+        gapPulseAmplitude: 0,
+        gapPulseSpeed: 0,
+        gapPulsePhase: 0,
       }
     this.pipeVariants.push(variant)
     if (this.obstacleVariantSystem) {

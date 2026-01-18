@@ -81,13 +81,11 @@ export class ImpactBurst {
       speed: { min: this.config.speedMin, max: this.config.speedMax },
       scale: { min: this.config.scaleMin, max: this.config.scaleMax },
       alpha: { start: this.config.alphaStart, end: this.config.alphaEnd },
+      tint: this.config.tint,
       blendMode: this.visual.blendMode ?? Phaser.BlendModes.ADD,
     })
     emitter.setDepth(4.2)
     emitter.setFrequency(-1)
-    if (this.config.tint !== undefined) {
-      emitter.setTint(this.config.tint)
-    }
     this.emitter = emitter
   }
 }
