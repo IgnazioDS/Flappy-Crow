@@ -176,6 +176,7 @@ export class PlayScene extends Phaser.Scene {
   private isMuted = false
   private reducedMotion = false
   private analyticsConsent: 'granted' | 'denied' | null = null
+  private readonly privacyPolicyUrl = String(import.meta.env.VITE_PRIVACY_POLICY_URL ?? '').trim()
   private gameModeId: GameModeId = DEFAULT_GAME_MODE
   private gameMode: GameModeConfig = getGameModeConfig(DEFAULT_GAME_MODE)
   private practiceEnabled = false
@@ -1010,6 +1011,15 @@ export class PlayScene extends Phaser.Scene {
         getValue: () => this.getAnalyticsLabel(),
         onToggle: () => this.toggleAnalyticsConsent(),
       },
+      ...(this.privacyPolicyUrl
+        ? [
+            {
+              label: 'PRIVACY',
+              getValue: () => 'OPEN',
+              onToggle: () => this.openPrivacyPolicy(),
+            },
+          ]
+        : []),
       {
         label: 'SEED',
         getValue: () => this.getSeedModeLabel(),
@@ -2079,6 +2089,23 @@ export class PlayScene extends Phaser.Scene {
     }
     const next = this.analyticsConsent === 'granted' ? 'denied' : 'granted'
     this.setAnalyticsConsent(next)
+  }
+
+  private openPrivacyPolicy(): void {
+    if (typeof window === 'undefined') {
+      return
+    }
+    if (!this.privacyPolicyUrl || !this.privacyPolicyUrl.startsWith('http')) {
+      return
+    }
+    try {
+      const opened = window.open(this.privacyPolicyUrl, '_blank', 'noopener,noreferrer')
+      if (!opened) {
+        window.location.href = this.privacyPolicyUrl
+      }
+    } catch {
+      window.location.href = this.privacyPolicyUrl
+    }
   }
 
   private toggleGhost(): void {
