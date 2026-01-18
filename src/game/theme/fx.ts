@@ -65,6 +65,20 @@ export const FX = {
     duration: 140,
     intensity: 0.002,
   },
+  cameraPunch: {
+    enabled: true,
+    amount: 0.02,
+    durationMs: 120,
+  },
+  sceneFade: {
+    enabled: true,
+    durationMs: 220,
+  },
+  overlayBounce: {
+    enabled: true,
+    startScale: 0.96,
+    durationMs: 260,
+  },
   screenFlash: {
     enabled: true,
     color: 0xffffff,

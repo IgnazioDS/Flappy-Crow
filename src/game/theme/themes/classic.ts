@@ -169,6 +169,20 @@ const CLASSIC_FX = {
     duration: 120,
     intensity: 0.0015,
   },
+  cameraPunch: {
+    enabled: true,
+    amount: 0.016,
+    durationMs: 110,
+  },
+  sceneFade: {
+    enabled: true,
+    durationMs: 200,
+  },
+  overlayBounce: {
+    enabled: true,
+    startScale: 0.97,
+    durationMs: 230,
+  },
   screenFlash: {
     enabled: true,
     color: 0xffffff,

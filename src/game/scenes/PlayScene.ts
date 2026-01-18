@@ -190,6 +190,7 @@ export class PlayScene extends Phaser.Scene {
   private scorePulseTween?: Phaser.Tweens.Tween
   private readyTween?: Phaser.Tweens.Tween
   private gameOverTween?: Phaser.Tweens.Tween
+  private cameraPunchTween?: Phaser.Tweens.Tween
   private visibilityPaused = false
   private readonly handleVisibilityChange = () => {
     if (typeof document === 'undefined') {
@@ -306,6 +307,7 @@ export class PlayScene extends Phaser.Scene {
     this.createImpactFx()
     this.createDebugOverlay()
     this.createEnvDebugOverlay()
+    this.startSceneFade()
 
     this.stateMachine.transition('BOOT_COMPLETE')
     this.enterReady()
@@ -402,6 +404,15 @@ export class PlayScene extends Phaser.Scene {
       document.body.style.backgroundColor = this.theme.palette.background
     }
     this.cameras.main.setBackgroundColor(this.theme.palette.background)
+    this.cameras.main.setZoom(1)
+  }
+
+  private startSceneFade(): void {
+    if (this.reducedMotion || !this.fx.sceneFade.enabled) {
+      return
+    }
+    const color = Phaser.Display.Color.HexStringToColor(this.theme.palette.background)
+    this.cameras.main.fadeIn(this.fx.sceneFade.durationMs, color.red, color.green, color.blue)
   }
 
   private getDifficultyTuning(): { speedScale: number; gap: number } {
@@ -1295,6 +1306,7 @@ export class PlayScene extends Phaser.Scene {
     this.runStartMs = this.time.now
     this.startReplayRecording()
     this.startGhostPlayback()
+    this.cameraPunch(0.6)
     telemetry.track('game_start')
     telemetry.track('flap')
     this.setE2EState({ state: 'PLAYING' })
@@ -1390,6 +1402,7 @@ export class PlayScene extends Phaser.Scene {
     if (!this.reducedMotion) {
       this.cameras.main.shake(this.fx.screenShake.duration, this.fx.screenShake.intensity)
     }
+    this.cameraPunch(1)
     this.screenFlash?.flash(1)
     this.impactBurst?.burst(this.bird.x, this.bird.y)
 
@@ -1609,14 +1622,15 @@ export class PlayScene extends Phaser.Scene {
     tweenRef?.stop()
 
     container.setAlpha(0)
-    container.setScale(0.98)
+    const bounceEnabled = this.fx.overlayBounce.enabled
+    container.setScale(bounceEnabled ? this.fx.overlayBounce.startScale : 0.98)
 
     const tween = this.tweens.add({
       targets: container,
       alpha: 1,
       scale: 1,
-      duration: 220,
-      ease: 'Sine.Out',
+      duration: bounceEnabled ? this.fx.overlayBounce.durationMs : 220,
+      ease: bounceEnabled ? 'Back.Out' : 'Sine.Out',
     })
 
     if (kind === 'ready') {
@@ -1685,6 +1699,8 @@ export class PlayScene extends Phaser.Scene {
       this.readyTween?.stop()
       this.gameOverTween?.stop()
       this.scorePulseTween?.stop()
+      this.cameraPunchTween?.stop()
+      this.cameras.main.setZoom(1)
       this.scoreFrame.setScale(1)
       this.scoreText.setScale(1)
       this.clearParticles()
@@ -1824,6 +1840,28 @@ export class PlayScene extends Phaser.Scene {
     this.practiceInvulnMs = PRACTICE_CONFIG.invulnerabilityMs
     this.bird.reset(this.practiceCheckpointY)
     this.setBirdVisual('flap')
+  }
+
+  private cameraPunch(intensity: number): void {
+    if (this.reducedMotion || !this.fx.cameraPunch.enabled) {
+      return
+    }
+    const amount = this.fx.cameraPunch.amount * intensity
+    if (amount <= 0) {
+      return
+    }
+    this.cameraPunchTween?.stop()
+    this.cameras.main.setZoom(1)
+    this.cameraPunchTween = this.tweens.add({
+      targets: this.cameras.main,
+      zoom: 1 + amount,
+      duration: this.fx.cameraPunch.durationMs,
+      yoyo: true,
+      ease: 'Sine.Out',
+      onComplete: () => {
+        this.cameras.main.setZoom(1)
+      },
+    })
   }
 
   private getLatestScoredGapY(): number | null {

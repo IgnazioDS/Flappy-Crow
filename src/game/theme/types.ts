@@ -120,6 +120,20 @@ export type ThemeFx = {
     duration: number
     intensity: number
   }
+  cameraPunch: {
+    enabled: boolean
+    amount: number
+    durationMs: number
+  }
+  sceneFade: {
+    enabled: boolean
+    durationMs: number
+  }
+  overlayBounce: {
+    enabled: boolean
+    startScale: number
+    durationMs: number
+  }
   screenFlash: {
     enabled: boolean
     color: number
