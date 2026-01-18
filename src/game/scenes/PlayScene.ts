@@ -2118,7 +2118,11 @@ export class PlayScene extends Phaser.Scene {
     if (!this.e2eEnabled || typeof window === 'undefined') {
       return
     }
-    const win = window as Window & { __flappyDebug?: E2EDebugState }
+    const win = window as Window & {
+      __flappyDebug?: E2EDebugState
+      __forceLowPower?: () => void
+      __clearLowPower?: () => void
+    }
     if (!win.__flappyDebug) {
       win.__flappyDebug = {
         state: this.stateMachine.state,
@@ -2132,6 +2136,12 @@ export class PlayScene extends Phaser.Scene {
       }
     }
     Object.assign(win.__flappyDebug, partial)
+    if (this.debugToggleAllowed || this.e2eEnabled) {
+      if (!win.__forceLowPower) {
+        win.__forceLowPower = () => this.setLowPowerMode(true)
+        win.__clearLowPower = () => this.setLowPowerMode(false)
+      }
+    }
   }
 
   private updateDebugOverlay(): void {
