@@ -39,3 +39,8 @@ Use `npm run preview` locally or a host with preview support if you need PR prev
 ## iOS app shell
 
 For iOS packaging (Capacitor), see `docs/IOS.md`.
+
+## Privacy policy URL
+
+If you use the in-game Privacy row, set the GitHub Actions repo variable
+`PRIVACY_POLICY_URL` so the Pages build receives `VITE_PRIVACY_POLICY_URL`.
