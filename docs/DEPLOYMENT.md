@@ -35,3 +35,7 @@ sites (Vercel, Netlify, custom domain), leave `VITE_BASE` unset so it defaults t
 
 GitHub Pages does not provide per-PR preview deployments by default.
 Use `npm run preview` locally or a host with preview support if you need PR previews.
+
+## iOS app shell
+
+For iOS packaging (Capacitor), see `docs/IOS.md`.

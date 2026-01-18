@@ -87,6 +87,7 @@ See `docs/PERFORMANCE.md` for the manual memory-growth checklist.
 - `docs/RELEASE.md` - release checklist and tagging
 - `docs/DEPLOYMENT.md` - deployment workflow and base path notes
 - `docs/TELEMETRY.md` - tracked events and privacy details
+- `docs/IOS.md` - iOS app shell workflow and App Store checklist
 
 ## Themes
 

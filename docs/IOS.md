@@ -1,0 +1,57 @@
+# iOS App Shell (Capacitor) Plan
+
+This project remains static-first. The iOS shell wraps the existing `dist/` build
+without changing web deployment.
+
+## Packaging workflow (Capacitor)
+
+1) Build the web bundle:
+
+```bash
+npm run build
+```
+
+2) Initialize Capacitor (one-time):
+
+```bash
+npx cap init flappy-crow com.yourorg.flappycrow --web-dir=dist
+```
+
+3) Add the iOS platform (one-time):
+
+```bash
+npx cap add ios
+```
+
+4) Sync web assets into the native project:
+
+```bash
+npx cap sync ios
+```
+
+5) Open in Xcode and run:
+
+```bash
+npx cap open ios
+```
+
+## iOS UX checklist
+
+- Safe areas: ensure score, settings, and overlays respect notches.
+- Touch targets: settings rows and buttons remain easy to tap on small screens.
+- Aspect ratios: validate from iPhone SE through Pro Max.
+- Haptics: optional only; respect reduced-motion and user toggles.
+- Background/foreground: pause/resume behavior is correct.
+
+## App Store compliance checklist
+
+- Telemetry must be opt-in and disabled without consent.
+- If any telemetry qualifies as tracking, require ATT before enabling.
+- Privacy policy must be accessible in-app.
+- Add a privacy manifest if any third-party SDKs are included in the iOS build.
+
+## No-backend best practices
+
+- Offline-first: local storage only; no required network calls.
+- Replay storage should be bounded to prevent large local data growth.
+
