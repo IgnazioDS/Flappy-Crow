@@ -3,6 +3,25 @@
 All notable changes to this project will be documented in this file.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [4.0.0] - 2026-01-18
+
+### Added
+- Replay recording and ghost playback for best runs.
+- Practice mode with checkpoints and brief invulnerability.
+- Casual and Hardcore difficulty presets.
+- Moving and pulsing obstacle variants with cooldown spacing.
+- Shareable run card export with seed links.
+- Accessibility upgrades (one-handed layout, text scaling, high contrast).
+- Emerald Lake Swan theme.
+
+### Changed
+- Added juice passes (camera punch, screen flash, impact bursts, overlay bounce).
+- Settings panel polish with value badges and backdrop dismissal.
+- Adaptive low-power visuals for smoother play on low-end devices.
+
+### Fixed
+- Particle tinting uses emitter config to satisfy Phaser typings.
+
 ## [3.0.0] - 2026-01-17
 
 ### Added

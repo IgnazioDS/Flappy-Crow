@@ -1,4 +1,4 @@
-# Flappy Bird EX
+# Flappy Crow
 
 Production-ready Flappy Bird-inspired clone built with TypeScript, Vite, and Phaser 3.
 All gameplay rules live in deterministic systems so the logic is easy to test.
