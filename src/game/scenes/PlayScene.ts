@@ -1677,15 +1677,15 @@ export class PlayScene extends Phaser.Scene {
         .setOrigin(0, 1)
         .setDepth(1.05)
         .setBlendMode(Phaser.BlendModes.SCREEN)
-        .setAlpha(0.3)
-        .setTint(0xb3f6ff)
+        .setAlpha(0.22)
+        .setTint(0x9ef1ff)
       bottomGlow = this.add
         .image(0, 0, obstacles.key, obstacles.bottomKey ?? obstacles.bottomFrames?.[0])
         .setOrigin(0, 0)
         .setDepth(1.05)
         .setBlendMode(Phaser.BlendModes.SCREEN)
-        .setAlpha(0.3)
-        .setTint(0xb3f6ff)
+        .setAlpha(0.22)
+        .setTint(0x9ef1ff)
       if (obstacles.type === 'image' && obstacles.flipTop) {
         topGlow.setFlipY(true)
       }
