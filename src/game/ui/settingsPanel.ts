@@ -29,9 +29,12 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
   const { scene, ui, theme, position, rows, onClose, panelHeightOffset = 30 } = options
   const panelWidth = ui.panelSize.large.width
   const rowWidth = panelWidth - 60
-  const rowHeight = 22
-  const rowGap = 26
-  const badgeHeight = rowHeight - 6
+  const labelFontSize = parseFontSize(ui.statLabelStyle.fontSize, 14)
+  const valueFontSize = parseFontSize(ui.statValueStyle.fontSize, 16)
+  const rowFontSize = Math.max(labelFontSize, valueFontSize)
+  const rowHeight = Math.max(26, Math.round(rowFontSize * 1.55))
+  const rowGap = Math.round(rowHeight * 1.15)
+  const badgeHeight = Math.max(18, rowHeight - 8)
   const badgeRightX = rowWidth / 2 - 6
   const badgeMinWidth = 54
   const badgePaddingX = 12
@@ -69,11 +72,9 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
 
   const labelStyle = {
     ...ui.statLabelStyle,
-    fontSize: '14px',
   }
   const valueStyle = {
     ...ui.statValueStyle,
-    fontSize: '16px',
   }
 
   let rowIndex = 0
@@ -232,4 +233,13 @@ const scaleFontSize = (value: string, multiplier: number): string => {
   }
   const next = Math.max(10, Math.round(Number(match[1]) * multiplier))
   return `${next}px`
+}
+
+const parseFontSize = (value: string, fallback: number): number => {
+  const match = value.match(/^(\\d+(?:\\.\\d+)?)px$/)
+  if (!match) {
+    return fallback
+  }
+  const parsed = Number(match[1])
+  return Number.isFinite(parsed) ? parsed : fallback
 }
