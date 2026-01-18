@@ -3,6 +3,17 @@
 Production-ready Flappy Bird-inspired clone built with TypeScript, Vite, and Phaser 3.
 All gameplay rules live in deterministic systems so the logic is easy to test.
 
+## Highlights
+
+- Deterministic seeded modes (daily + custom) with repeatable obstacle spawns
+- Ghost replay playback + best-run recording (local)
+- Practice mode with checkpoints and invulnerability window
+- Casual / Hardcore presets for comfort vs mastery
+- Moving + pulsing obstacle variants tuned for readability
+- Shareable run card with seed link export (local)
+- Accessibility: one-handed layout, text scaling, high contrast, reduced motion
+- Multiple themes (Classic Sky, Evil Forest Crow, Emerald Lake Swan)
+
 ## Quickstart
 
 ```bash
@@ -28,10 +39,13 @@ Playwright runs the dev server with `VITE_TEST_SEED` and `VITE_E2E` to make runs
 
 - Tap / click: flap
 - Spacebar: flap
-- Settings button (top-left) opens toggles for mute, reduced motion, and analytics opt-out
+- Settings button opens toggles for mute, reduced motion, handedness, text scale, contrast,
+  analytics opt-out, seed mode, difficulty, practice, ghost, and theme
 - H: toggle art QA hitbox overlay
 - M: toggle mute icon
 - R: toggle reduced motion
+- Esc: close settings panel
+- Share button (Game Over): export run card + seed link
 
 ## Query params
 
@@ -61,7 +75,7 @@ All gameplay constants live in `src/game/config.ts`. Key values:
 
 ## Telemetry (optional)
 
-Telemetry is opt-in via environment configuration and can be disabled by players
+Telemetry is opt-in via environment configuration and consent, and can be disabled by players
 through the analytics opt-out flag (stored in localStorage).
 
 ## Performance sanity checks
