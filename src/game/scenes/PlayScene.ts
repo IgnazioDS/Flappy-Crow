@@ -844,6 +844,7 @@ export class PlayScene extends Phaser.Scene {
     const items: Phaser.GameObjects.GameObject[] = [buttonBase, label]
     if (uiAssets.kind === 'atlas' && uiAssets.frames?.iconRestart && uiAssets.atlasKey) {
       const icon = this.add.image(-54, 0, uiAssets.atlasKey, uiAssets.frames.iconRestart).setScale(0.9)
+      this.applyIconContrast(icon)
       items.splice(1, 0, icon)
       label.setX(18)
     }
@@ -883,6 +884,7 @@ export class PlayScene extends Phaser.Scene {
         .setScale(iconScale)
         .setInteractive(hitConfig)
       this.motionIcon.on('pointerdown', () => this.toggleReducedMotion())
+      this.applyIconContrast(this.motionIcon)
 
       this.muteIcon = this.add
         .image(
@@ -895,6 +897,7 @@ export class PlayScene extends Phaser.Scene {
         .setScale(iconScale)
         .setInteractive(hitConfig)
       this.muteIcon.on('pointerdown', () => this.toggleMute())
+      this.applyIconContrast(this.muteIcon)
     } else {
       this.motionIcon = null
       this.muteIcon = null
@@ -930,6 +933,13 @@ export class PlayScene extends Phaser.Scene {
         this.toggleSettingsPanel()
       },
     )
+  }
+
+  private applyIconContrast(icon: Phaser.GameObjects.Image): void {
+    if (this.theme.id !== 'evil-forest') {
+      return
+    }
+    icon.setTint(this.theme.paletteNum.panelStroke)
   }
 
   private applyHandednessLayout(): void {
