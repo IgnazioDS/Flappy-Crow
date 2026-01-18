@@ -1,4 +1,4 @@
-export type ThemeId = 'classic' | 'evil-forest'
+export type ThemeId = 'classic' | 'evil-forest' | 'emerald-lake'
 
 export type ThemeTextStyle = {
   fontFamily: string

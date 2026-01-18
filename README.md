@@ -76,8 +76,8 @@ See `docs/PERFORMANCE.md` for the manual memory-growth checklist.
 
 ## Themes
 
-Two themes are available: Classic Sky and Evil Forest Crow. Use the Settings panel to switch themes,
-or set `VITE_THEME=classic` / `VITE_THEME=evil-forest` in your environment.
+Three themes are available: Classic Sky, Evil Forest Crow, and Emerald Lake Swan. Use the Settings panel to switch themes,
+or set `VITE_THEME=classic` / `VITE_THEME=evil-forest` / `VITE_THEME=emerald-lake` in your environment.
 
 Optional environment variables (see `.env.example`):
 
