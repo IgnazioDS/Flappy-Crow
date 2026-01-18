@@ -33,6 +33,7 @@ jobs:
         run: npm run build
         env:
           VITE_BASE: /${{ github.event.repository.name }}/
+          VITE_PRIVACY_POLICY_URL: ${{ vars.PRIVACY_POLICY_URL }}
 
       - name: Upload Pages Artifact
         uses: actions/upload-pages-artifact@v3
