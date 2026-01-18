@@ -80,8 +80,8 @@ const CLASSIC_UI = {
     alpha: 0.95,
   },
   panelSize: {
-    small: { width: 250, height: 110 },
-    large: { width: 300, height: 170 },
+    small: { width: 260, height: 120 },
+    large: { width: 320, height: 180 },
   },
   layout: {
     ready: {
@@ -94,22 +94,22 @@ const CLASSIC_UI = {
     },
   },
   button: {
-    width: 170,
-    height: 48,
+    width: 176,
+    height: 50,
     textStyle: {
       fontFamily: '"Bungee", "Trebuchet MS", sans-serif',
-      fontSize: '16px',
+      fontSize: '17px',
       color: CLASSIC_PALETTE.textPrimary,
       stroke: '#ffffff',
       strokeThickness: 4,
     },
   },
   scoreFrameSize: {
-    width: 140,
-    height: 50,
+    width: 150,
+    height: 54,
   },
   icon: {
-    size: 24,
+    size: 26,
     padding: 10,
   },
 } as const
