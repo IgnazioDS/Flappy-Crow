@@ -63,16 +63,16 @@ const EMERALD_UI = {
   statLabelStyle: {
     fontFamily: '"Cinzel", serif',
     fontSize: '14px',
-    color: EMERALD_PALETTE.textMuted,
-    stroke: '#0b1f1b',
+    color: '#bff3e7',
+    stroke: '#09201b',
     strokeThickness: 3,
   },
   statValueStyle: {
     fontFamily: '"Space Mono", monospace',
     fontSize: '18px',
     color: EMERALD_PALETTE.textPrimary,
-    stroke: '#0b1f1b',
-    strokeThickness: 4,
+    stroke: '#041512',
+    strokeThickness: 5,
   },
   panel: {
     fill: EMERALD_PALETTE_NUM.panel,
