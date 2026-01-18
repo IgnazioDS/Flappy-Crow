@@ -81,6 +81,8 @@ import {
 type PipeSprites = {
   top: Phaser.GameObjects.Image
   bottom: Phaser.GameObjects.Image
+  topGlow?: Phaser.GameObjects.Image
+  bottomGlow?: Phaser.GameObjects.Image
 }
 
 type ParallaxLayer = {
@@ -228,6 +230,8 @@ export class PlayScene extends Phaser.Scene {
     const sprites = this.pipeSprites.splice(index, 1)[0]
     sprites.top.setVisible(false)
     sprites.bottom.setVisible(false)
+    sprites.topGlow?.setVisible(false)
+    sprites.bottomGlow?.setVisible(false)
     this.pipeSpritePool.push(sprites)
     this.pipeVariants.splice(index, 1)
   }
@@ -1664,7 +1668,30 @@ export class PlayScene extends Phaser.Scene {
     if (obstacles.type === 'image' && obstacles.flipTop) {
       top.setFlipY(true)
     }
-    return { top, bottom }
+
+    let topGlow: Phaser.GameObjects.Image | undefined
+    let bottomGlow: Phaser.GameObjects.Image | undefined
+    if (this.theme.id === 'evil-forest') {
+      topGlow = this.add
+        .image(0, 0, obstacles.key, obstacles.topKey ?? obstacles.topFrames?.[0])
+        .setOrigin(0, 1)
+        .setDepth(1.05)
+        .setBlendMode(Phaser.BlendModes.ADD)
+        .setAlpha(0.22)
+        .setTint(0x9ef1ff)
+      bottomGlow = this.add
+        .image(0, 0, obstacles.key, obstacles.bottomKey ?? obstacles.bottomFrames?.[0])
+        .setOrigin(0, 0)
+        .setDepth(1.05)
+        .setBlendMode(Phaser.BlendModes.ADD)
+        .setAlpha(0.22)
+        .setTint(0x9ef1ff)
+      if (obstacles.type === 'image' && obstacles.flipTop) {
+        topGlow.setFlipY(true)
+      }
+    }
+
+    return { top, bottom, topGlow, bottomGlow }
   }
 
   private applyObstacleVariant(sprites: PipeSprites): void {
@@ -1673,8 +1700,12 @@ export class PlayScene extends Phaser.Scene {
       return
     }
     const variantIndex = this.nextObstacleVariant()
-    sprites.top.setTexture(obstacles.key, obstacles.topFrames[variantIndex])
-    sprites.bottom.setTexture(obstacles.key, obstacles.bottomFrames[variantIndex])
+    const topFrame = obstacles.topFrames[variantIndex]
+    const bottomFrame = obstacles.bottomFrames[variantIndex]
+    sprites.top.setTexture(obstacles.key, topFrame)
+    sprites.bottom.setTexture(obstacles.key, bottomFrame)
+    sprites.topGlow?.setTexture(obstacles.key, topFrame)
+    sprites.bottomGlow?.setTexture(obstacles.key, bottomFrame)
   }
 
   private updatePipeSprites(pipe: PipePair, sprites: PipeSprites): void {
@@ -1690,11 +1721,23 @@ export class PlayScene extends Phaser.Scene {
     sprites.top.setDisplaySize(PIPE_CONFIG.width, topHeight)
     sprites.top.setRotation(-sway)
     sprites.top.setVisible(topHeight > 0)
+    if (sprites.topGlow) {
+      sprites.topGlow.setPosition(pipe.x - 1, topHeight)
+      sprites.topGlow.setDisplaySize(PIPE_CONFIG.width + 2, topHeight + 2)
+      sprites.topGlow.setRotation(-sway)
+      sprites.topGlow.setVisible(topHeight > 0)
+    }
 
     sprites.bottom.setPosition(pipe.x, pipe.bottomY)
     sprites.bottom.setDisplaySize(PIPE_CONFIG.width, bottomHeight)
     sprites.bottom.setRotation(sway)
     sprites.bottom.setVisible(bottomHeight > 0)
+    if (sprites.bottomGlow) {
+      sprites.bottomGlow.setPosition(pipe.x - 1, pipe.bottomY)
+      sprites.bottomGlow.setDisplaySize(PIPE_CONFIG.width + 2, bottomHeight + 2)
+      sprites.bottomGlow.setRotation(sway)
+      sprites.bottomGlow.setVisible(bottomHeight > 0)
+    }
   }
 
   private updateBirdVisual(dt: number): void {
