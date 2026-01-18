@@ -5,12 +5,12 @@ const EMERALD_PALETTE = {
   textPrimary: '#e6fffb',
   textMuted: '#9fe7da',
   panel: '#10362f',
-  panelStroke: '#2b7a65',
+  panelStroke: '#47b091',
 } as const
 
 const EMERALD_PALETTE_NUM = {
   panel: 0x10362f,
-  panelStroke: 0x2b7a65,
+  panelStroke: 0x47b091,
   shadow: 0x031310,
 } as const
 
@@ -77,8 +77,8 @@ const EMERALD_UI = {
   panel: {
     fill: EMERALD_PALETTE_NUM.panel,
     stroke: EMERALD_PALETTE_NUM.panelStroke,
-    strokeThickness: 2,
-    alpha: 0.95,
+    strokeThickness: 3,
+    alpha: 0.92,
   },
   panelSize: {
     small: { width: 260, height: 110 },
