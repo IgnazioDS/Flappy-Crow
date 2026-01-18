@@ -235,12 +235,12 @@ const IMAGE_KEYS = {
 } as const
 
 const IMAGE_PATHS = {
-  [IMAGE_KEYS.bgFar]: 'assets/bg_far.svg',
-  [IMAGE_KEYS.bgMid]: 'assets/bg_mid.svg',
-  [IMAGE_KEYS.bgNear]: 'assets/bg_near.svg',
-  [IMAGE_KEYS.ground]: 'assets/ground.svg',
+  [IMAGE_KEYS.bgFar]: 'assets/emerald_bg_far.svg',
+  [IMAGE_KEYS.bgMid]: 'assets/emerald_bg_mid.svg',
+  [IMAGE_KEYS.bgNear]: 'assets/emerald_bg_near.svg',
+  [IMAGE_KEYS.ground]: 'assets/emerald_ground.svg',
   [IMAGE_KEYS.swan]: 'assets/swan.svg',
-  [IMAGE_KEYS.pipe]: 'assets/pipe.svg',
+  [IMAGE_KEYS.pipe]: 'assets/emerald_pipe.svg',
   [IMAGE_KEYS.vignette]: 'assets/vignette.svg',
 } as const
 

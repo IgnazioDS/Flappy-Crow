@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="640" viewBox="0 0 360 640" fill="none">
+  <rect width="360" height="640" fill="none" />
+  <path
+    d="M0 420 C70 390 150 390 210 420 C270 450 320 450 360 430 L360 640 L0 640 Z"
+    fill="#1c5a4d"
+  />
+  <path
+    d="M0 480 C70 450 160 450 230 480 C290 505 330 505 360 490 L360 640 L0 640 Z"
+    fill="#1a5145"
+  />
+  <path
+    d="M0 540 C80 520 170 520 240 540 C300 560 330 560 360 548 L360 640 L0 640 Z"
+    fill="#18483e"
+  />
+</svg>
