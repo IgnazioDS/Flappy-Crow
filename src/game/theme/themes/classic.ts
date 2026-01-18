@@ -14,6 +14,18 @@ const CLASSIC_PALETTE_NUM = {
   shadow: 0x0b1a26,
 } as const
 
+const CLASSIC_ACCESSIBILITY = {
+  contrast: {
+    high: {
+      palette: {
+        textPrimary: '#0b1a26',
+        textMuted: '#1f2933',
+        panelStroke: '#0b1a26',
+      },
+    },
+  },
+} as const
+
 const CLASSIC_UI = {
   fonts: {
     title: '"Bungee", "Trebuchet MS", sans-serif',
@@ -236,6 +248,7 @@ export const classicTheme: ThemeDefinition = {
   name: 'Classic Sky',
   palette: CLASSIC_PALETTE,
   paletteNum: CLASSIC_PALETTE_NUM,
+  accessibility: CLASSIC_ACCESSIBILITY,
   assets: {
     images: IMAGE_PATHS,
   },
@@ -264,4 +277,5 @@ export const classicTheme: ThemeDefinition = {
   },
   ui: CLASSIC_UI,
   fx: CLASSIC_FX,
+  audio: {},
 }

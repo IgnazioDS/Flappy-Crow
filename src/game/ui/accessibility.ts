@@ -17,6 +17,12 @@ const TEXT_SCALE_KEY = 'flappy-text-scale'
 const TEXT_SCALES = [1, 1.15, 1.3]
 const HAND_OPTIONS: Handedness[] = ['normal', 'left', 'right']
 const CONTRAST_OPTIONS: ContrastMode[] = ['normal', 'high']
+const DEFAULT_HIGH_CONTRAST_OVERRIDES = {
+  textPrimary: '#ffffff',
+  textMuted: '#e2e8f0',
+  panel: '#0b1220',
+  panelStroke: '#f8fafc',
+} as const
 
 export const readAccessibilitySettings = (): AccessibilitySettings => {
   const handRaw = readStoredString(HAND_KEY)
@@ -65,21 +71,16 @@ export const applyAccessibilityTheme = (
   settings: AccessibilitySettings,
 ): ThemeDefinition => {
   // Create a derived theme for accessibility without mutating the base theme registry.
+  const highContrast = theme.accessibility.contrast?.high
+  const paletteOverrides = highContrast?.palette ?? DEFAULT_HIGH_CONTRAST_OVERRIDES
   const palette =
-    settings.contrast === 'high'
-      ? {
-          ...theme.palette,
-          textPrimary: '#ffffff',
-          textMuted: '#e2e8f0',
-          panel: '#0b1220',
-          panelStroke: '#f8fafc',
-        }
-      : theme.palette
+    settings.contrast === 'high' ? { ...theme.palette, ...paletteOverrides } : theme.palette
 
   const paletteNum =
     settings.contrast === 'high'
       ? {
           ...theme.paletteNum,
+          ...(highContrast?.paletteNum ?? {}),
           panel: hexToNumber(palette.panel),
           panelStroke: hexToNumber(palette.panelStroke),
         }

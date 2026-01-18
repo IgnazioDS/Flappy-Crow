@@ -14,6 +14,19 @@ const EMERALD_PALETTE_NUM = {
   shadow: 0x031310,
 } as const
 
+const EMERALD_ACCESSIBILITY = {
+  contrast: {
+    high: {
+      palette: {
+        textPrimary: '#ffffff',
+        textMuted: '#d1fae5',
+        panel: '#0b241f',
+        panelStroke: '#5eead4',
+      },
+    },
+  },
+} as const
+
 const EMERALD_UI = {
   fonts: {
     title: '"Cinzel Decorative", "Cinzel", serif',
@@ -236,6 +249,7 @@ export const emeraldLakeTheme: ThemeDefinition = {
   name: 'Emerald Lake Swan',
   palette: EMERALD_PALETTE,
   paletteNum: EMERALD_PALETTE_NUM,
+  accessibility: EMERALD_ACCESSIBILITY,
   assets: {
     images: IMAGE_PATHS,
   },
@@ -264,4 +278,5 @@ export const emeraldLakeTheme: ThemeDefinition = {
   },
   ui: EMERALD_UI,
   fx: EMERALD_FX,
+  audio: {},
 }

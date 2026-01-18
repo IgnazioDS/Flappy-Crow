@@ -4,6 +4,19 @@ import { FX } from '../fx'
 import { PALETTE, PALETTE_NUM } from '../palette'
 import { UI } from '../ui'
 
+const EVIL_FOREST_ACCESSIBILITY = {
+  contrast: {
+    high: {
+      palette: {
+        textPrimary: '#ffffff',
+        textMuted: '#dbeafe',
+        panel: '#0b0d14',
+        panelStroke: '#9ef1ff',
+      },
+    },
+  },
+} as const
+
 export const evilForestTheme: ThemeDefinition = {
   id: 'evil-forest',
   name: 'Evil Forest Crow',
@@ -19,6 +32,7 @@ export const evilForestTheme: ThemeDefinition = {
     panelStroke: PALETTE_NUM.panelStroke,
     shadow: PALETTE_NUM.shadow,
   },
+  accessibility: EVIL_FOREST_ACCESSIBILITY,
   assets: {
     atlas: ATLAS,
     images: IMAGE_PATHS,
@@ -73,4 +87,5 @@ export const evilForestTheme: ThemeDefinition = {
   },
   ui: UI,
   fx: FX,
+  audio: {},
 }

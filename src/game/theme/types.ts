@@ -240,11 +240,36 @@ export type ThemePaletteNum = {
   shadow: number
 }
 
+export type ThemeAccessibility = {
+  contrast?: {
+    high?: {
+      palette?: Partial<ThemePalette>
+      paletteNum?: Partial<ThemePaletteNum>
+    }
+  }
+}
+
+export type ThemeAudio = {
+  ambience?: {
+    key: string
+    volume: number
+    loop: boolean
+  }
+  sfx?: {
+    flap?: string
+    score?: string
+    hit?: string
+    uiTap?: string
+    gameOver?: string
+  }
+}
+
 export type ThemeDefinition = {
   id: ThemeId
   name: string
   palette: ThemePalette
   paletteNum: ThemePaletteNum
+  accessibility: ThemeAccessibility
   assets: ThemeAssets
   images: ThemeImages
   visuals: {
@@ -255,4 +280,5 @@ export type ThemeDefinition = {
   }
   ui: ThemeUI
   fx: ThemeFx
+  audio: ThemeAudio
 }
