@@ -50,6 +50,7 @@ export class BackgroundSystem {
   private biolume: BiolumeInstance[] = []
   private elapsed = 0
   private reducedMotion = false
+  private lowPower = false
 
   constructor(scene: Phaser.Scene, env: EnvironmentConfig) {
     this.scene = scene
@@ -64,6 +65,11 @@ export class BackgroundSystem {
 
   setReducedMotion(reduced: boolean): void {
     this.reducedMotion = reduced
+  }
+
+  setLowPowerMode(enabled: boolean): void {
+    this.lowPower = enabled
+    this.applyLowPowerVisibility()
   }
 
   setSpeedScale(scale: number): void {
@@ -89,6 +95,7 @@ export class BackgroundSystem {
     if (this.env.biolume) {
       this.biolume = this.createBiolume(this.env.biolume)
     }
+    this.applyLowPowerVisibility()
   }
 
   update(dt: number): void {
@@ -100,11 +107,11 @@ export class BackgroundSystem {
       this.updateLayers(this.foregroundLayers, dt)
     }
 
-    if (this.lightRays) {
+    if (this.lightRays && this.lightRays.sprite.visible) {
       this.updateLightRays(this.lightRays)
     }
 
-    if (this.reflection && !this.reducedMotion) {
+    if (this.reflection && this.reflection.container.visible && !this.reducedMotion) {
       this.updateReflection(this.reflection, dt)
     }
 
@@ -185,6 +192,9 @@ export class BackgroundSystem {
     }
     const baseSpeed = PIPE_CONFIG.speed * this.speedScale * dt
     for (const layer of layers) {
+      if (!layer.sprite.visible) {
+        continue
+      }
       layer.sprite.tilePositionX += baseSpeed * layer.speed
     }
   }
@@ -287,15 +297,48 @@ export class BackgroundSystem {
   private updateBiolume(patches: BiolumeInstance[]): void {
     if (this.reducedMotion) {
       for (const patch of patches) {
+        if (!patch.sprite.visible) {
+          continue
+        }
         patch.sprite.setAlpha(patch.baseAlpha)
         patch.sprite.setScale(patch.baseScale)
       }
       return
     }
     for (const patch of patches) {
+      if (!patch.sprite.visible) {
+        continue
+      }
       const pulse = (Math.sin(this.elapsed * patch.pulseSpeed) + 1) * 0.5
       patch.sprite.setAlpha(patch.baseAlpha * (0.75 + pulse * 0.25))
       patch.sprite.setScale(patch.baseScale * (0.95 + pulse * 0.05))
+    }
+  }
+
+  private applyLowPowerVisibility(): void {
+    const lowPowerConfig = this.env.lowPower
+    const isLowPower = this.lowPower && lowPowerConfig
+    const disabledLayers = new Set(lowPowerConfig?.disableLayers ?? [])
+
+    for (const layer of this.layers) {
+      layer.sprite.setVisible(!(isLowPower && disabledLayers.has(layer.name)))
+    }
+    for (const layer of this.fogLayers) {
+      layer.sprite.setVisible(!(isLowPower && lowPowerConfig?.disableFog))
+    }
+    for (const layer of this.foregroundLayers) {
+      layer.sprite.setVisible(!(isLowPower && lowPowerConfig?.disableForeground))
+    }
+
+    if (this.lightRays) {
+      this.lightRays.sprite.setVisible(!(isLowPower && lowPowerConfig?.disableLightRays))
+    }
+    if (this.reflection) {
+      this.reflection.container.setVisible(!(isLowPower && lowPowerConfig?.disableReflection))
+    }
+    if (this.biolume.length > 0) {
+      const visible = !(isLowPower && lowPowerConfig?.disableBiolume)
+      this.biolume.forEach((patch) => patch.sprite.setVisible(visible))
     }
   }
 }

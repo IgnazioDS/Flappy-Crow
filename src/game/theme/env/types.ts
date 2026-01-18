@@ -19,6 +19,15 @@ export type EnvironmentFogLayer = EnvironmentLayer & {
   blendMode?: 'normal' | 'screen' | 'add'
 }
 
+export type EnvironmentLowPowerConfig = {
+  disableFog?: boolean
+  disableForeground?: boolean
+  disableLightRays?: boolean
+  disableReflection?: boolean
+  disableBiolume?: boolean
+  disableLayers?: string[]
+}
+
 export type LightRaysConfig = {
   key: string
   depth: number
@@ -96,4 +105,5 @@ export type EnvironmentConfig = {
   reflection?: ReflectionConfig
   biolume?: BiolumeConfig
   particles: EnvironmentParticles
+  lowPower?: EnvironmentLowPowerConfig
 }

@@ -81,7 +81,7 @@ export const EVIL_FOREST_V2: EnvironmentConfig = {
       name: 'Fog A',
       speed: 0.02,
       depth: 0.3,
-      alpha: 0.35,
+      alpha: 0.26,
       scale: 1.15,
       blendMode: 'normal',
     },
@@ -90,7 +90,7 @@ export const EVIL_FOREST_V2: EnvironmentConfig = {
       name: 'Fog B',
       speed: 0.045,
       depth: 0.6,
-      alpha: 0.45,
+      alpha: 0.34,
       scale: 1.25,
       blendMode: 'normal',
     },
@@ -107,7 +107,7 @@ export const EVIL_FOREST_V2: EnvironmentConfig = {
   lightRays: {
     key: V2_KEYS.lightRays,
     depth: 0.5,
-    alpha: 0.18,
+    alpha: 0.12,
     pulseSpeed: 0.6,
     scale: 1,
     blendMode: 'screen',
@@ -118,7 +118,7 @@ export const EVIL_FOREST_V2: EnvironmentConfig = {
     waterlineY: 380,
     height: 200,
     rippleSpeed: 0.6,
-    rippleAmplitude: 6,
+    rippleAmplitude: 4,
     layers: [
       { key: V2_KEYS.treesMid, speed: 0.085, alpha: 0.18 },
       { key: V2_KEYS.swampNear, speed: 0.14, alpha: 0.22 },
@@ -129,11 +129,18 @@ export const EVIL_FOREST_V2: EnvironmentConfig = {
     depth: 0.72,
     blendMode: 'add',
     patches: [
-      { x: 160, y: 440, scale: 0.65, alpha: 0.55, pulseSpeed: 0.9 },
-      { x: 320, y: 480, scale: 0.75, alpha: 0.6, pulseSpeed: 0.7 },
-      { x: 520, y: 450, scale: 0.7, alpha: 0.55, pulseSpeed: 0.8 },
-      { x: 720, y: 490, scale: 0.8, alpha: 0.6, pulseSpeed: 0.75 },
+      { x: 160, y: 440, scale: 0.65, alpha: 0.45, pulseSpeed: 0.9 },
+      { x: 320, y: 480, scale: 0.75, alpha: 0.5, pulseSpeed: 0.7 },
+      { x: 520, y: 450, scale: 0.7, alpha: 0.45, pulseSpeed: 0.8 },
+      { x: 720, y: 490, scale: 0.8, alpha: 0.5, pulseSpeed: 0.75 },
     ],
+  },
+  lowPower: {
+    disableFog: true,
+    disableForeground: true,
+    disableLightRays: true,
+    disableReflection: true,
+    disableBiolume: true,
   },
   particles: {
     embers: {

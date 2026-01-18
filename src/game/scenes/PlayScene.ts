@@ -462,6 +462,7 @@ export class PlayScene extends Phaser.Scene {
     this.perfLowFpsMs = 0
     this.perfHighFpsMs = 0
     this.backgroundSystem?.setReducedMotion(this.isMotionReduced())
+    this.backgroundSystem?.setLowPowerMode(enabled)
     if (enabled) {
       this.clearParticles()
       this.screenFlash?.setEnabled(false)
