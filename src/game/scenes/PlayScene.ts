@@ -89,6 +89,11 @@ type E2EDebugState = {
   state: string
   score: number
   bestScore: number
+  seedMode: 'normal' | 'daily' | 'custom'
+  seedLabel: string
+  gameMode: GameModeId
+  practiceEnabled: boolean
+  reducedMotion: boolean
 }
 
 /**
@@ -1290,6 +1295,11 @@ export class PlayScene extends Phaser.Scene {
       state: 'READY',
       score: this.scoreSystem.score,
       bestScore: this.bestScore,
+      seedMode: this.seedMode,
+      seedLabel: this.seedLabel,
+      gameMode: this.gameModeId,
+      practiceEnabled: this.practiceEnabled,
+      reducedMotion: this.reducedMotion,
     })
   }
 
@@ -1429,6 +1439,11 @@ export class PlayScene extends Phaser.Scene {
       state: 'GAME_OVER',
       score,
       bestScore: this.bestScore,
+      seedMode: this.seedMode,
+      seedLabel: this.seedLabel,
+      gameMode: this.gameModeId,
+      practiceEnabled: this.practiceEnabled,
+      reducedMotion: this.reducedMotion,
     })
   }
 
@@ -1708,6 +1723,7 @@ export class PlayScene extends Phaser.Scene {
       this.screenFlash?.setEnabled(true)
       this.impactBurst?.setEnabled(true)
     }
+    this.setE2EState({ reducedMotion: this.reducedMotion })
     this.updateSettingsValues()
   }
 
@@ -1779,6 +1795,7 @@ export class PlayScene extends Phaser.Scene {
       this.ghostPlayer?.stop()
       this.replayRecorder = null
     }
+    this.setE2EState({ practiceEnabled: this.practiceEnabled })
     if (this.stateMachine.state === 'PLAYING' || this.stateMachine.state === 'GAME_OVER') {
       this.enterReady()
       return
@@ -1798,6 +1815,7 @@ export class PlayScene extends Phaser.Scene {
       this.bestLabelText.setText('BEST')
     }
     this.bestReplay = loadBestReplay(this.gameModeId)
+    this.setE2EState({ gameMode: this.gameModeId })
     this.updateSettingsValues()
   }
 
@@ -1998,6 +2016,11 @@ export class PlayScene extends Phaser.Scene {
         state: this.stateMachine.state,
         score: this.scoreSystem.score,
         bestScore: this.bestScore,
+        seedMode: this.seedMode,
+        seedLabel: this.seedLabel,
+        gameMode: this.gameModeId,
+        practiceEnabled: this.practiceEnabled,
+        reducedMotion: this.reducedMotion,
       }
     }
     Object.assign(win.__flappyDebug, partial)
