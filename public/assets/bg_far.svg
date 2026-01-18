@@ -1,20 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="360" height="640" viewBox="0 0 360 640" fill="none">
   <defs>
-    <linearGradient id="farSky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#1a1026" />
-      <stop offset="0.55" stop-color="#120c1d" />
-      <stop offset="1" stop-color="#0a0b12" />
+    <linearGradient id="classicSkyFar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#dff4ff" />
+      <stop offset="0.55" stop-color="#c6e6ff" />
+      <stop offset="1" stop-color="#b4d8fb" />
     </linearGradient>
   </defs>
-  <rect width="360" height="640" fill="url(#farSky)" />
-  <rect x="18" y="120" width="28" height="220" fill="#0f1018" opacity="0.35" />
-  <rect x="80" y="140" width="22" height="240" fill="#0f1018" opacity="0.35" />
-  <rect x="136" y="110" width="30" height="260" fill="#0f1018" opacity="0.35" />
-  <rect x="210" y="130" width="20" height="230" fill="#0f1018" opacity="0.35" />
-  <rect x="270" y="100" width="28" height="270" fill="#0f1018" opacity="0.35" />
-  <ellipse cx="70" cy="220" rx="90" ry="36" fill="#8897a3" opacity="0.08" />
-  <ellipse cx="220" cy="260" rx="130" ry="48" fill="#8ea4ad" opacity="0.07" />
-  <ellipse cx="160" cy="360" rx="150" ry="52" fill="#8ea4ad" opacity="0.06" />
-  <ellipse cx="280" cy="420" rx="120" ry="44" fill="#7f96a0" opacity="0.06" />
-  <ellipse cx="120" cy="480" rx="140" ry="50" fill="#7f96a0" opacity="0.05" />
+  <rect width="360" height="640" fill="url(#classicSkyFar)" />
+  <ellipse cx="90" cy="150" rx="70" ry="26" fill="#ffffff" opacity="0.35" />
+  <ellipse cx="250" cy="190" rx="90" ry="30" fill="#ffffff" opacity="0.3" />
+  <ellipse cx="150" cy="260" rx="110" ry="34" fill="#ffffff" opacity="0.25" />
+  <ellipse cx="290" cy="320" rx="80" ry="26" fill="#ffffff" opacity="0.22" />
+  <ellipse cx="80" cy="360" rx="95" ry="28" fill="#ffffff" opacity="0.2" />
 </svg>

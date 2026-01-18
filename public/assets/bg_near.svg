@@ -1,16 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="360" height="640" viewBox="0 0 360 640" fill="none">
-  <path d="M0 260 L24 260 L32 360 L22 520 L34 640 L0 640 Z" fill="#0e0f16" opacity="0.9" />
-  <path d="M56 240 L82 240 L90 360 L78 520 L88 640 L50 640 Z" fill="#0e0f16" opacity="0.92" />
-  <path d="M138 230 L166 230 L174 360 L162 520 L174 640 L130 640 Z" fill="#0d0e15" opacity="0.92" />
-  <path d="M212 250 L240 250 L248 360 L236 520 L248 640 L204 640 Z" fill="#0d0e15" opacity="0.92" />
-  <path d="M286 220 L314 220 L322 360 L310 520 L322 640 L274 640 Z" fill="#0d0e15" opacity="0.92" />
-  <path d="M40 300 L12 276" stroke="#2e203b" stroke-width="8" stroke-linecap="round" opacity="0.8" />
-  <path d="M156 310 L190 280" stroke="#2e203b" stroke-width="8" stroke-linecap="round" opacity="0.8" />
-  <path d="M232 330 L200 304" stroke="#2e203b" stroke-width="8" stroke-linecap="round" opacity="0.8" />
-  <path d="M302 300 L330 270" stroke="#2e203b" stroke-width="8" stroke-linecap="round" opacity="0.8" />
-  <circle cx="70" cy="520" r="5" fill="#ff4fa3" opacity="0.7" />
-  <circle cx="94" cy="540" r="3" fill="#ff4fa3" opacity="0.6" />
-  <circle cx="220" cy="500" r="4" fill="#ff4fa3" opacity="0.7" />
-  <circle cx="248" cy="522" r="3" fill="#ff4fa3" opacity="0.6" />
-  <circle cx="300" cy="510" r="4" fill="#ff4fa3" opacity="0.6" />
+  <rect width="360" height="640" fill="none" />
+  <path
+    d="M0 400 C60 370 140 370 200 400 C260 430 320 430 360 410 L360 640 L0 640 Z"
+    fill="#8fc1dd"
+  />
+  <path
+    d="M0 460 C70 430 150 430 220 460 C280 485 320 490 360 470 L360 640 L0 640 Z"
+    fill="#80b2d1"
+  />
+  <path
+    d="M0 520 C80 500 170 500 240 520 C300 540 330 540 360 530 L360 640 L0 640 Z"
+    fill="#6ea3c6"
+  />
 </svg>
