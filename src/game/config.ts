@@ -36,3 +36,10 @@ export const DIFFICULTY_CONFIG = {
   minGap: 110,
   gapReductionPerScore: 1.2,
 }
+
+export const PERFORMANCE_CONFIG = {
+  lowFpsThreshold: 48,
+  highFpsThreshold: 56,
+  lowFpsWindowMs: 2200,
+  recoveryWindowMs: 3200,
+} as const

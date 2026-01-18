@@ -1,5 +1,11 @@
 import Phaser from 'phaser'
-import { BIRD_CONFIG, GAME_DIMENSIONS, GROUND_HEIGHT, PIPE_CONFIG } from '../config'
+import {
+  BIRD_CONFIG,
+  GAME_DIMENSIONS,
+  GROUND_HEIGHT,
+  PERFORMANCE_CONFIG,
+  PIPE_CONFIG,
+} from '../config'
 import { Bird } from '../entities/Bird'
 import { Ground } from '../entities/Ground'
 import { PipePair } from '../entities/PipePair'
@@ -197,6 +203,9 @@ export class PlayScene extends Phaser.Scene {
   private gameOverTween?: Phaser.Tweens.Tween
   private cameraPunchTween?: Phaser.Tweens.Tween
   private visibilityPaused = false
+  private perfLowPower = false
+  private perfLowFpsMs = 0
+  private perfHighFpsMs = 0
   private readonly handleVisibilityChange = () => {
     if (typeof document === 'undefined') {
       return
@@ -325,6 +334,7 @@ export class PlayScene extends Phaser.Scene {
     const wantsFlap = this.inputSystem.consumeFlap()
     const dtMs = Math.min(deltaMs, 50)
     const dt = dtMs / 1000
+    this.updatePerformanceMode(dtMs)
 
     switch (this.stateMachine.state) {
       case 'READY':
@@ -412,6 +422,58 @@ export class PlayScene extends Phaser.Scene {
     this.cameras.main.setZoom(1)
   }
 
+  private updatePerformanceMode(dtMs: number): void {
+    if (this.reducedMotion) {
+      this.perfLowFpsMs = 0
+      this.perfHighFpsMs = 0
+      return
+    }
+    const fps = this.game.loop?.actualFps ?? 0
+    if (!fps) {
+      return
+    }
+    if (fps < PERFORMANCE_CONFIG.lowFpsThreshold) {
+      this.perfLowFpsMs += dtMs
+      this.perfHighFpsMs = 0
+    } else if (fps > PERFORMANCE_CONFIG.highFpsThreshold) {
+      this.perfHighFpsMs += dtMs
+      this.perfLowFpsMs = 0
+    } else {
+      this.perfLowFpsMs = 0
+      this.perfHighFpsMs = 0
+    }
+
+    if (!this.perfLowPower && this.perfLowFpsMs >= PERFORMANCE_CONFIG.lowFpsWindowMs) {
+      this.setLowPowerMode(true)
+    }
+    if (this.perfLowPower && this.perfHighFpsMs >= PERFORMANCE_CONFIG.recoveryWindowMs) {
+      this.setLowPowerMode(false)
+    }
+  }
+
+  private setLowPowerMode(enabled: boolean): void {
+    this.perfLowPower = enabled
+    this.perfLowFpsMs = 0
+    this.perfHighFpsMs = 0
+    this.backgroundSystem?.setReducedMotion(this.isMotionReduced())
+    if (enabled) {
+      this.clearParticles()
+      this.screenFlash?.setEnabled(false)
+      this.impactBurst?.setEnabled(false)
+      this.scorePulseTween?.stop()
+      this.scoreFrame.setScale(1)
+      this.scoreText.setScale(1)
+    } else {
+      this.createParticles()
+      this.screenFlash?.setEnabled(true)
+      this.impactBurst?.setEnabled(true)
+    }
+  }
+
+  private isMotionReduced(): boolean {
+    return this.reducedMotion || this.perfLowPower
+  }
+
   private startSceneFade(): void {
     if (this.reducedMotion || !this.fx.sceneFade.enabled) {
       return
@@ -489,12 +551,12 @@ export class PlayScene extends Phaser.Scene {
     this.environmentKey = envKey
     this.environmentConfig = ENVIRONMENTS[envKey]
     this.backgroundSystem = new BackgroundSystem(this, this.environmentConfig)
-    this.backgroundSystem.setReducedMotion(this.reducedMotion)
+    this.backgroundSystem.setReducedMotion(this.isMotionReduced())
     this.backgroundSystem.create()
   }
 
   private updateParallax(dt: number): void {
-    if (this.reducedMotion || !this.parallaxLayers.length) {
+    if (this.isMotionReduced() || !this.parallaxLayers.length) {
       return
     }
 
@@ -522,7 +584,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private updateFog(dt: number): void {
-    if (this.reducedMotion || !this.fogLayer) {
+    if (this.isMotionReduced() || !this.fogLayer) {
       return
     }
     this.fogLayer.tilePositionX += this.fx.fog.speedX * dt
@@ -581,11 +643,11 @@ export class PlayScene extends Phaser.Scene {
     this.storeEnvironmentKey(envKey)
     if (this.backgroundSystem) {
       this.backgroundSystem.setEnvironment(this.environmentConfig)
-      this.backgroundSystem.setReducedMotion(this.reducedMotion)
+      this.backgroundSystem.setReducedMotion(this.isMotionReduced())
       this.backgroundSystem.setSpeedScale(this.speedScale)
     } else {
       this.backgroundSystem = new BackgroundSystem(this, this.environmentConfig)
-      this.backgroundSystem.setReducedMotion(this.reducedMotion)
+      this.backgroundSystem.setReducedMotion(this.isMotionReduced())
       this.backgroundSystem.setSpeedScale(this.speedScale)
       this.backgroundSystem.create()
     }
@@ -1052,7 +1114,7 @@ export class PlayScene extends Phaser.Scene {
 
   private createParticles(): void {
     this.clearParticles()
-    if (this.reducedMotion) {
+    if (this.isMotionReduced()) {
       return
     }
     const particles = this.theme.visuals.particles
@@ -1222,7 +1284,7 @@ export class PlayScene extends Phaser.Scene {
     this.impactBurst?.destroy()
 
     this.screenFlash = new ScreenFlash(this, this.fx.screenFlash)
-    this.screenFlash.setEnabled(!this.reducedMotion)
+    this.screenFlash.setEnabled(!this.isMotionReduced())
 
     const particles = this.theme.visuals.particles
     const particleFrame = particles?.ember ?? particles?.dust ?? particles?.leaf
@@ -1233,7 +1295,7 @@ export class PlayScene extends Phaser.Scene {
       frame: particleFrame,
       blendMode: Phaser.BlendModes.ADD,
     })
-    this.impactBurst.setEnabled(!this.reducedMotion)
+    this.impactBurst.setEnabled(!this.isMotionReduced())
   }
 
   private createDebugOverlay(): void {
@@ -1406,7 +1468,7 @@ export class PlayScene extends Phaser.Scene {
     this.showReadyOverlay(false)
     this.showGameOverOverlay(true)
 
-    if (!this.reducedMotion) {
+    if (!this.isMotionReduced()) {
       this.cameras.main.shake(this.fx.screenShake.duration, this.fx.screenShake.intensity)
     }
     this.cameraPunch(1)
@@ -1564,9 +1626,10 @@ export class PlayScene extends Phaser.Scene {
     const topHeight = Math.max(0, pipe.topHeight)
     const bottomHeight = Math.max(0, pipe.bottomHeight)
 
-    const swayPhase = this.reducedMotion ? 0 : this.obstacleSwayClock * this.fx.obstacleSway.speed
+    const motionReduced = this.isMotionReduced()
+    const swayPhase = motionReduced ? 0 : this.obstacleSwayClock * this.fx.obstacleSway.speed
     const sway =
-      this.reducedMotion ? 0 : Math.sin((pipe.x + swayPhase) * 0.01) * this.fx.obstacleSway.amplitude
+      motionReduced ? 0 : Math.sin((pipe.x + swayPhase) * 0.01) * this.fx.obstacleSway.amplitude
 
     sprites.top.setPosition(pipe.x, topHeight)
     sprites.top.setDisplaySize(PIPE_CONFIG.width, topHeight)
@@ -1580,12 +1643,12 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private updateBirdVisual(dt: number): void {
-    if (this.stateMachine.state === 'READY' && !this.reducedMotion) {
+    if (this.stateMachine.state === 'READY' && !this.isMotionReduced()) {
       this.birdBobTime += dt * this.fx.readyBob.speed
     }
 
     const bobOffset =
-      this.stateMachine.state === 'READY' && !this.reducedMotion
+      this.stateMachine.state === 'READY' && !this.isMotionReduced()
         ? Math.sin(this.birdBobTime) * this.fx.readyBob.amplitude
         : 0
 
@@ -1624,7 +1687,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private animateOverlay(container: Phaser.GameObjects.Container, kind: 'ready' | 'gameover'): void {
-    if (this.reducedMotion) {
+    if (this.isMotionReduced()) {
       container.setAlpha(1)
       container.setScale(1)
       return
@@ -1653,7 +1716,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private pulseScore(): void {
-    if (this.reducedMotion) {
+    if (this.isMotionReduced()) {
       return
     }
 
@@ -1705,9 +1768,9 @@ export class PlayScene extends Phaser.Scene {
       )
     }
     storeBool('flappy-reduced-motion', this.reducedMotion)
-    this.backgroundSystem?.setReducedMotion(this.reducedMotion)
+    this.backgroundSystem?.setReducedMotion(this.isMotionReduced())
 
-    if (this.reducedMotion) {
+    if (this.isMotionReduced()) {
       this.readyTween?.stop()
       this.gameOverTween?.stop()
       this.scorePulseTween?.stop()
@@ -2067,6 +2130,9 @@ export class PlayScene extends Phaser.Scene {
       `FPS: ${fps}`,
       `PIPES: ${this.pipes.length}`,
     ]
+    if (this.perfLowPower) {
+      lines.push('PERF: LOW')
+    }
     if (this.backgroundSystem) {
       lines.push(...this.backgroundSystem.getDebugLines())
     }
