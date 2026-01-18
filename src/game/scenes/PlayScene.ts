@@ -921,7 +921,7 @@ export class PlayScene extends Phaser.Scene {
         onToggle: () => this.toggleAnalyticsConsent(),
       },
       {
-        label: 'MODE',
+        label: 'SEED',
         getValue: () => this.getSeedModeLabel(),
         onToggle: () => this.toggleSeedMode(),
       },
@@ -955,19 +955,16 @@ export class PlayScene extends Phaser.Scene {
       })
     }
 
-    const panelHeightOffset = Math.max(30, (rows.length - 5) * 26)
-
     this.settingsPanel = createSettingsPanel({
       scene: this,
       ui: this.ui,
       theme: this.theme,
       position: {
         x: GAME_DIMENSIONS.width / 2,
-        y: 140,
+        y: GAME_DIMENSIONS.height / 2,
       },
       rows,
       onClose: () => this.toggleSettingsPanel(),
-      panelHeightOffset,
     })
     this.updateSettingsValues()
   }

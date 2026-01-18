@@ -28,17 +28,28 @@ type SettingsPanelOptions = {
 export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPanelHandle => {
   const { scene, ui, theme, position, rows, onClose, panelHeightOffset = 30 } = options
   const panelWidth = ui.panelSize.large.width
-  const panelHeight = ui.panelSize.large.height + panelHeightOffset
   const rowWidth = panelWidth - 60
   const rowHeight = 22
-  const rowStartY = -40
   const rowGap = 26
+  const headerHeight = 86
+  const footerHeight = 62
+  const basePanelHeight = ui.panelSize.large.height + panelHeightOffset
+  const rowsHeight = rowHeight + (rows.length - 1) * rowGap
+  const panelHeight = Math.max(basePanelHeight, rowsHeight + headerHeight + footerHeight)
 
   const panel = createPanel(scene, ui, theme, 'large', panelWidth, panelHeight)
 
-  const title = scene.add
-    .text(0, -78, 'SETTINGS', ui.overlayTitleStyle)
+  const titleY = -panelHeight / 2 + 34
+  const title = scene.add.text(0, titleY, 'SETTINGS', ui.overlayTitleStyle).setOrigin(0.5, 0.5)
+
+  const hintStyle = {
+    ...ui.statLabelStyle,
+    fontSize: scaleFontSize(ui.statLabelStyle.fontSize, 0.85),
+  }
+  const hint = scene.add
+    .text(0, titleY + 26, 'Tap a row to toggle. Saved automatically.', hintStyle)
     .setOrigin(0.5, 0.5)
+  hint.setWordWrapWidth(panelWidth - 80)
 
   const labelStyle = {
     ...ui.statLabelStyle,
@@ -53,13 +64,24 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
   const valueTexts: Phaser.GameObjects.Text[] = []
   let settingsPanel: Phaser.GameObjects.Container
 
+  const rowsTop = titleY + 50
+  const closeButtonY = panelHeight / 2 - 18
+  const rowsBottom = closeButtonY - 28
+  const rowsAreaHeight = rowsBottom - rowsTop
+  const rowStartY =
+    rowsTop + rowHeight / 2 + Math.max(0, (rowsAreaHeight - rowsHeight) / 2)
+
   const createRow = (row: SettingsRow): void => {
     const y = rowStartY + rowIndex * rowGap
     rowIndex += 1
 
+    const highlightColor = theme.paletteNum.shadow ?? 0x000000
     const hit = scene.add
-      .rectangle(0, y, rowWidth, rowHeight, 0x000000, 0)
+      .rectangle(0, y, rowWidth, rowHeight, highlightColor, 0)
       .setInteractive({ useHandCursor: true })
+    hit.on('pointerover', () => hit.setFillStyle(highlightColor, 0.18))
+    hit.on('pointerout', () => hit.setFillStyle(highlightColor, 0))
+    hit.on('pointerup', () => hit.setFillStyle(highlightColor, 0))
     hit.on(
       'pointerdown',
       (
@@ -69,6 +91,7 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
         event: Phaser.Types.Input.EventData,
       ) => {
         event.stopPropagation()
+        hit.setFillStyle(highlightColor, 0.28)
         row.onToggle()
       },
     )
@@ -82,7 +105,7 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
     settingsPanel.add([hit, labelText, valueText])
   }
 
-  const items: Phaser.GameObjects.GameObject[] = [panel, title]
+  const items: Phaser.GameObjects.GameObject[] = [panel, title, hint]
   settingsPanel = scene.add.container(position.x, position.y, items)
   settingsPanel.setDepth(6)
   settingsPanel.setVisible(false)
@@ -105,4 +128,13 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
     setVisible: (visible: boolean) => settingsPanel.setVisible(visible),
     isVisible: () => settingsPanel.visible,
   }
+}
+
+const scaleFontSize = (value: string, multiplier: number): string => {
+  const match = value.match(/^(\\d+(?:\\.\\d+)?)px$/)
+  if (!match) {
+    return value
+  }
+  const next = Math.max(10, Math.round(Number(match[1]) * multiplier))
+  return `${next}px`
 }
