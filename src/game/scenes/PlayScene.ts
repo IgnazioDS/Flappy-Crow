@@ -170,6 +170,7 @@ export class PlayScene extends Phaser.Scene {
   private settingsOpen = false
   private telemetryConsentPanel: Phaser.GameObjects.Container | null = null
   private telemetryConsentOpen = false
+  private safeArea = { top: 0, right: 0, bottom: 0, left: 0 }
 
   private lastScore = -1
   private bestScore = 0
@@ -222,6 +223,9 @@ export class PlayScene extends Phaser.Scene {
       this.visibilityPaused = false
       this.scene.resume()
     }
+  }
+  private readonly handleResize = () => {
+    this.updateSafeAreaLayout()
   }
 
   private readonly handleSpawn = (gapCenterY: number) => {
@@ -321,6 +325,7 @@ export class PlayScene extends Phaser.Scene {
     this.createToggles()
     this.createSettingsPanel()
     this.createTelemetryConsentOverlay()
+    this.updateSafeAreaLayout()
 
     this.createParticles()
     this.createVignette()
@@ -333,6 +338,10 @@ export class PlayScene extends Phaser.Scene {
     this.enterReady()
     this.setupInput()
     this.setupVisibilityHandlers()
+    this.scale.on('resize', this.handleResize)
+    this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+      this.scale.off('resize', this.handleResize)
+    })
   }
 
   update(_time: number, deltaMs: number): void {
@@ -954,10 +963,10 @@ export class PlayScene extends Phaser.Scene {
     const iconSize = this.ui.icon.size
     const padding = this.ui.icon.padding
     const spacing = iconSize + 10
-    const topY = 28
-    const bottomY = GAME_DIMENSIONS.height - GROUND_HEIGHT - 26
-    const leftX = padding + iconSize / 2
-    const rightX = GAME_DIMENSIONS.width - padding - iconSize / 2
+    const topY = 28 + this.safeArea.top
+    const bottomY = GAME_DIMENSIONS.height - GROUND_HEIGHT - 26 - this.safeArea.bottom
+    const leftX = padding + iconSize / 2 + this.safeArea.left
+    const rightX = GAME_DIMENSIONS.width - padding - iconSize / 2 - this.safeArea.right
     const settingsOffset = spacing * 2.4
 
     if (this.handMode === 'normal') {
@@ -2105,6 +2114,41 @@ export class PlayScene extends Phaser.Scene {
       }
     } catch {
       window.location.href = this.privacyPolicyUrl
+    }
+  }
+
+  private updateSafeAreaLayout(): void {
+    const { top, right, bottom, left } = this.readSafeAreaInsets()
+    const canvas = this.game.canvas
+    const scaleX = canvas?.clientWidth ? canvas.clientWidth / GAME_DIMENSIONS.width : 1
+    const scaleY = canvas?.clientHeight ? canvas.clientHeight / GAME_DIMENSIONS.height : 1
+    this.safeArea = {
+      top: top / scaleY,
+      right: right / scaleX,
+      bottom: bottom / scaleY,
+      left: left / scaleX,
+    }
+
+    const scoreY = this.ui.score.y + this.safeArea.top
+    this.scoreFrame?.setPosition(this.ui.score.x, scoreY)
+    this.scoreText?.setPosition(this.ui.score.x, scoreY + 2)
+    this.applyHandednessLayout()
+  }
+
+  private readSafeAreaInsets(): { top: number; right: number; bottom: number; left: number } {
+    if (typeof window === 'undefined') {
+      return { top: 0, right: 0, bottom: 0, left: 0 }
+    }
+    const style = getComputedStyle(document.documentElement)
+    const parse = (value: string): number => {
+      const parsed = Number.parseFloat(value)
+      return Number.isFinite(parsed) ? parsed : 0
+    }
+    return {
+      top: parse(style.getPropertyValue('--safe-area-top')),
+      right: parse(style.getPropertyValue('--safe-area-right')),
+      bottom: parse(style.getPropertyValue('--safe-area-bottom')),
+      left: parse(style.getPropertyValue('--safe-area-left')),
     }
   }
 
