@@ -929,9 +929,6 @@ export class PlayScene extends Phaser.Scene {
 
   private createSettingsButton(): void {
     const buttonImage = createButtonBase(this, this.ui, this.theme, 0.42)
-    applyMinHitArea(buttonImage)
-    applyButtonFeedback(buttonImage)
-
     const labelStyle = {
       ...this.ui.statLabelStyle,
       fontSize: '12px',
@@ -941,7 +938,18 @@ export class PlayScene extends Phaser.Scene {
 
     this.settingsButton = this.add.container(this.ui.icon.padding + 34, 28, [buttonImage, label])
     this.settingsButton.setDepth(4.2)
-    buttonImage.on(
+    const hitWidth = Math.max(buttonImage.displayWidth, 44)
+    const hitHeight = Math.max(buttonImage.displayHeight, 44)
+    const hitArea = new Phaser.Geom.Rectangle(-hitWidth / 2, -hitHeight / 2, hitWidth, hitHeight)
+    this.settingsButton.setSize(hitWidth, hitHeight)
+    this.settingsButton.setInteractive({
+      hitArea,
+      hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+      useHandCursor: true,
+    })
+    applyButtonFeedback(this.settingsButton)
+
+    this.settingsButton.on(
       'pointerdown',
       (
         _pointer: Phaser.Input.Pointer,

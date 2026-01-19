@@ -26,21 +26,23 @@ type SettingsPanelOptions = {
 }
 
 export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPanelHandle => {
-  const { scene, ui, theme, position, rows, onClose, panelHeightOffset = 30 } = options
-  const panelWidth = ui.panelSize.large.width
-  const rowWidth = panelWidth - 60
-  const labelFontSize = parseFontSize(ui.statLabelStyle.fontSize, 14)
-  const valueFontSize = parseFontSize(ui.statValueStyle.fontSize, 16)
+  const { scene, ui, theme, position, rows, onClose, panelHeightOffset = 20 } = options
+  const panelScale = 0.9
+  const textScale = 0.9
+  const panelWidth = Math.round(ui.panelSize.large.width * panelScale)
+  const rowWidth = panelWidth - Math.round(56 * panelScale)
+  const labelFontSize = parseFontSize(scaleFontSize(ui.statLabelStyle.fontSize, textScale), 14)
+  const valueFontSize = parseFontSize(scaleFontSize(ui.statValueStyle.fontSize, textScale), 16)
   const rowFontSize = Math.max(labelFontSize, valueFontSize)
-  const rowHeight = Math.max(44, Math.round(rowFontSize * 1.55))
-  const rowGap = Math.round(rowHeight * 1.15)
+  const rowHeight = Math.max(44, Math.round(rowFontSize * 1.5))
+  const rowGap = Math.round(rowHeight * 1.05)
   const badgeHeight = Math.max(18, rowHeight - 8)
   const badgeRightX = rowWidth / 2 - 6
   const badgeMinWidth = 54
   const badgePaddingX = 12
-  const headerHeight = 86
-  const footerHeight = 62
-  const basePanelHeight = ui.panelSize.large.height + panelHeightOffset
+  const headerHeight = 72
+  const footerHeight = 52
+  const basePanelHeight = Math.round(ui.panelSize.large.height * panelScale) + Math.round(panelHeightOffset * panelScale)
   const rowsHeight = rowHeight + (rows.length - 1) * rowGap
   const panelHeight = Math.max(basePanelHeight, rowsHeight + headerHeight + footerHeight)
 
@@ -58,23 +60,29 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
     },
   )
 
-  const titleY = -panelHeight / 2 + 34
-  const title = scene.add.text(0, titleY, 'SETTINGS', ui.overlayTitleStyle).setOrigin(0.5, 0.5)
+  const titleY = -panelHeight / 2 + Math.round(32 * panelScale)
+  const titleStyle = {
+    ...ui.overlayTitleStyle,
+    fontSize: scaleFontSize(ui.overlayTitleStyle.fontSize, textScale),
+  }
+  const title = scene.add.text(0, titleY, 'SETTINGS', titleStyle).setOrigin(0.5, 0.5)
 
   const hintStyle = {
     ...ui.statLabelStyle,
-    fontSize: scaleFontSize(ui.statLabelStyle.fontSize, 0.85),
+    fontSize: scaleFontSize(ui.statLabelStyle.fontSize, 0.78),
   }
   const hint = scene.add
-    .text(0, titleY + 26, 'Tap a row to toggle. Tap outside to close.', hintStyle)
+    .text(0, titleY + Math.round(24 * panelScale), 'Tap a row to toggle. Tap outside to close.', hintStyle)
     .setOrigin(0.5, 0.5)
-  hint.setWordWrapWidth(panelWidth - 80)
+  hint.setWordWrapWidth(panelWidth - Math.round(72 * panelScale))
 
   const labelStyle = {
     ...ui.statLabelStyle,
+    fontSize: scaleFontSize(ui.statLabelStyle.fontSize, textScale),
   }
   const valueStyle = {
     ...ui.statValueStyle,
+    fontSize: scaleFontSize(ui.statValueStyle.fontSize, textScale),
   }
 
   let rowIndex = 0
@@ -82,9 +90,9 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
   const valueBadges: Phaser.GameObjects.Rectangle[] = []
   let settingsPanel: Phaser.GameObjects.Container
 
-  const rowsTop = titleY + 50
-  const closeButtonY = panelHeight / 2 - 18
-  const rowsBottom = closeButtonY - 28
+  const rowsTop = titleY + Math.round(44 * panelScale)
+  const closeButtonY = panelHeight / 2 - Math.round(16 * panelScale)
+  const rowsBottom = closeButtonY - Math.round(24 * panelScale)
   const rowsAreaHeight = rowsBottom - rowsTop
   const rowStartY =
     rowsTop + rowHeight / 2 + Math.max(0, (rowsAreaHeight - rowsHeight) / 2)
@@ -200,7 +208,7 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
   rows.forEach((row) => createRow(row))
 
   const closeButton = createSmallButton(scene, ui, theme, 'CLOSE', onClose)
-  closeButton.setPosition(0, panelHeight / 2 - 18)
+  closeButton.setPosition(0, panelHeight / 2 - Math.round(16 * panelScale))
   settingsPanel.add(closeButton)
 
   const updateValues = (): void => {
