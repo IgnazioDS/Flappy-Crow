@@ -27,7 +27,13 @@ import {
   storeNumber,
   storeString,
 } from '../persistence/storage'
-import { applyButtonFeedback, createButtonBase, createPanel, createSmallButton } from '../ui/uiFactory'
+import {
+  applyButtonFeedback,
+  applyMinHitArea,
+  createButtonBase,
+  createPanel,
+  createSmallButton,
+} from '../ui/uiFactory'
 import { createSettingsPanel, type SettingsPanelHandle } from '../ui/settingsPanel'
 import {
   buildShareUrl,
@@ -847,7 +853,7 @@ export class PlayScene extends Phaser.Scene {
   private createRestartButton(): Phaser.GameObjects.Container {
     const uiAssets = this.theme.visuals.ui
     const buttonBase = createButtonBase(this, this.ui, this.theme)
-    buttonBase.setInteractive({ useHandCursor: true })
+    applyMinHitArea(buttonBase)
     applyButtonFeedback(buttonBase)
     buttonBase.on('pointerdown', () => this.restart())
 
@@ -923,7 +929,7 @@ export class PlayScene extends Phaser.Scene {
 
   private createSettingsButton(): void {
     const buttonImage = createButtonBase(this, this.ui, this.theme, 0.42)
-    buttonImage.setInteractive({ useHandCursor: true })
+    applyMinHitArea(buttonImage)
     applyButtonFeedback(buttonImage)
 
     const labelStyle = {

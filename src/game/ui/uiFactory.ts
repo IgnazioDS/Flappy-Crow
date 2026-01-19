@@ -51,6 +51,20 @@ export const createButtonBase = (
     .setStrokeStyle(ui.panel.strokeThickness, ui.panel.stroke)
 }
 
+export const applyMinHitArea = (
+  button: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle,
+  minSize = 44,
+): void => {
+  const width = Math.max(button.displayWidth, minSize)
+  const height = Math.max(button.displayHeight, minSize)
+  const hitArea = new Phaser.Geom.Rectangle(-width / 2, -height / 2, width, height)
+  button.setInteractive({
+    hitArea,
+    hitAreaCallback: Phaser.Geom.Rectangle.Contains,
+    useHandCursor: true,
+  })
+}
+
 export const applyButtonFeedback = (
   button: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle,
 ): void => {
@@ -89,7 +103,7 @@ export const createSmallButton = (
   onClick: () => void,
 ): Phaser.GameObjects.Container => {
   const buttonImage = createButtonBase(scene, ui, theme, 0.4)
-  buttonImage.setInteractive({ useHandCursor: true })
+  applyMinHitArea(buttonImage)
   applyButtonFeedback(buttonImage)
 
   const text = scene.add
