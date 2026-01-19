@@ -2133,6 +2133,7 @@ export class PlayScene extends Phaser.Scene {
     this.scoreFrame?.setPosition(this.ui.score.x, scoreY)
     this.scoreText?.setPosition(this.ui.score.x, scoreY + 2)
     this.applyHandednessLayout()
+    this.updateOverlayLayout()
   }
 
   private readSafeAreaInsets(): { top: number; right: number; bottom: number; left: number } {
@@ -2149,6 +2150,24 @@ export class PlayScene extends Phaser.Scene {
       right: parse(style.getPropertyValue('--safe-area-right')),
       bottom: parse(style.getPropertyValue('--safe-area-bottom')),
       left: parse(style.getPropertyValue('--safe-area-left')),
+    }
+  }
+
+  private updateOverlayLayout(): void {
+    const offsetX = (this.safeArea.left - this.safeArea.right) / 2
+    const offsetY = (this.safeArea.top - this.safeArea.bottom) / 2
+
+    if (this.readyContainer) {
+      this.readyContainer.setPosition(
+        this.ui.layout.ready.x + offsetX,
+        this.ui.layout.ready.y + offsetY,
+      )
+    }
+    if (this.gameOverContainer) {
+      this.gameOverContainer.setPosition(
+        this.ui.layout.gameOver.x + offsetX,
+        this.ui.layout.gameOver.y + offsetY,
+      )
     }
   }
 
