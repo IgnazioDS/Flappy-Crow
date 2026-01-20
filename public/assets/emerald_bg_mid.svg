@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="360" height="640" viewBox="0 0 360 640" fill="none">
   <rect width="360" height="640" fill="none" />
   <path
-    d="M0 280 C70 250 130 250 190 280 C250 310 300 310 360 280 L360 640 L0 640 Z"
-    fill="#1a4b40"
+    d="M0 285 C70 255 135 255 200 285 C260 315 310 315 360 285 L360 640 L0 640 Z"
+    fill="#1b4f43"
   />
   <path
-    d="M0 340 C60 315 120 315 180 340 C240 365 300 365 360 340 L360 640 L0 640 Z"
-    fill="#174238"
+    d="M0 345 C60 320 125 320 190 345 C250 370 310 370 360 345 L360 640 L0 640 Z"
+    fill="#174439"
     opacity="0.9"
   />
-  <ellipse cx="110" cy="220" rx="85" ry="22" fill="#2f6b5c" opacity="0.18" />
-  <ellipse cx="250" cy="240" rx="100" ry="24" fill="#2f6b5c" opacity="0.16" />
+  <ellipse cx="112" cy="225" rx="90" ry="22" fill="#2f6b5c" opacity="0.16" />
+  <ellipse cx="250" cy="246" rx="105" ry="24" fill="#2f6b5c" opacity="0.14" />
 </svg>
