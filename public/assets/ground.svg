@@ -1,22 +1,22 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="360" height="80" viewBox="0 0 360 80" fill="none">
-  <rect width="360" height="80" fill="#6ea3c6" />
+  <rect width="360" height="80" fill="#5b8fb5" />
   <path
     d="M0 18 L24 26 L48 22 L72 28 L96 24 L120 30 L144 26 L168 32 L192 28 L216 34 L240 30 L264 36 L288 32 L312 38 L336 34 L360 40 L360 80 L0 80 Z"
-    fill="#5d95bc"
+    fill="#4d81a9"
   />
   <path
     d="M0 36 C60 28 120 28 180 36 C240 44 300 44 360 36 L360 80 L0 80 Z"
-    fill="#4f86b0"
-    opacity="0.9"
+    fill="#3f749f"
+    opacity="0.92"
   />
-  <path d="M32 30 L24 58" stroke="#3f6f95" stroke-width="2" stroke-linecap="round" />
-  <path d="M78 32 L68 64" stroke="#3f6f95" stroke-width="2" stroke-linecap="round" />
-  <path d="M124 34 L112 66" stroke="#3f6f95" stroke-width="2" stroke-linecap="round" />
-  <path d="M170 36 L156 68" stroke="#3f6f95" stroke-width="2" stroke-linecap="round" />
-  <path d="M216 38 L202 70" stroke="#3f6f95" stroke-width="2" stroke-linecap="round" />
-  <path d="M262 40 L248 70" stroke="#3f6f95" stroke-width="2" stroke-linecap="round" />
-  <path d="M308 42 L296 68" stroke="#3f6f95" stroke-width="2" stroke-linecap="round" />
-  <circle cx="86" cy="54" r="3" fill="#b7d9f2" opacity="0.6" />
-  <circle cx="210" cy="58" r="2" fill="#b7d9f2" opacity="0.5" />
-  <circle cx="296" cy="60" r="2" fill="#b7d9f2" opacity="0.5" />
+  <path d="M32 30 L24 58" stroke="#335f83" stroke-width="2" stroke-linecap="round" />
+  <path d="M78 32 L68 64" stroke="#335f83" stroke-width="2" stroke-linecap="round" />
+  <path d="M124 34 L112 66" stroke="#335f83" stroke-width="2" stroke-linecap="round" />
+  <path d="M170 36 L156 68" stroke="#335f83" stroke-width="2" stroke-linecap="round" />
+  <path d="M216 38 L202 70" stroke="#335f83" stroke-width="2" stroke-linecap="round" />
+  <path d="M262 40 L248 70" stroke="#335f83" stroke-width="2" stroke-linecap="round" />
+  <path d="M308 42 L296 68" stroke="#335f83" stroke-width="2" stroke-linecap="round" />
+  <circle cx="86" cy="54" r="3" fill="#cfe9ff" opacity="0.55" />
+  <circle cx="210" cy="58" r="2" fill="#cfe9ff" opacity="0.5" />
+  <circle cx="296" cy="60" r="2" fill="#cfe9ff" opacity="0.5" />
 </svg>
