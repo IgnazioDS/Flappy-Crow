@@ -81,8 +81,8 @@ export const EVIL_FOREST_V2: EnvironmentConfig = {
       name: 'Fog A',
       speed: 0.02,
       depth: 0.3,
-      alpha: 0.26,
-      scale: 1.15,
+      alpha: 0.2,
+      scale: 1.1,
       blendMode: 'normal',
     },
     {
@@ -90,8 +90,8 @@ export const EVIL_FOREST_V2: EnvironmentConfig = {
       name: 'Fog B',
       speed: 0.045,
       depth: 0.6,
-      alpha: 0.34,
-      scale: 1.25,
+      alpha: 0.26,
+      scale: 1.18,
       blendMode: 'normal',
     },
   ],
@@ -107,7 +107,7 @@ export const EVIL_FOREST_V2: EnvironmentConfig = {
   lightRays: {
     key: V2_KEYS.lightRays,
     depth: 0.5,
-    alpha: 0.12,
+    alpha: 0.08,
     pulseSpeed: 0.6,
     scale: 1,
     blendMode: 'screen',
@@ -118,10 +118,10 @@ export const EVIL_FOREST_V2: EnvironmentConfig = {
     waterlineY: 380,
     height: 200,
     rippleSpeed: 0.6,
-    rippleAmplitude: 4,
+    rippleAmplitude: 3,
     layers: [
-      { key: V2_KEYS.treesMid, speed: 0.085, alpha: 0.18 },
-      { key: V2_KEYS.swampNear, speed: 0.14, alpha: 0.22 },
+      { key: V2_KEYS.treesMid, speed: 0.085, alpha: 0.14 },
+      { key: V2_KEYS.swampNear, speed: 0.14, alpha: 0.18 },
     ],
   },
   biolume: {
@@ -129,10 +129,10 @@ export const EVIL_FOREST_V2: EnvironmentConfig = {
     depth: 0.72,
     blendMode: 'add',
     patches: [
-      { x: 160, y: 440, scale: 0.65, alpha: 0.45, pulseSpeed: 0.9 },
-      { x: 320, y: 480, scale: 0.75, alpha: 0.5, pulseSpeed: 0.7 },
-      { x: 520, y: 450, scale: 0.7, alpha: 0.45, pulseSpeed: 0.8 },
-      { x: 720, y: 490, scale: 0.8, alpha: 0.5, pulseSpeed: 0.75 },
+      { x: 160, y: 440, scale: 0.62, alpha: 0.36, pulseSpeed: 0.9 },
+      { x: 320, y: 480, scale: 0.72, alpha: 0.4, pulseSpeed: 0.7 },
+      { x: 520, y: 450, scale: 0.68, alpha: 0.36, pulseSpeed: 0.8 },
+      { x: 720, y: 490, scale: 0.76, alpha: 0.4, pulseSpeed: 0.75 },
     ],
   },
   lowPower: {
@@ -141,6 +141,7 @@ export const EVIL_FOREST_V2: EnvironmentConfig = {
     disableLightRays: true,
     disableReflection: true,
     disableBiolume: true,
+    disableLayers: ['Trees Mid', 'Swamp Near'],
   },
   particles: {
     embers: {
