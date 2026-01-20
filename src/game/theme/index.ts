@@ -2,14 +2,15 @@ import type { ThemeDefinition, ThemeId } from './types'
 import { classicTheme } from './themes/classic'
 import { emeraldLakeTheme } from './themes/emeraldLake'
 import { evilForestTheme } from './themes/evilForest'
+import { validateThemeDefinition } from './contract'
 
 const THEME_STORAGE_KEY = 'flappy-theme'
 const DEFAULT_THEME_ID: ThemeId = 'evil-forest'
 
 const THEMES: Record<ThemeId, ThemeDefinition> = {
-  classic: classicTheme,
-  'emerald-lake': emeraldLakeTheme,
-  'evil-forest': evilForestTheme,
+  classic: validateThemeDefinition(classicTheme),
+  'emerald-lake': validateThemeDefinition(emeraldLakeTheme),
+  'evil-forest': validateThemeDefinition(evilForestTheme),
 }
 
 const isThemeId = (value: string): value is ThemeId => value in THEMES
