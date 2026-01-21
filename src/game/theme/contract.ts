@@ -98,7 +98,6 @@ export const validateThemeDefinition = (theme: ThemeDefinition): ThemeDefinition
   }
 
   if (issues.length) {
-    // eslint-disable-next-line no-console
     console.warn(`[theme-contract] ${theme.id}: ${formatIssues(issues)}`)
   }
 
