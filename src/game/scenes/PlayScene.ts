@@ -967,7 +967,7 @@ export class PlayScene extends Phaser.Scene {
     if (this.theme.id !== 'evil-forest') {
       return
     }
-    icon.setTint(this.theme.paletteNum.panelStroke)
+    icon.setTint(0x9ef1ff)
   }
 
   private applyHandednessLayout(): void {
@@ -1710,14 +1710,14 @@ export class PlayScene extends Phaser.Scene {
         .setOrigin(0, 1)
         .setDepth(1.05)
         .setBlendMode(Phaser.BlendModes.SCREEN)
-        .setAlpha(0.22)
+        .setAlpha(0.26)
         .setTint(0x9ef1ff)
       bottomGlow = this.add
         .image(0, 0, obstacles.key, obstacles.bottomKey ?? obstacles.bottomFrames?.[0])
         .setOrigin(0, 0)
         .setDepth(1.05)
         .setBlendMode(Phaser.BlendModes.SCREEN)
-        .setAlpha(0.22)
+        .setAlpha(0.26)
         .setTint(0x9ef1ff)
       if (obstacles.type === 'image' && obstacles.flipTop) {
         topGlow.setFlipY(true)
@@ -1755,8 +1755,8 @@ export class PlayScene extends Phaser.Scene {
     sprites.top.setRotation(-sway)
     sprites.top.setVisible(topHeight > 0)
     if (sprites.topGlow) {
-      sprites.topGlow.setPosition(pipe.x - 1, topHeight)
-      sprites.topGlow.setDisplaySize(PIPE_CONFIG.width + 2, topHeight + 2)
+      sprites.topGlow.setPosition(pipe.x - 2, topHeight)
+      sprites.topGlow.setDisplaySize(PIPE_CONFIG.width + 4, topHeight + 4)
       sprites.topGlow.setRotation(-sway)
       sprites.topGlow.setVisible(topHeight > 0)
     }
@@ -1766,8 +1766,8 @@ export class PlayScene extends Phaser.Scene {
     sprites.bottom.setRotation(sway)
     sprites.bottom.setVisible(bottomHeight > 0)
     if (sprites.bottomGlow) {
-      sprites.bottomGlow.setPosition(pipe.x - 1, pipe.bottomY)
-      sprites.bottomGlow.setDisplaySize(PIPE_CONFIG.width + 2, bottomHeight + 2)
+      sprites.bottomGlow.setPosition(pipe.x - 2, pipe.bottomY)
+      sprites.bottomGlow.setDisplaySize(PIPE_CONFIG.width + 4, bottomHeight + 4)
       sprites.bottomGlow.setRotation(sway)
       sprites.bottomGlow.setVisible(bottomHeight > 0)
     }
