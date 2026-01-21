@@ -45,7 +45,7 @@ const CLASSIC_UI = {
   },
   overlayTitleStyle: {
     fontFamily: '"Bungee", "Trebuchet MS", sans-serif',
-    fontSize: '24px',
+    fontSize: '23px',
     color: CLASSIC_PALETTE.textPrimary,
     stroke: '#ffffff',
     strokeThickness: 5,
@@ -53,7 +53,7 @@ const CLASSIC_UI = {
   },
   overlayBodyStyle: {
     fontFamily: '"Trebuchet MS", sans-serif',
-    fontSize: '16px',
+    fontSize: '15px',
     color: CLASSIC_PALETTE.textMuted,
     stroke: '#ffffff',
     strokeThickness: 4,
@@ -61,14 +61,14 @@ const CLASSIC_UI = {
   },
   statLabelStyle: {
     fontFamily: '"Trebuchet MS", sans-serif',
-    fontSize: '14px',
+    fontSize: '13px',
     color: CLASSIC_PALETTE.textMuted,
     stroke: '#ffffff',
     strokeThickness: 3,
   },
   statValueStyle: {
     fontFamily: '"Bungee", "Trebuchet MS", sans-serif',
-    fontSize: '18px',
+    fontSize: '17px',
     color: CLASSIC_PALETTE.textPrimary,
     stroke: '#ffffff',
     strokeThickness: 4,
@@ -80,8 +80,8 @@ const CLASSIC_UI = {
     alpha: 0.95,
   },
   panelSize: {
-    small: { width: 260, height: 120 },
-    large: { width: 320, height: 180 },
+    small: { width: 252, height: 112 },
+    large: { width: 304, height: 170 },
   },
   layout: {
     ready: {
@@ -94,11 +94,11 @@ const CLASSIC_UI = {
     },
   },
   button: {
-    width: 176,
-    height: 50,
+    width: 168,
+    height: 46,
     textStyle: {
       fontFamily: '"Bungee", "Trebuchet MS", sans-serif',
-      fontSize: '17px',
+      fontSize: '15px',
       color: CLASSIC_PALETTE.textPrimary,
       stroke: '#ffffff',
       strokeThickness: 4,
@@ -174,17 +174,17 @@ const CLASSIC_FX = {
     lifespanMax: 0,
   },
   scorePulse: {
-    scale: 1.08,
-    duration: 120,
+    scale: 1.07,
+    duration: 140,
   },
   screenShake: {
-    duration: 120,
-    intensity: 0.0015,
+    duration: 110,
+    intensity: 0.0013,
   },
   cameraPunch: {
     enabled: true,
-    amount: 0.016,
-    durationMs: 110,
+    amount: 0.015,
+    durationMs: 120,
   },
   sceneFade: {
     enabled: true,
@@ -192,14 +192,14 @@ const CLASSIC_FX = {
   },
   overlayBounce: {
     enabled: true,
-    startScale: 0.97,
-    durationMs: 230,
+    startScale: 0.98,
+    durationMs: 220,
   },
   screenFlash: {
     enabled: true,
     color: 0xffffff,
-    alpha: 0.12,
-    durationMs: 120,
+    alpha: 0.1,
+    durationMs: 130,
   },
   impactBurst: {
     enabled: true,
@@ -212,7 +212,7 @@ const CLASSIC_FX = {
     alphaEnd: 0,
     lifespanMin: 280,
     lifespanMax: 420,
-    tint: 0xfef3c7,
+    tint: 0xfff1b3,
   },
   vignette: {
     alpha: 0.2,
