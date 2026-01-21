@@ -502,7 +502,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private startSceneFade(): void {
-    if (this.reducedMotion || !this.fx.sceneFade.enabled) {
+    if (this.isMotionReduced() || !this.fx.sceneFade.enabled) {
       return
     }
     const color = Phaser.Display.Color.HexStringToColor(this.theme.palette.background)
@@ -2052,7 +2052,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private cameraPunch(intensity: number): void {
-    if (this.reducedMotion || !this.fx.cameraPunch.enabled) {
+    if (this.isMotionReduced() || !this.fx.cameraPunch.enabled) {
       return
     }
     const amount = this.fx.cameraPunch.amount * intensity
