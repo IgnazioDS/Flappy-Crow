@@ -20,9 +20,9 @@ npm run preview
 4b) iOS shell smoke test (if preparing App Store build):
 
 ```bash
-npm run build
-npx cap sync ios
-npx cap open ios
+npm run build:ios
+npm run cap:sync:ios
+npm run cap:open:ios
 ```
 
 Run on a simulator: verify touch input, pause/resume, and Privacy Policy link.

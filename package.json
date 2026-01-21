@@ -6,6 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "build:ios": "tsc && vite build --base=./",
+    "cap:sync:ios": "cap sync ios",
+    "cap:open:ios": "cap open ios",
+    "ios:smoke": "npm run build:ios && npm run cap:sync:ios",
     "preview": "vite preview",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
@@ -14,6 +18,8 @@
     "test:e2e": "playwright test"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.0.1",
+    "@capacitor/ios": "^8.0.1",
     "@playwright/test": "^1.55.0",
     "@types/node": "^25.0.9",
     "@typescript-eslint/eslint-plugin": "^8.52.0",
@@ -26,6 +32,7 @@
     "vitest": "^3.2.4"
   },
   "dependencies": {
+    "@capacitor/core": "^8.0.1",
     "phaser": "^3.90.0"
   }
 }

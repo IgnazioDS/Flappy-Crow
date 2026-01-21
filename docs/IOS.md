@@ -8,7 +8,7 @@ without changing web deployment.
 1) Build the web bundle:
 
 ```bash
-npm run build
+npm run build:ios
 ```
 
 2) Initialize Capacitor (one-time):
@@ -26,13 +26,13 @@ npx cap add ios
 4) Sync web assets into the native project:
 
 ```bash
-npx cap sync ios
+npm run cap:sync:ios
 ```
 
 5) Open in Xcode and run:
 
 ```bash
-npx cap open ios
+npm run cap:open:ios
 ```
 
 ## Capacitor config template
@@ -51,6 +51,14 @@ const config: CapacitorConfig = {
 
 export default config
 ```
+
+
+## Convenience scripts
+
+- `npm run build:ios`: build with `base=./` for Capacitor file URLs.
+- `npm run cap:sync:ios`: sync the iOS project with the latest web build.
+- `npm run cap:open:ios`: open the iOS project in Xcode.
+- `npm run ios:smoke`: build + sync for a quick simulator pass.
 
 ## iOS UX checklist
 
