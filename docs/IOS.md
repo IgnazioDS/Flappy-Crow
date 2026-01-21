@@ -37,7 +37,7 @@ npx cap open ios
 
 ## Capacitor config template
 
-Create `capacitor.config.ts` at the repo root:
+Create `capacitor.config.ts` at the repo root (or copy `capacitor.config.example.ts`):
 
 ```ts
 import { CapacitorConfig } from '@capacitor/cli'
@@ -66,6 +66,32 @@ export default config
 - If any telemetry qualifies as tracking, require ATT before enabling.
 - Privacy policy must be accessible in-app.
 - Add a privacy manifest if any third-party SDKs are included in the iOS build.
+
+## Privacy manifest template
+
+Create `ios/App/PrivacyInfo.xcprivacy` (or include SDK manifests) and fill in
+only the APIs and data types you actually use. Template:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>NSPrivacyTracking</key>
+    <false/>
+    <key>NSPrivacyTrackingDomains</key>
+    <array/>
+    <key>NSPrivacyCollectedDataTypes</key>
+    <array>
+      <!-- Add data types per SDK; omit if none are collected. -->
+    </array>
+    <key>NSPrivacyAccessedAPITypes</key>
+    <array>
+      <!-- Add required reason APIs if used by any SDK. -->
+    </array>
+  </dict>
+</plist>
+```
 
 ## In-app privacy policy access plan
 
