@@ -3,14 +3,14 @@ import type { ThemeDefinition } from '../types'
 const EMERALD_PALETTE = {
   background: '#0d2a24',
   textPrimary: '#e6fffb',
-  textMuted: '#9fe7da',
+  textMuted: '#b7f3e6',
   panel: '#10362f',
-  panelStroke: '#47b091',
+  panelStroke: '#6be3cb',
 } as const
 
 const EMERALD_PALETTE_NUM = {
   panel: 0x10362f,
-  panelStroke: 0x47b091,
+  panelStroke: 0x6be3cb,
   shadow: 0x031310,
 } as const
 
@@ -49,7 +49,7 @@ const EMERALD_UI = {
     fontSize: '24px',
     color: EMERALD_PALETTE.textPrimary,
     stroke: '#0b1f1b',
-    strokeThickness: 5,
+    strokeThickness: 4,
     align: 'center',
   },
   overlayBodyStyle: {
@@ -63,22 +63,22 @@ const EMERALD_UI = {
   statLabelStyle: {
     fontFamily: '"Cinzel", serif',
     fontSize: '14px',
-    color: '#bff3e7',
-    stroke: '#09201b',
+    color: '#d6fff4',
+    stroke: '#061814',
     strokeThickness: 3,
   },
   statValueStyle: {
     fontFamily: '"Space Mono", monospace',
     fontSize: '18px',
     color: EMERALD_PALETTE.textPrimary,
-    stroke: '#041512',
-    strokeThickness: 5,
+    stroke: '#062019',
+    strokeThickness: 4,
   },
   panel: {
     fill: EMERALD_PALETTE_NUM.panel,
     stroke: EMERALD_PALETTE_NUM.panelStroke,
     strokeThickness: 3,
-    alpha: 0.92,
+    alpha: 0.94,
   },
   panelSize: {
     small: { width: 260, height: 110 },
