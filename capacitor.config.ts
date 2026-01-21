@@ -1,7 +1,7 @@
 import { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'com.yourorg.flappycrow',
+  appId: 'com.ignaziods.flappycrow',
   appName: 'Flappy Crow',
   webDir: 'dist',
   bundledWebRuntime: false,
