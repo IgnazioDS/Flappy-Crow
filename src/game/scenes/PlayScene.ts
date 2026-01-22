@@ -6,11 +6,13 @@ import {
   PERFORMANCE_CONFIG,
   PIPE_CONFIG,
 } from '../config'
+import { ECONOMY_CONFIG } from '../economy/economyConfig'
 import { Bird } from '../entities/Bird'
 import { Ground } from '../entities/Ground'
 import { PipePair } from '../entities/PipePair'
 import { GameStateMachine } from '../state/GameStateMachine'
 import { CollisionSystem } from '../systems/CollisionSystem'
+import { CurrencySystem } from '../systems/CurrencySystem'
 import { DespawnSystem } from '../systems/DespawnSystem'
 import { InputSystem } from '../systems/InputSystem'
 import { ScoreSystem } from '../systems/ScoreSystem'
@@ -120,6 +122,7 @@ export class PlayScene extends Phaser.Scene {
   private inputSystem = new InputSystem()
   private spawnSystem!: SpawnSystem
   private scoreSystem = new ScoreSystem()
+  private currencySystem = new CurrencySystem(ECONOMY_CONFIG.rewardPolicy)
   private collisionSystem = new CollisionSystem()
   private despawnSystem = new DespawnSystem()
   private theme = getActiveTheme()
@@ -161,6 +164,8 @@ export class PlayScene extends Phaser.Scene {
   private finalScoreText!: Phaser.GameObjects.Text
   private bestScoreText!: Phaser.GameObjects.Text
   private bestLabelText!: Phaser.GameObjects.Text
+  private coinsEarnedText!: Phaser.GameObjects.Text
+  private totalCoinsText!: Phaser.GameObjects.Text
   private medalSprite: Phaser.GameObjects.Image | null = null
 
   private muteIcon: Phaser.GameObjects.Image | null = null
@@ -186,6 +191,8 @@ export class PlayScene extends Phaser.Scene {
 
   private lastScore = -1
   private bestScore = 0
+  private coinsEarned = 0
+  private totalCoins = 0
   private isMuted = false
   private reducedMotion = false
   private analyticsConsent: 'granted' | 'denied' | null = null
@@ -281,6 +288,7 @@ export class PlayScene extends Phaser.Scene {
     this.ghostEnabled = readStoredBool('flappy-ghost', true)
     this.bestReplay = loadBestReplay(this.gameModeId)
     this.saveSystem = new SaveSystem()
+    this.totalCoins = this.saveSystem.getState().coins
     this.debugEnabled = this.debugToggleAllowed
       ? readStoredBool('flappy-hitboxes', false)
       : false
@@ -809,21 +817,39 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private createGameOverOverlay(): void {
-    const panel = createPanel(this, this.ui, this.theme, 'large')
-    const title = this.add.text(0, -66, 'GAME OVER', this.ui.overlayTitleStyle).setOrigin(0.5, 0.5)
+    const panelWidth = this.ui.panelSize.large.width
+    const panelHeight = 240
+    const panel = createPanel(this, this.ui, this.theme, 'large', panelWidth, panelHeight)
+    const title = this.add
+      .text(0, -panelHeight / 2 + 30, 'RUN SUMMARY', this.ui.overlayTitleStyle)
+      .setOrigin(0.5, 0.5)
 
     const scoreLabel = this.add
-      .text(-20, -26, 'SCORE', this.ui.statLabelStyle)
+      .text(-20, -58, 'SCORE', this.ui.statLabelStyle)
       .setOrigin(0, 0.5)
     this.finalScoreText = this.add
-      .text(-20, -4, '0', this.ui.statValueStyle)
+      .text(-20, -36, '0', this.ui.statValueStyle)
       .setOrigin(0, 0.5)
 
     this.bestLabelText = this.add
-      .text(-20, 24, 'BEST', this.ui.statLabelStyle)
+      .text(-20, -8, 'BEST', this.ui.statLabelStyle)
       .setOrigin(0, 0.5)
     this.bestScoreText = this.add
-      .text(-20, 46, String(this.bestScore), this.ui.statValueStyle)
+      .text(-20, 12, String(this.bestScore), this.ui.statValueStyle)
+      .setOrigin(0, 0.5)
+
+    const coinsLabel = this.add
+      .text(-20, 40, 'COINS', this.ui.statLabelStyle)
+      .setOrigin(0, 0.5)
+    this.coinsEarnedText = this.add
+      .text(-20, 60, '0', this.ui.statValueStyle)
+      .setOrigin(0, 0.5)
+
+    const totalLabel = this.add
+      .text(-20, 88, 'TOTAL', this.ui.statLabelStyle)
+      .setOrigin(0, 0.5)
+    this.totalCoinsText = this.add
+      .text(-20, 108, String(this.totalCoins), this.ui.statValueStyle)
       .setOrigin(0, 0.5)
 
     const overlayItems: Phaser.GameObjects.GameObject[] = [
@@ -833,6 +859,10 @@ export class PlayScene extends Phaser.Scene {
       this.finalScoreText,
       this.bestLabelText,
       this.bestScoreText,
+      coinsLabel,
+      this.coinsEarnedText,
+      totalLabel,
+      this.totalCoinsText,
     ]
 
     const uiAssets = this.theme.visuals.ui
@@ -845,14 +875,18 @@ export class PlayScene extends Phaser.Scene {
       this.medalSprite = null
     }
 
-    const restartButton = this.createRestartButton()
-    restartButton.setPosition(0, 84)
-    overlayItems.push(restartButton)
+    const playAgainButton = this.createPlayAgainButton()
+    playAgainButton.setPosition(0, panelHeight / 2 + 30)
+    overlayItems.push(playAgainButton)
+
+    const homeButton = createSmallButton(this, this.ui, this.theme, 'HOME', () => this.restart())
+    homeButton.setPosition(-70, panelHeight / 2 + 66)
+    overlayItems.push(homeButton)
 
     const shareButton = createSmallButton(this, this.ui, this.theme, 'SHARE', () =>
       this.shareRunCard(),
     )
-    shareButton.setPosition(0, 62)
+    shareButton.setPosition(70, panelHeight / 2 + 66)
     overlayItems.push(shareButton)
 
     this.gameOverContainer = this.add.container(
@@ -864,7 +898,7 @@ export class PlayScene extends Phaser.Scene {
     this.gameOverContainer.setVisible(false)
   }
 
-  private createRestartButton(): Phaser.GameObjects.Container {
+  private createPlayAgainButton(): Phaser.GameObjects.Container {
     const uiAssets = this.theme.visuals.ui
     const buttonBase = createButtonBase(this, this.ui, this.theme)
     applyMinHitArea(buttonBase)
@@ -872,8 +906,9 @@ export class PlayScene extends Phaser.Scene {
     buttonBase.on('pointerdown', () => this.restart())
 
     const label = this.add
-      .text(0, 0, 'RESTART', this.ui.button.textStyle)
+      .text(0, 0, 'PLAY AGAIN', this.ui.button.textStyle)
       .setOrigin(0.5, 0.5)
+      .setScale(0.92)
 
     const items: Phaser.GameObjects.GameObject[] = [buttonBase, label]
     if (uiAssets.kind === 'atlas' && uiAssets.frames?.iconRestart && uiAssets.atlasKey) {
@@ -1234,7 +1269,15 @@ export class PlayScene extends Phaser.Scene {
     if (!this.saveSystem) {
       return
     }
-    this.saveSystem.reset()
+    const reset = this.saveSystem.reset()
+    this.coinsEarned = 0
+    this.totalCoins = reset.coins
+    if (this.coinsEarnedText) {
+      this.coinsEarnedText.setText('0')
+    }
+    if (this.totalCoinsText) {
+      this.totalCoinsText.setText(String(this.totalCoins))
+    }
     this.analyticsSystem.track('save_reset')
   }
 
@@ -1701,9 +1744,30 @@ export class PlayScene extends Phaser.Scene {
     this.finishReplayRecording(isNewBest)
     this.ghostPlayer?.stop()
 
+    const coinsEarned = this.practiceEnabled ? 0 : this.currencySystem.calculateCoins(score)
+    this.coinsEarned = coinsEarned
+    if (!this.practiceEnabled) {
+      if (this.saveSystem) {
+        const updated = this.saveSystem.update((state) => ({
+          ...state,
+          coins: state.coins + coinsEarned,
+          lifetime: {
+            runs: state.lifetime.runs + 1,
+            bestScore: Math.max(state.lifetime.bestScore, score),
+            totalCoinsEarned: state.lifetime.totalCoinsEarned + coinsEarned,
+          },
+        }))
+        this.totalCoins = updated.coins
+      } else {
+        this.totalCoins += coinsEarned
+      }
+    }
+
     this.finalScoreText.setText(String(score))
     this.bestScoreText.setText(String(this.bestScore))
     this.bestLabelText.setText(isNewBest ? 'NEW BEST' : 'BEST')
+    this.coinsEarnedText.setText(String(this.coinsEarned))
+    this.totalCoinsText.setText(String(this.totalCoins))
     this.updateMedal(score)
 
     const sessionDurationMs =
@@ -1718,6 +1782,12 @@ export class PlayScene extends Phaser.Scene {
       bestScore: this.bestScore,
       sessionDurationMs: Math.round(sessionDurationMs),
     })
+    if (!this.practiceEnabled) {
+      this.analyticsSystem.track('coins_earned', {
+        coins: this.coinsEarned,
+        totalCoins: this.totalCoins,
+      })
+    }
     this.runStartMs = null
     this.setE2EState({
       state: 'GAME_OVER',

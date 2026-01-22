@@ -27,12 +27,12 @@ type SettingsPanelOptions = {
 
 export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPanelHandle => {
   const { scene, ui, theme, position, rows, onClose, panelHeightOffset = 20 } = options
-  const panelScale = 0.9
-  const textScale = 0.9
+  const panelScale = 0.7
+  const textScale = 0.7
   const panelWidth = Math.round(ui.panelSize.large.width * panelScale)
   const rowWidth = panelWidth - Math.round(56 * panelScale)
-  const labelFontSize = parseFontSize(scaleFontSize(ui.statLabelStyle.fontSize, textScale), 14)
-  const valueFontSize = parseFontSize(scaleFontSize(ui.statValueStyle.fontSize, textScale), 16)
+  const labelFontSize = parseFontSize(scaleFontSize(ui.statLabelStyle.fontSize, textScale), 13)
+  const valueFontSize = parseFontSize(scaleFontSize(ui.statValueStyle.fontSize, textScale), 15)
   const rowFontSize = Math.max(labelFontSize, valueFontSize)
   const rowHeight = Math.max(44, Math.round(rowFontSize * 1.5))
   const rowGap = Math.round(rowHeight * 1.05)
