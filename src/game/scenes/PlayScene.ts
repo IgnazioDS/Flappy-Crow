@@ -27,6 +27,7 @@ import {
   storeNumber,
   storeString,
 } from '../persistence/storage'
+import { SaveSystem } from '../persistence/SaveSystem'
 import {
   applyButtonFeedback,
   applyMinHitArea,
@@ -77,6 +78,7 @@ import { ReplayRecorder } from '../replay/ReplayRecorder'
 import { ReplayPlayer } from '../replay/ReplayPlayer'
 import { loadBestReplay, saveBestReplay } from '../replay/ReplayStorage'
 import type { ReplayData } from '../replay/types'
+import { AnalyticsSystem } from '../systems/AnalyticsSystem'
 import {
   getTelemetryConsent,
   setTelemetryConsent,
@@ -176,6 +178,10 @@ export class PlayScene extends Phaser.Scene {
   private settingsOpen = false
   private telemetryConsentPanel: Phaser.GameObjects.Container | null = null
   private telemetryConsentOpen = false
+  private debugMenu: Phaser.GameObjects.Container | null = null
+  private debugMenuBackdrop: Phaser.GameObjects.Rectangle | null = null
+  private debugMenuOpen = false
+  private readonly debugMenuEnabled = import.meta.env.DEV
   private safeArea = { top: 0, right: 0, bottom: 0, left: 0 }
 
   private lastScore = -1
@@ -202,6 +208,8 @@ export class PlayScene extends Phaser.Scene {
   private seedValue: number | null = null
   private seedLabel = 'NORMAL'
   private debugEnabled = false
+  private saveSystem: SaveSystem | null = null
+  private analyticsSystem = new AnalyticsSystem({ logToConsole: import.meta.env.DEV })
   private readonly debugToggleAllowed =
     import.meta.env.DEV || import.meta.env.VITE_ART_QA === 'true'
   private readonly e2eEnabled =
@@ -272,6 +280,7 @@ export class PlayScene extends Phaser.Scene {
     this.practiceEnabled = readStoredBool('flappy-practice', false)
     this.ghostEnabled = readStoredBool('flappy-ghost', true)
     this.bestReplay = loadBestReplay(this.gameModeId)
+    this.saveSystem = new SaveSystem()
     this.debugEnabled = this.debugToggleAllowed
       ? readStoredBool('flappy-hitboxes', false)
       : false
@@ -330,6 +339,7 @@ export class PlayScene extends Phaser.Scene {
     this.createGameOverOverlay()
     this.createToggles()
     this.createSettingsPanel()
+    this.createDebugMenu()
     this.createTelemetryConsentOverlay()
     this.updateSafeAreaLayout()
 
@@ -422,6 +432,10 @@ export class PlayScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-R', () => this.toggleReducedMotion())
     this.input.keyboard?.on('keydown-E', () => this.toggleEnvironment())
     this.input.keyboard?.on('keydown-ESC', () => {
+      if (this.debugMenuOpen) {
+        this.toggleDebugMenu()
+        return
+      }
       if (this.settingsOpen) {
         this.toggleSettingsPanel()
       }
@@ -1070,6 +1084,14 @@ export class PlayScene extends Phaser.Scene {
       },
     ]
 
+    if (this.debugMenuEnabled) {
+      rows.push({
+        label: 'DEBUG',
+        getValue: () => 'OPEN',
+        onToggle: () => this.toggleDebugMenu(),
+      })
+    }
+
     if (this.debugToggleAllowed) {
       rows.push({
         label: 'HITBOXES',
@@ -1115,6 +1137,105 @@ export class PlayScene extends Phaser.Scene {
       onClose: () => this.toggleSettingsPanel(),
     })
     this.updateSettingsValues()
+  }
+
+  private createDebugMenu(): void {
+    if (!this.debugMenuEnabled) {
+      return
+    }
+
+    const panelWidth = Math.round(this.ui.panelSize.large.width * 0.82)
+    const panelHeight = 170
+    const backdrop = this.add
+      .rectangle(0, 0, GAME_DIMENSIONS.width, GAME_DIMENSIONS.height, this.theme.paletteNum.shadow, 0.35)
+      .setOrigin(0, 0)
+      .setDepth(6.5)
+      .setVisible(false)
+    backdrop.setInteractive()
+    backdrop.on(
+      'pointerdown',
+      (
+        _pointer: Phaser.Input.Pointer,
+        _localX: number,
+        _localY: number,
+        event: Phaser.Types.Input.EventData,
+      ) => {
+        event.stopPropagation()
+        if (this.debugMenuOpen) {
+          this.toggleDebugMenu()
+        }
+      },
+    )
+    backdrop.disableInteractive()
+    this.debugMenuBackdrop = backdrop
+
+    const panel = createPanel(this, this.ui, this.theme, 'large', panelWidth, panelHeight)
+    panel.setInteractive()
+    panel.on(
+      'pointerdown',
+      (
+        _pointer: Phaser.Input.Pointer,
+        _localX: number,
+        _localY: number,
+        event: Phaser.Types.Input.EventData,
+      ) => {
+        event.stopPropagation()
+      },
+    )
+
+    const title = this.add.text(0, -50, 'DEBUG', this.ui.overlayTitleStyle).setOrigin(0.5, 0.5)
+    const body = this.add
+      .text(0, -12, 'Dev-only tools for local save data.', this.ui.overlayBodyStyle)
+      .setOrigin(0.5, 0.5)
+    body.setWordWrapWidth(panelWidth - 30)
+
+    const resetButton = createSmallButton(this, this.ui, this.theme, 'RESET SAVE', () =>
+      this.resetSaveState(),
+    )
+    const closeButton = createSmallButton(this, this.ui, this.theme, 'CLOSE', () =>
+      this.toggleDebugMenu(),
+    )
+    resetButton.setPosition(-70, 48)
+    closeButton.setPosition(70, 48)
+
+    const content = this.add.container(GAME_DIMENSIONS.width / 2, GAME_DIMENSIONS.height / 2, [
+      panel,
+      title,
+      body,
+      resetButton,
+      closeButton,
+    ])
+
+    this.debugMenu = this.add.container(0, 0, [backdrop, content])
+    this.debugMenu.setDepth(7)
+    this.debugMenu.setVisible(false)
+  }
+
+  private toggleDebugMenu(): void {
+    if (!this.debugMenuEnabled || !this.debugMenu) {
+      return
+    }
+    this.debugMenuOpen = !this.debugMenuOpen
+    this.debugMenu.setVisible(this.debugMenuOpen)
+    if (this.debugMenuBackdrop) {
+      this.debugMenuBackdrop.setVisible(this.debugMenuOpen)
+      if (this.debugMenuOpen) {
+        this.debugMenuBackdrop.setInteractive()
+      } else {
+        this.debugMenuBackdrop.disableInteractive()
+      }
+    }
+    if (this.debugMenuOpen && this.settingsOpen) {
+      this.toggleSettingsPanel()
+    }
+  }
+
+  private resetSaveState(): void {
+    if (!this.saveSystem) {
+      return
+    }
+    this.saveSystem.reset()
+    this.analyticsSystem.track('save_reset')
   }
 
   private createTelemetryConsentOverlay(): void {
@@ -1466,6 +1587,12 @@ export class PlayScene extends Phaser.Scene {
     this.startGhostPlayback()
     this.cameraPunch(0.6)
     telemetry.track('game_start')
+    this.analyticsSystem.track('run_start', {
+      mode: this.gameModeId,
+      seedMode: this.seedMode,
+      seedLabel: this.seedLabel,
+      practiceEnabled: this.practiceEnabled,
+    })
     telemetry.track('flap')
     this.setE2EState({ state: 'PLAYING' })
     this.bird.flap()
@@ -1474,6 +1601,7 @@ export class PlayScene extends Phaser.Scene {
   private restart(): void {
     this.stateMachine.transition('RESTART')
     telemetry.track('restart')
+    this.analyticsSystem.track('run_restart')
     this.enterReady()
   }
 
@@ -1581,6 +1709,11 @@ export class PlayScene extends Phaser.Scene {
     const sessionDurationMs =
       this.runStartMs === null ? 0 : Math.max(0, this.time.now - this.runStartMs)
     telemetry.track('game_over', {
+      score,
+      bestScore: this.bestScore,
+      sessionDurationMs: Math.round(sessionDurationMs),
+    })
+    this.analyticsSystem.track('run_end', {
       score,
       bestScore: this.bestScore,
       sessionDurationMs: Math.round(sessionDurationMs),
