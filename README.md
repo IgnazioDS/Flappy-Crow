@@ -136,9 +136,10 @@ exported as SVG source plus PNG/WebP runtime variants.
 ## Attribution
 
 - Cinzel + Cinzel Decorative by Natanael Gama (Google Fonts, SIL Open Font License):
-  https://fonts.google.com/specimen/Cinzel
-  https://fonts.google.com/specimen/Cinzel+Decorative
-  https://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL
+  <https://fonts.google.com/specimen/Cinzel>
+  <https://fonts.google.com/specimen/Cinzel+Decorative>
+  <https://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL>
+
 - Space Mono by Colophon Foundry (Google Fonts, SIL Open Font License):
-  https://fonts.google.com/specimen/Space+Mono
-  https://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL
+  <https://fonts.google.com/specimen/Space+Mono>
+  <https://scripts.sil.org/cms/scripts/page.php?site_id=nrsi&id=OFL>

@@ -27,7 +27,7 @@ npm run cap:open:ios
 
 Run on a simulator: verify touch input, pause/resume, and Privacy Policy link.
 
-5) Commit the release:
+1) Commit the release:
 
 ```bash
 git add package.json package-lock.json CHANGELOG.md
@@ -35,15 +35,15 @@ git add package.json package-lock.json CHANGELOG.md
 git commit -m "I release vX.Y.Z"
 ```
 
-6) Tag the release and push commits + tags:
+1) Tag the release and push commits + tags:
 
 ```bash
 git tag -a vX.Y.Z -m "vX.Y.Z"
 git push origin main --tags
 ```
 
-7) Create a GitHub Release using the `vX.Y.Z` tag and paste the notes from `CHANGELOG.md`.
-8) Verify the GitHub Pages deploy and run a quick smoke test in the live build.
+1) Create a GitHub Release using the `vX.Y.Z` tag and paste the notes from `CHANGELOG.md`.
+2) Verify the GitHub Pages deploy and run a quick smoke test in the live build.
 
 ## Release Notes Template
 
