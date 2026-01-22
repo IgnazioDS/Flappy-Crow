@@ -3,6 +3,29 @@
 All notable changes to this project will be documented in this file.
 This project follows [Semantic Versioning](https://semver.org/).
 
+
+## [5.0.0] - 2026-01-22
+
+### Added
+- Capacitor iOS app-shell scaffolding (config, iOS project, scripts, and docs).
+- Privacy policy settings row with `VITE_PRIVACY_POLICY_URL` wiring.
+- Privacy manifest template for iOS builds.
+- Theme contract validation for required assets/frames in dev builds.
+- Visual QA specs for safe-area and Emerald UI checks.
+- Theme QA checklist for v5 visual review.
+
+### Changed
+- Classic, Emerald Lake, and Evil Forest art passes (backgrounds, pipes, birds, ground).
+- Evil Forest environment tuning with calmer fog/biolume and low-power profile.
+- UI contrast and sizing polish across themes (Classic sizing, Emerald stats, Evil Forest glow).
+- Safe-area offsets for overlays plus minimum touch target sizing.
+- Reduced-motion/low-power now suppresses motion FX (camera punch/scene fades).
+- Release checklist includes an iOS simulator smoke step.
+
+### Fixed
+- Settings button hit area reliability.
+- Emerald pipe contrast in motion.
+
 ## [4.0.0] - 2026-01-18
 
 ### Added
