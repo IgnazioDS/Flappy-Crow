@@ -1114,7 +1114,7 @@ export class PlayScene extends Phaser.Scene {
       },
       {
         label: 'THEME',
-        getValue: () => this.theme.name,
+        getValue: () => this.getThemeLabel(),
         onToggle: () => this.toggleTheme(),
       },
     ]
@@ -2228,6 +2228,19 @@ export class PlayScene extends Phaser.Scene {
 
   private getGameModeLabel(): string {
     return this.gameMode.label
+  }
+
+  private getThemeLabel(): string {
+    switch (this.theme.id) {
+      case 'classic':
+        return 'Classic'
+      case 'evil-forest':
+        return 'Evil Forest'
+      case 'emerald-lake':
+        return 'Emerald Lake'
+      default:
+        return this.theme.name
+    }
   }
 
   private getHandednessLabel(): string {

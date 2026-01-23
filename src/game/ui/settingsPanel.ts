@@ -1,4 +1,5 @@
 import Phaser from 'phaser'
+import { GAME_DIMENSIONS } from '../config'
 import type { ThemeDefinition, ThemeUI } from '../theme/types'
 import { createPanel, createSmallButton } from './uiFactory'
 
@@ -26,27 +27,26 @@ type SettingsPanelOptions = {
 }
 
 export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPanelHandle => {
-  const { scene, ui, theme, position, rows, onClose, panelHeightOffset = 20 } = options
-  const panelScale = 0.68
-  const textScale = 0.66
-  const panelWidth = Math.round(ui.panelSize.large.width * panelScale)
-  const rowWidth = panelWidth - Math.round(48 * panelScale)
-  const labelFontSize = parseFontSize(scaleFontSize(ui.statLabelStyle.fontSize, textScale), 13)
-  const valueFontSize = parseFontSize(scaleFontSize(ui.statValueStyle.fontSize, textScale), 15)
-  const rowFontSize = Math.max(labelFontSize, valueFontSize)
-  const rowHeight = Math.max(40, Math.round(rowFontSize * 1.4))
-  const rowGap = Math.round(rowHeight * 0.95)
-  const badgeHeight = Math.max(18, rowHeight - 9)
-  const badgeRightX = rowWidth / 2 - 6
-  const badgeMinWidth = 50
-  const badgePaddingX = 11
-  const labelValueGap = Math.round(9 * panelScale)
-  const headerHeight = Math.max(84, Math.round(rowHeight * 1.7))
-  const footerHeight = Math.max(56, Math.round(rowHeight * 1.15))
-  const basePanelHeight = Math.round(ui.panelSize.large.height * panelScale) + Math.round(panelHeightOffset * panelScale)
-  const rowsHeight = rowHeight + (rows.length - 1) * rowGap
-  const minPanelHeight = headerHeight + footerHeight + rowHeight
-  const panelHeight = Math.max(basePanelHeight, minPanelHeight)
+  const { scene, ui, theme, position, rows, onClose, panelHeightOffset = 0 } = options
+  const panelWidth = Math.round(GAME_DIMENSIONS.width * (2 / 3))
+  const panelHeight = Math.round(GAME_DIMENSIONS.height * (2 / 3)) + Math.max(0, panelHeightOffset)
+  const horizontalPadding = Math.max(18, Math.round(panelWidth * 0.08))
+  const rowWidth = panelWidth - horizontalPadding * 2
+  const baseLabelFontSize = parseFontSize(ui.statLabelStyle.fontSize, 13)
+  const baseValueFontSize = parseFontSize(ui.statValueStyle.fontSize, 15)
+  const baseRowFontSize = Math.max(baseLabelFontSize, baseValueFontSize)
+  const badgeMinWidth = 56
+  const badgePaddingX = 12
+  const labelValueGap = 12
+  const menuTextScale = 0.85
+  const titlePaddingTop = 10
+  const titleHintGap = 2
+  const hintRowsGap = 6
+  const rowsBottomGap = 6
+  const bottomPadding = 14
+  const hintFontScale = 0.9
+  const hintWrapWidth = panelWidth - 24
+  const hintLineSpacing = 2
 
   const panel = createPanel(scene, ui, theme, 'large', panelWidth, panelHeight)
   panel.setInteractive()
@@ -62,31 +62,70 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
     },
   )
 
-  const titleY = -panelHeight / 2 + Math.round(32 * panelScale)
   const titleStyle = {
     ...ui.overlayTitleStyle,
-    fontSize: scaleFontSize(ui.overlayTitleStyle.fontSize, textScale),
+    fontSize: scaleFontSize(ui.overlayTitleStyle.fontSize, menuTextScale),
   }
-  const title = scene.add.text(0, titleY, 'SETTINGS', titleStyle).setOrigin(0.5, 0.5)
+  const title = scene.add.text(0, 0, 'SETTINGS', titleStyle).setOrigin(0.5, 0.5)
+  title.setPosition(0, -panelHeight / 2 + titlePaddingTop)
 
   const hintStyle = {
     ...ui.overlayBodyStyle,
-    fontSize: scaleFontSize(ui.overlayBodyStyle.fontSize, 0.6),
+    fontSize: scaleFontSize(ui.overlayBodyStyle.fontSize, menuTextScale * hintFontScale),
   }
   const hint = scene.add
-    .text(0, titleY + Math.round(22 * panelScale), 'Tap a row to toggle. Tap outside to close.', hintStyle)
+    .text(0, 0, 'Tap a row to toggle. Tap outside to close.', hintStyle)
     .setOrigin(0.5, 0.5)
-  hint.setWordWrapWidth(panelWidth - Math.round(60 * panelScale))
-  hint.setLineSpacing(Math.round(3 * panelScale))
-  hint.setAlpha(0.82)
+  hint.setWordWrapWidth(hintWrapWidth)
+  hint.setLineSpacing(hintLineSpacing)
+  hint.setAlpha(0.78)
+  hint.setPosition(0, title.y + title.height / 2 + titleHintGap + hint.height / 2)
 
+  const rowsTop = hint.y + hint.height / 2 + hintRowsGap
+  const closeButtonY = panelHeight / 2 - bottomPadding
+  const rowsBottom = closeButtonY - rowsBottomGap
+  const rowsAreaHeight = Math.max(0, rowsBottom - rowsTop)
+  const minRowHeight = 18
+  let targetVisibleRows = Math.min(rows.length, 6)
+  let targetRowHeight = Math.floor(rowsAreaHeight / Math.max(1, targetVisibleRows))
+  if (targetVisibleRows > 5 && targetRowHeight < minRowHeight) {
+    targetVisibleRows = 5
+    targetRowHeight = Math.floor(rowsAreaHeight / Math.max(1, targetVisibleRows))
+  }
+  const rowHeight = Math.max(minRowHeight, targetRowHeight)
+  const extraGap = Math.max(
+    0,
+    Math.floor(
+      (rowsAreaHeight - rowHeight * targetVisibleRows) / Math.max(1, targetVisibleRows - 1),
+    ),
+  )
+  const rowGap = rowHeight + extraGap
+  const rowsHeight = rowHeight + (rows.length - 1) * rowGap
+  const rowsOverflow = rowsHeight - rowsAreaHeight
+  const rowStartY =
+    rowsTop + rowHeight / 2 + (rowsOverflow > 0 ? 0 : Math.max(0, (rowsAreaHeight - rowsHeight) / 2))
+  const badgeHeight = Math.max(28, rowHeight - 2)
+  const badgeRightX = rowWidth / 2 - 4
+  const rowTextScaleBase =
+    rowHeight < baseRowFontSize + 2
+      ? Math.min(1, Math.max(0.6, (rowHeight - 4) / baseRowFontSize))
+      : 1
+  const rowTextScale = Math.max(0.55, Math.min(0.9, rowTextScaleBase * menuTextScale))
+  const maxValueFontPx = Math.floor((badgeHeight - 10) * 0.38)
+  const maxLabelFontSize = Math.floor(rowHeight * 0.6)
   const labelStyle = {
     ...ui.statLabelStyle,
-    fontSize: scaleFontSize(ui.statLabelStyle.fontSize, textScale),
+    fontSize: clampFontSize(scaleFontSize(ui.statLabelStyle.fontSize, rowTextScale), maxLabelFontSize),
   }
+  const valueFontPx = Math.min(
+    parseFontSize(scaleFontSize(ui.statValueStyle.fontSize, rowTextScale), maxValueFontPx),
+    maxValueFontPx,
+  )
+  const valueStrokeThickness = Math.max(0, Math.round((ui.statValueStyle.strokeThickness ?? 0) * 0.5))
   const valueStyle = {
     ...ui.statValueStyle,
-    fontSize: scaleFontSize(ui.statValueStyle.fontSize, textScale),
+    fontSize: `${Math.max(10, valueFontPx)}px`,
+    strokeThickness: valueStrokeThickness,
   }
 
   let rowIndex = 0
@@ -94,14 +133,6 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
   const valueBadges: Phaser.GameObjects.Rectangle[] = []
   const valueMaxWidths: number[] = []
   let settingsPanel: Phaser.GameObjects.Container
-
-  const rowsTop = hint.y + hint.height / 2 + Math.round(14 * panelScale)
-  const closeButtonY = panelHeight / 2 - Math.round(20 * panelScale)
-  const rowsBottom = closeButtonY - Math.round(20 * panelScale)
-  const rowsAreaHeight = Math.max(0, rowsBottom - rowsTop)
-  const rowsOverflow = rowsHeight - rowsAreaHeight
-  const rowStartY =
-    rowsTop + rowHeight / 2 + (rowsOverflow > 0 ? 0 : Math.max(0, (rowsAreaHeight - rowsHeight) / 2))
   const rowsContainer = scene.add.container(0, 0)
   const maxScroll = Math.max(0, rowsHeight - rowsAreaHeight)
   let scrollOffset = 0
@@ -109,7 +140,7 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
   let dragStartY = 0
   let dragStartOffset = 0
   let dragMoved = false
-  const dragThreshold = Math.max(4, Math.round(6 * panelScale))
+  const dragThreshold = 6
 
   const isPointerInRowsArea = (pointer: Phaser.Input.Pointer): boolean => {
     const x = pointer.worldX ?? pointer.x
@@ -289,7 +320,7 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
       },
     )
 
-    const labelText = scene.add.text(-rowWidth / 2 + 4, y, row.label, labelStyle).setOrigin(0, 0.5)
+    const labelText = scene.add.text(-rowWidth / 2 + 6, y, row.label, labelStyle).setOrigin(0, 0.5)
     const valueText = scene.add.text(0, y, row.getValue(), valueStyle).setOrigin(1, 0.5)
     const labelRightX = labelText.x + labelText.width
     const maxBadgeWidth = Math.max(0, badgeRightX - labelRightX - labelValueGap)
@@ -404,7 +435,7 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
 }
 
 const scaleFontSize = (value: string, multiplier: number): string => {
-  const match = value.match(/^(\\d+(?:\\.\\d+)?)px$/)
+  const match = value.match(/^(\d+(?:\.\d+)?)px$/)
   if (!match) {
     return value
   }
@@ -412,8 +443,14 @@ const scaleFontSize = (value: string, multiplier: number): string => {
   return `${next}px`
 }
 
+const clampFontSize = (value: string, maxPx: number): string => {
+  const current = parseFontSize(value, 10)
+  const clamped = Math.max(10, Math.min(current, Math.floor(maxPx)))
+  return `${clamped}px`
+}
+
 const parseFontSize = (value: string, fallback: number): number => {
-  const match = value.match(/^(\\d+(?:\\.\\d+)?)px$/)
+  const match = value.match(/^(\d+(?:\.\d+)?)px$/)
   if (!match) {
     return fallback
   }
