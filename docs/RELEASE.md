@@ -27,6 +27,11 @@ npm run cap:open:ios
 
 Run on a simulator: verify touch input, pause/resume, and Privacy Policy link.
 
+5) Run the App Store readiness pass (V6):
+
+- Review `docs/V6_APP_STORE_READINESS.md`.
+- Ensure release builds do not set `VITE_ART_QA`, `VITE_E2E`, or `VITE_TELEMETRY_CONSOLE`.
+
 1) Commit the release:
 
 ```bash
