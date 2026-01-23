@@ -47,7 +47,33 @@ describe('SaveSystem migrations', () => {
     expect(result.state.coins).toBe(0)
   })
 
-  it('keeps v1 saves without migration', () => {
+  it('migrates v1 saves to the latest version', () => {
+    const storage = createMemoryStorage()
+    storage.setItem(
+      SAVE_STATE_KEY,
+      JSON.stringify({
+        version: 1,
+        createdAt: 100,
+        updatedAt: 120,
+        coins: 5,
+        lifetime: { runs: 1, bestScore: 4, totalCoinsEarned: 5 },
+        inventory: {
+          ownedSkins: [],
+          ownedTrails: [],
+          ownedFrames: [],
+          selected: { skin: null, trail: null, frame: null },
+        },
+        streak: { lastClaimDate: null, streakCount: 0 },
+      }),
+    )
+
+    const result = loadSaveState(storage, () => 1500)
+    expect(result.migrated).toBe(true)
+    expect(result.state.version).toBe(SAVE_STATE_VERSION)
+    expect(result.state.purchases.removeAds).toBe(false)
+  })
+
+  it('keeps latest saves without migration', () => {
     const storage = createMemoryStorage()
     const base = createDefaultSaveState(1000)
     storage.setItem(SAVE_STATE_KEY, JSON.stringify(base))

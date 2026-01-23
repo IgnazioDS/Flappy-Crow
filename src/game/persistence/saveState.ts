@@ -1,7 +1,7 @@
-export const SAVE_STATE_VERSION = 1
+export const SAVE_STATE_VERSION = 2
 
 export type SaveState = {
-  version: 1
+  version: 2
   createdAt: number
   updatedAt: number
   coins: number
@@ -9,6 +9,10 @@ export type SaveState = {
     runs: number
     bestScore: number
     totalCoinsEarned: number
+  }
+  purchases: {
+    removeAds: boolean
+    supporterPack: boolean
   }
   inventory: {
     ownedSkins: string[]
@@ -41,6 +45,10 @@ export const createDefaultSaveState = (now: number): SaveState => ({
     bestScore: 0,
     totalCoinsEarned: 0,
   },
+  purchases: {
+    removeAds: false,
+    supporterPack: false,
+  },
   inventory: {
     ownedSkins: [],
     ownedTrails: [],
@@ -64,7 +72,12 @@ export const migrateSaveState = (input: unknown, now: number): MigrationResult =
 
   const version = readNumber(input.version, 0)
   if (version.value === SAVE_STATE_VERSION) {
-    return normalizeV1(input, now)
+    return normalizeV2(input, now)
+  }
+
+  if (version.value === 1) {
+    const normalized = normalizeV2(input, now)
+    return { state: normalized.state, migrated: true }
   }
 
   if (version.value === 0) {
@@ -74,7 +87,7 @@ export const migrateSaveState = (input: unknown, now: number): MigrationResult =
   return { state: createDefaultSaveState(now), migrated: true }
 }
 
-const normalizeV1 = (input: Record<string, unknown>, now: number): MigrationResult => {
+const normalizeV2 = (input: Record<string, unknown>, now: number): MigrationResult => {
   const base = createDefaultSaveState(now)
   let migrated = false
 
@@ -93,6 +106,19 @@ const normalizeV1 = (input: Record<string, unknown>, now: number): MigrationResu
   const bestScore = readNumber(lifetimeRecord.value.bestScore, base.lifetime.bestScore)
   const totalCoins = readNumber(lifetimeRecord.value.totalCoinsEarned, base.lifetime.totalCoinsEarned)
   if (!runs.valid || !bestScore.valid || !totalCoins.valid) {
+    migrated = true
+  }
+
+  const purchasesRecord = readRecord(input.purchases)
+  if (!purchasesRecord.valid) {
+    migrated = true
+  }
+  const removeAds = readBool(purchasesRecord.value.removeAds, base.purchases.removeAds)
+  const supporterPack = readBool(
+    purchasesRecord.value.supporterPack,
+    base.purchases.supporterPack,
+  )
+  if (!removeAds.valid || !supporterPack.valid) {
     migrated = true
   }
 
@@ -142,6 +168,10 @@ const normalizeV1 = (input: Record<string, unknown>, now: number): MigrationResu
         bestScore: bestScore.value,
         totalCoinsEarned: totalCoins.value,
       },
+      purchases: {
+        removeAds: removeAds.value,
+        supporterPack: supporterPack.value,
+      },
       inventory: {
         ownedSkins: ownedSkins.value,
         ownedTrails: ownedTrails.value,
@@ -172,6 +202,7 @@ const migrateV0 = (input: Record<string, unknown>, now: number): SaveState => {
 
   return {
     ...base,
+    version: SAVE_STATE_VERSION,
     createdAt: normalizedCreatedAt,
     updatedAt: normalizedUpdatedAt,
     coins: coins.value,
@@ -199,6 +230,13 @@ const readRecord = (value: unknown): ReadResult<Record<string, unknown>> => {
 
 const readNumber = (value: unknown, fallback: number): ReadResult<number> => {
   if (typeof value === 'number' && Number.isFinite(value)) {
+    return { value, valid: true }
+  }
+  return { value: fallback, valid: false }
+}
+
+const readBool = (value: unknown, fallback: boolean): ReadResult<boolean> => {
+  if (typeof value === 'boolean') {
     return { value, valid: true }
   }
   return { value: fallback, valid: false }

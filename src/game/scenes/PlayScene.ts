@@ -7,6 +7,10 @@ import {
   PIPE_CONFIG,
 } from '../config'
 import { ECONOMY_CONFIG } from '../economy/economyConfig'
+import { STREAK_REWARDS } from '../economy/streakConfig'
+import { IapSystem } from '../monetization/IapSystem'
+import { createIapProvider } from '../monetization/provider'
+import { IAP_PRODUCTS, SUPPORTER_PACK_ITEM_IDS, type IapProductId } from '../monetization/products'
 import { Bird } from '../entities/Bird'
 import { Ground } from '../entities/Ground'
 import { PipePair } from '../entities/PipePair'
@@ -15,8 +19,11 @@ import { CollisionSystem } from '../systems/CollisionSystem'
 import { CurrencySystem } from '../systems/CurrencySystem'
 import { DespawnSystem } from '../systems/DespawnSystem'
 import { InputSystem } from '../systems/InputSystem'
+import { InventorySystem } from '../systems/InventorySystem'
 import { ScoreSystem } from '../systems/ScoreSystem'
 import { SpawnSystem } from '../systems/SpawnSystem'
+import { StoreSystem } from '../systems/StoreSystem'
+import { StreakSystem } from '../systems/StreakSystem'
 import { BackgroundSystem } from '../systems/BackgroundSystem'
 import { getActiveTheme, listThemes, setActiveThemeId } from '../theme'
 import { DEFAULT_ENV, ENVIRONMENTS } from '../theme/env'
@@ -30,6 +37,7 @@ import {
   storeString,
 } from '../persistence/storage'
 import { SaveSystem } from '../persistence/SaveSystem'
+import type { SaveState } from '../persistence/saveState'
 import {
   applyButtonFeedback,
   applyMinHitArea,
@@ -81,6 +89,8 @@ import { ReplayPlayer } from '../replay/ReplayPlayer'
 import { loadBestReplay, saveBestReplay } from '../replay/ReplayStorage'
 import type { ReplayData } from '../replay/types'
 import { AnalyticsSystem } from '../systems/AnalyticsSystem'
+import { STORE_CATALOG, getItemsByType } from '../store/catalog'
+import type { CosmeticItem } from '../store/types'
 import {
   getTelemetryConsent,
   setTelemetryConsent,
@@ -112,6 +122,20 @@ type E2EDebugState = {
   gameMode: GameModeId
   practiceEnabled: boolean
   reducedMotion: boolean
+}
+
+type ShopRow = {
+  itemId: string
+  actionBase: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle
+  actionLabel: Phaser.GameObjects.Text
+  actionContainer: Phaser.GameObjects.Container
+}
+
+type IapRow = {
+  productId: IapProductId
+  actionBase: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle
+  actionLabel: Phaser.GameObjects.Text
+  actionContainer: Phaser.GameObjects.Container
 }
 
 /**
@@ -187,6 +211,23 @@ export class PlayScene extends Phaser.Scene {
   private debugMenuBackdrop: Phaser.GameObjects.Rectangle | null = null
   private debugMenuOpen = false
   private readonly debugMenuEnabled = import.meta.env.DEV
+  private shopContainer: Phaser.GameObjects.Container | null = null
+  private shopBackdrop: Phaser.GameObjects.Rectangle | null = null
+  private shopOpen = false
+  private shopCoinsText: Phaser.GameObjects.Text | null = null
+  private shopRows: ShopRow[] = []
+  private iapRows: IapRow[] = []
+  private iapPurchaseInProgress = false
+  private iapPendingProductId: IapProductId | null = null
+  private dailyRewardContainer: Phaser.GameObjects.Container | null = null
+  private dailyRewardBackdrop: Phaser.GameObjects.Rectangle | null = null
+  private dailyRewardOpen = false
+  private dailyRewardStatusText: Phaser.GameObjects.Text | null = null
+  private dailyRewardDayText: Phaser.GameObjects.Text | null = null
+  private dailyRewardCoinsText: Phaser.GameObjects.Text | null = null
+  private dailyRewardClaimBase: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | null = null
+  private dailyRewardClaimLabel: Phaser.GameObjects.Text | null = null
+  private dailyRewardClaimContainer: Phaser.GameObjects.Container | null = null
   private safeArea = { top: 0, right: 0, bottom: 0, left: 0 }
 
   private lastScore = -1
@@ -217,6 +258,10 @@ export class PlayScene extends Phaser.Scene {
   private debugEnabled = false
   private saveSystem: SaveSystem | null = null
   private analyticsSystem = new AnalyticsSystem({ logToConsole: import.meta.env.DEV })
+  private inventorySystem: InventorySystem | null = null
+  private storeSystem = new StoreSystem(STORE_CATALOG)
+  private streakSystem = new StreakSystem(STREAK_REWARDS)
+  private iapSystem = new IapSystem(createIapProvider())
   private readonly debugToggleAllowed =
     import.meta.env.DEV || import.meta.env.VITE_ART_QA === 'true'
   private readonly e2eEnabled =
@@ -289,6 +334,7 @@ export class PlayScene extends Phaser.Scene {
     this.bestReplay = loadBestReplay(this.gameModeId)
     this.saveSystem = new SaveSystem()
     this.totalCoins = this.saveSystem.getState().coins
+    this.initializeInventory()
     this.debugEnabled = this.debugToggleAllowed
       ? readStoredBool('flappy-hitboxes', false)
       : false
@@ -342,11 +388,14 @@ export class PlayScene extends Phaser.Scene {
       .text(this.ui.score.x, this.ui.score.y + 2, '0', this.ui.scoreTextStyle)
       .setOrigin(0.5, 0.5)
       .setDepth(4.1)
+    this.applyCosmetics()
 
     this.createReadyOverlay()
     this.createGameOverOverlay()
     this.createToggles()
     this.createSettingsPanel()
+    this.createShopOverlay()
+    this.createDailyRewardOverlay()
     this.createDebugMenu()
     this.createTelemetryConsentOverlay()
     this.updateSafeAreaLayout()
@@ -440,6 +489,14 @@ export class PlayScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-R', () => this.toggleReducedMotion())
     this.input.keyboard?.on('keydown-E', () => this.toggleEnvironment())
     this.input.keyboard?.on('keydown-ESC', () => {
+      if (this.dailyRewardOpen) {
+        this.toggleDailyReward()
+        return
+      }
+      if (this.shopOpen) {
+        this.toggleShop()
+        return
+      }
       if (this.debugMenuOpen) {
         this.toggleDebugMenu()
         return
@@ -1113,11 +1170,22 @@ export class PlayScene extends Phaser.Scene {
         onToggle: () => this.toggleGhost(),
       },
       {
+        label: 'DAILY',
+        getValue: () => this.getDailyRewardLabel(),
+        onToggle: () => this.toggleDailyReward(),
+      },
+      {
         label: 'THEME',
         getValue: () => this.getThemeLabel(),
         onToggle: () => this.toggleTheme(),
       },
     ]
+
+    rows.push({
+      label: 'SHOP',
+      getValue: () => 'OPEN',
+      onToggle: () => this.toggleShop(),
+    })
 
     if (this.debugMenuEnabled) {
       rows.push({
@@ -1172,6 +1240,761 @@ export class PlayScene extends Phaser.Scene {
       onClose: () => this.toggleSettingsPanel(),
     })
     this.updateSettingsValues()
+  }
+
+  private initializeInventory(): void {
+    if (!this.saveSystem) {
+      return
+    }
+    const inventory = this.saveSystem.getState().inventory
+    this.inventorySystem = new InventorySystem(inventory)
+    const normalized = this.inventorySystem.toInventoryState()
+    if (!this.inventoryEquals(inventory, normalized)) {
+      this.saveSystem.update((state) => ({
+        ...state,
+        inventory: normalized,
+      }))
+    }
+    this.applySupporterPackRewards()
+  }
+
+  private createShopOverlay(): void {
+    const panelWidth = Math.round(this.ui.panelSize.large.width * 0.95)
+    const panelHeight = 360
+    const backdrop = this.add
+      .rectangle(0, 0, GAME_DIMENSIONS.width, GAME_DIMENSIONS.height, this.theme.paletteNum.shadow, 0.35)
+      .setOrigin(0, 0)
+      .setDepth(6.5)
+      .setVisible(false)
+    backdrop.setInteractive()
+    backdrop.on(
+      'pointerdown',
+      (
+        _pointer: Phaser.Input.Pointer,
+        _localX: number,
+        _localY: number,
+        event: Phaser.Types.Input.EventData,
+      ) => {
+        event.stopPropagation()
+        if (this.shopOpen) {
+          this.toggleShop()
+        }
+      },
+    )
+    backdrop.disableInteractive()
+    this.shopBackdrop = backdrop
+
+    const panel = createPanel(this, this.ui, this.theme, 'large', panelWidth, panelHeight)
+    panel.setInteractive()
+    panel.on(
+      'pointerdown',
+      (
+        _pointer: Phaser.Input.Pointer,
+        _localX: number,
+        _localY: number,
+        event: Phaser.Types.Input.EventData,
+      ) => {
+        event.stopPropagation()
+      },
+    )
+
+    const title = this.add
+      .text(0, -panelHeight / 2 + 30, 'SHOP', this.ui.overlayTitleStyle)
+      .setOrigin(0.5, 0.5)
+    const coinStyle = {
+      ...this.ui.statValueStyle,
+      fontSize: '18px',
+    }
+    this.shopCoinsText = this.add
+      .text(0, -panelHeight / 2 + 58, `COINS: ${this.totalCoins}`, coinStyle)
+      .setOrigin(0.5, 0.5)
+
+    const content = this.add.container(GAME_DIMENSIONS.width / 2, GAME_DIMENSIONS.height / 2, [
+      panel,
+      title,
+      this.shopCoinsText,
+    ])
+
+    let y = -panelHeight / 2 + 90
+    y = this.createShopSection(content, 'SKINS', getItemsByType(STORE_CATALOG, 'skin'), y, panelWidth)
+    y += 12
+    y = this.createShopSection(content, 'FRAMES', getItemsByType(STORE_CATALOG, 'frame'), y, panelWidth)
+    y += 18
+    this.createIapSection(content, 'SUPPORT', IAP_PRODUCTS, y, panelWidth)
+
+    const closeButton = createSmallButton(this, this.ui, this.theme, 'CLOSE', () =>
+      this.toggleShop(),
+    )
+    closeButton.setPosition(0, panelHeight / 2 - 18)
+    content.add(closeButton)
+
+    this.shopContainer = this.add.container(0, 0, [backdrop, content])
+    this.shopContainer.setDepth(7)
+    this.shopContainer.setVisible(false)
+  }
+
+  private createShopSection(
+    content: Phaser.GameObjects.Container,
+    label: string,
+    items: CosmeticItem[],
+    startY: number,
+    panelWidth: number,
+  ): number {
+    const headerStyle = {
+      ...this.ui.statLabelStyle,
+      fontSize: '12px',
+      color: this.ui.statLabelStyle.color,
+    }
+    const header = this.add.text(-panelWidth / 2 + 20, startY, label, headerStyle).setOrigin(0, 0.5)
+    content.add(header)
+    let y = startY + 20
+    const rowGap = 32
+
+    for (const item of items) {
+      const row = this.createShopRow(content, item, y, panelWidth)
+      this.shopRows.push(row)
+      y += rowGap
+    }
+
+    return y
+  }
+
+  private createIapSection(
+    content: Phaser.GameObjects.Container,
+    label: string,
+    items: { id: IapProductId; title: string; subtitle?: string }[],
+    startY: number,
+    panelWidth: number,
+  ): number {
+    const headerStyle = {
+      ...this.ui.statLabelStyle,
+      fontSize: '12px',
+      color: this.ui.statLabelStyle.color,
+    }
+    const header = this.add.text(-panelWidth / 2 + 20, startY, label, headerStyle).setOrigin(0, 0.5)
+    content.add(header)
+    let y = startY + 22
+    const rowGap = 44
+
+    for (const item of items) {
+      const row = this.createIapRow(content, item, y, panelWidth)
+      this.iapRows.push(row)
+      y += rowGap
+    }
+
+    return y
+  }
+
+  private createShopRow(
+    content: Phaser.GameObjects.Container,
+    item: CosmeticItem,
+    y: number,
+    panelWidth: number,
+  ): ShopRow {
+    const swatchX = -panelWidth / 2 + 26
+    const swatchColor = item.tint ?? this.theme.paletteNum.panelStroke
+    const swatch = this.add.rectangle(swatchX, y, 14, 14, swatchColor, 0.9)
+    swatch.setStrokeStyle(1, this.theme.paletteNum.panelStroke, 0.7)
+
+    const nameStyle = {
+      ...this.ui.statValueStyle,
+      fontSize: '15px',
+    }
+    const nameText = this.add
+      .text(swatchX + 18, y, item.name.toUpperCase(), nameStyle)
+      .setOrigin(0, 0.5)
+
+    const action = this.createShopActionButton('BUY', () => this.handleShopAction(item.id))
+    action.container.setPosition(panelWidth / 2 - 56, y)
+
+    content.add([swatch, nameText, action.container])
+
+    return {
+      itemId: item.id,
+      actionBase: action.base,
+      actionLabel: action.label,
+      actionContainer: action.container,
+    }
+  }
+
+  private createIapRow(
+    content: Phaser.GameObjects.Container,
+    item: { id: IapProductId; title: string; subtitle?: string },
+    y: number,
+    panelWidth: number,
+  ): IapRow {
+    const nameStyle = {
+      ...this.ui.statValueStyle,
+      fontSize: '14px',
+    }
+    const subtitleStyle = {
+      ...this.ui.statLabelStyle,
+      fontSize: '11px',
+    }
+
+    const hasSubtitle = Boolean(item.subtitle)
+    const nameY = hasSubtitle ? y - 6 : y
+    const nameText = this.add
+      .text(-panelWidth / 2 + 20, nameY, item.title, nameStyle)
+      .setOrigin(0, 0.5)
+    content.add(nameText)
+
+    if (item.subtitle) {
+      const subtitle = this.add
+        .text(-panelWidth / 2 + 20, y + 10, item.subtitle, subtitleStyle)
+        .setOrigin(0, 0.5)
+      content.add(subtitle)
+    }
+
+    const action = this.createShopActionButton('BUY', () => {
+      void this.handleIapPurchase(item.id)
+    })
+    action.container.setPosition(panelWidth / 2 - 56, y)
+    content.add(action.container)
+
+    return {
+      productId: item.id,
+      actionBase: action.base,
+      actionLabel: action.label,
+      actionContainer: action.container,
+    }
+  }
+
+  private createShopActionButton(label: string, onClick: () => void): {
+    container: Phaser.GameObjects.Container
+    base: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle
+    label: Phaser.GameObjects.Text
+  } {
+    const base = createButtonBase(this, this.ui, this.theme, 0.36)
+    applyMinHitArea(base)
+    applyButtonFeedback(base)
+
+    const text = this.add
+      .text(0, 1, label, this.ui.button.textStyle)
+      .setOrigin(0.5, 0.5)
+      .setScale(0.7)
+
+    base.on(
+      'pointerdown',
+      (
+        _pointer: Phaser.Input.Pointer,
+        _localX: number,
+        _localY: number,
+        event: Phaser.Types.Input.EventData,
+      ) => {
+        event.stopPropagation()
+        onClick()
+      },
+    )
+
+    return {
+      container: this.add.container(0, 0, [base, text]),
+      base,
+      label: text,
+    }
+  }
+
+  private toggleShop(): void {
+    if (!this.shopContainer) {
+      return
+    }
+    if (this.stateMachine.state === 'PLAYING') {
+      return
+    }
+    this.shopOpen = !this.shopOpen
+    this.shopContainer.setVisible(this.shopOpen)
+    if (this.shopBackdrop) {
+      this.shopBackdrop.setVisible(this.shopOpen)
+      if (this.shopOpen) {
+        this.shopBackdrop.setInteractive()
+      } else {
+        this.shopBackdrop.disableInteractive()
+      }
+    }
+    if (this.shopOpen) {
+      this.updateShopUI()
+    }
+    if (this.shopOpen && this.settingsOpen) {
+      this.toggleSettingsPanel()
+    }
+    if (this.shopOpen && this.dailyRewardOpen) {
+      this.toggleDailyReward()
+    }
+    if (this.shopOpen && this.debugMenuOpen) {
+      this.toggleDebugMenu()
+    }
+  }
+
+  private updateShopUI(): void {
+    if (!this.inventorySystem || !this.shopCoinsText) {
+      return
+    }
+    this.shopCoinsText.setText(`COINS: ${this.totalCoins}`)
+    for (const row of this.shopRows) {
+      const item = this.storeSystem.getItem(row.itemId)
+      if (!item) {
+        continue
+      }
+      const owned = this.inventorySystem.isOwned(item)
+      const selected = this.inventorySystem.isSelected(item)
+      const affordable = this.totalCoins >= item.price
+      let label = 'BUY'
+      let enabled = true
+
+      if (!owned) {
+        label = `BUY ${item.price}`
+        enabled = affordable
+      } else if (selected) {
+        label = 'EQUIPPED'
+        enabled = false
+      } else {
+        label = 'EQUIP'
+      }
+
+      row.actionLabel.setText(label)
+      this.setShopButtonEnabled(row.actionBase, row.actionContainer, enabled)
+    }
+    this.updateIapUI()
+  }
+
+  private updateIapUI(): void {
+    if (!this.iapRows.length) {
+      return
+    }
+    for (const row of this.iapRows) {
+      const product = this.iapSystem.getProduct(row.productId)
+      if (!product) {
+        continue
+      }
+      const owned = this.isIapOwned(row.productId)
+      const available = this.iapSystem.isAvailable()
+      const pending = this.iapPurchaseInProgress && this.iapPendingProductId === row.productId
+      let label = `BUY ${product.priceLabel}`
+      let enabled = true
+
+      if (pending) {
+        label = 'PROCESSING'
+        enabled = false
+      } else if (!available) {
+        label = 'UNAVAILABLE'
+        enabled = false
+      } else if (owned) {
+        label = 'OWNED'
+        enabled = false
+      }
+
+      row.actionLabel.setText(label)
+      this.setShopButtonEnabled(row.actionBase, row.actionContainer, enabled)
+    }
+  }
+
+  private async handleIapPurchase(productId: IapProductId): Promise<void> {
+    if (!this.saveSystem || this.iapPurchaseInProgress) {
+      return
+    }
+    const product = this.iapSystem.getProduct(productId)
+    if (!product) {
+      return
+    }
+    if (this.isIapOwned(productId)) {
+      return
+    }
+
+    this.iapPurchaseInProgress = true
+    this.iapPendingProductId = productId
+    this.updateIapUI()
+
+    const result = await this.iapSystem.purchase(productId)
+    this.iapPurchaseInProgress = false
+    this.iapPendingProductId = null
+
+    if (result.status === 'purchased') {
+      this.setPurchaseOwned(productId)
+      if (productId === 'supporter_pack') {
+        this.applySupporterPackRewards()
+      }
+      this.analyticsSystem.track('iap_purchase', {
+        productId,
+      })
+    } else if (result.status === 'not_supported') {
+      this.analyticsSystem.track('iap_unavailable', { productId })
+    }
+
+    this.updateIapUI()
+    this.updateShopUI()
+  }
+
+  private isIapOwned(productId: IapProductId): boolean {
+    const purchases = this.getPurchasesState()
+    if (productId === 'remove_ads') {
+      return purchases.removeAds
+    }
+    return purchases.supporterPack
+  }
+
+  private setPurchaseOwned(productId: IapProductId): void {
+    if (!this.saveSystem) {
+      return
+    }
+    this.saveSystem.update((state) => {
+      const purchases = {
+        ...state.purchases,
+        removeAds: productId === 'remove_ads' ? true : state.purchases.removeAds,
+        supporterPack: productId === 'supporter_pack' ? true : state.purchases.supporterPack,
+      }
+      return {
+        ...state,
+        purchases,
+      }
+    })
+  }
+
+  private applySupporterPackRewards(): void {
+    if (!this.saveSystem || !this.inventorySystem) {
+      return
+    }
+    if (!this.getPurchasesState().supporterPack) {
+      return
+    }
+    let changed = false
+    for (const id of SUPPORTER_PACK_ITEM_IDS) {
+      const item = this.storeSystem.getItem(id)
+      if (item && this.inventorySystem.unlock(item)) {
+        changed = true
+      }
+    }
+    if (changed) {
+      this.saveSystem.update((state) => ({
+        ...state,
+        inventory: this.inventorySystem?.toInventoryState() ?? state.inventory,
+      }))
+      this.updateShopUI()
+    }
+  }
+
+  private getPurchasesState(): SaveState['purchases'] {
+    return (
+      this.saveSystem?.getState().purchases ?? {
+        removeAds: false,
+        supporterPack: false,
+      }
+    )
+  }
+
+  private handleShopAction(itemId: string): void {
+    if (!this.inventorySystem) {
+      return
+    }
+    const item = this.storeSystem.getItem(itemId)
+    if (!item) {
+      return
+    }
+
+    let coins = this.totalCoins
+    let changed = false
+    const purchase = this.storeSystem.purchase(
+      itemId,
+      coins,
+      (ownedItem) => this.inventorySystem?.isOwned(ownedItem) ?? false,
+      (unlockItem) => {
+        this.inventorySystem?.unlock(unlockItem)
+      },
+    )
+    if (purchase.status === 'purchased') {
+      coins = purchase.coinsRemaining
+      changed = true
+      this.analyticsSystem.track('shop_purchase', {
+        itemId: item.id,
+        itemType: item.type,
+        price: item.price,
+      })
+    }
+
+    if (this.inventorySystem.select(item)) {
+      changed = true
+      this.analyticsSystem.track('cosmetic_equipped', {
+        itemId: item.id,
+        itemType: item.type,
+      })
+    }
+
+    if (!changed) {
+      return
+    }
+
+    this.totalCoins = coins
+    if (this.saveSystem) {
+      this.saveSystem.update((state) => ({
+        ...state,
+        coins,
+        inventory: this.inventorySystem?.toInventoryState() ?? state.inventory,
+      }))
+    }
+    this.applyCosmetics()
+    this.updateShopUI()
+  }
+
+  private setShopButtonEnabled(
+    base: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle,
+    container: Phaser.GameObjects.Container,
+    enabled: boolean,
+  ): void {
+    container.setAlpha(enabled ? 1 : 0.55)
+    if (enabled) {
+      applyMinHitArea(base)
+    } else {
+      base.disableInteractive()
+    }
+  }
+
+  private applyCosmetics(): void {
+    if (!this.inventorySystem) {
+      return
+    }
+    const skinId = this.inventorySystem.getSelectedId('skin')
+    const frameId = this.inventorySystem.getSelectedId('frame')
+    const skin = skinId ? this.storeSystem.getItem(skinId) : null
+    const frame = frameId ? this.storeSystem.getItem(frameId) : null
+    this.applySkinCosmetic(skin)
+    this.applyFrameCosmetic(frame)
+  }
+
+  private applySkinCosmetic(item: CosmeticItem | null): void {
+    if (!this.birdSprite) {
+      return
+    }
+    if (!item || item.tint === undefined) {
+      this.birdSprite.clearTint()
+      this.birdGlow?.clearTint()
+      return
+    }
+    this.birdSprite.setTint(item.tint)
+    if (this.birdGlow) {
+      this.birdGlow.setTint(item.tint)
+    }
+  }
+
+  private applyFrameCosmetic(item: CosmeticItem | null): void {
+    if (!this.scoreFrame) {
+      return
+    }
+    if (this.scoreFrame instanceof Phaser.GameObjects.Image) {
+      if (!item || item.tint === undefined) {
+        this.scoreFrame.clearTint()
+      } else {
+        this.scoreFrame.setTint(item.tint)
+      }
+      return
+    }
+
+    const fill = item?.tint ?? this.ui.panel.fill
+    const stroke = item?.tint ?? this.ui.panel.stroke
+    this.scoreFrame
+      .setFillStyle(fill, this.ui.panel.alpha)
+      .setStrokeStyle(this.ui.panel.strokeThickness, stroke)
+  }
+
+  private inventoryEquals(
+    left: SaveState['inventory'],
+    right: SaveState['inventory'],
+  ): boolean {
+    return (
+      this.arrayEquals(left.ownedSkins, right.ownedSkins) &&
+      this.arrayEquals(left.ownedTrails, right.ownedTrails) &&
+      this.arrayEquals(left.ownedFrames, right.ownedFrames) &&
+      left.selected.skin === right.selected.skin &&
+      left.selected.trail === right.selected.trail &&
+      left.selected.frame === right.selected.frame
+    )
+  }
+
+  private arrayEquals(left: string[], right: string[]): boolean {
+    if (left.length !== right.length) {
+      return false
+    }
+    for (let i = 0; i < left.length; i += 1) {
+      if (left[i] !== right[i]) {
+        return false
+      }
+    }
+    return true
+  }
+
+  private createDailyRewardOverlay(): void {
+    const panelWidth = Math.round(this.ui.panelSize.large.width * 0.9)
+    const panelHeight = 220
+    const backdrop = this.add
+      .rectangle(0, 0, GAME_DIMENSIONS.width, GAME_DIMENSIONS.height, this.theme.paletteNum.shadow, 0.35)
+      .setOrigin(0, 0)
+      .setDepth(6.5)
+      .setVisible(false)
+    backdrop.setInteractive()
+    backdrop.on(
+      'pointerdown',
+      (
+        _pointer: Phaser.Input.Pointer,
+        _localX: number,
+        _localY: number,
+        event: Phaser.Types.Input.EventData,
+      ) => {
+        event.stopPropagation()
+        if (this.dailyRewardOpen) {
+          this.toggleDailyReward()
+        }
+      },
+    )
+    backdrop.disableInteractive()
+    this.dailyRewardBackdrop = backdrop
+
+    const panel = createPanel(this, this.ui, this.theme, 'large', panelWidth, panelHeight)
+    panel.setInteractive()
+    panel.on(
+      'pointerdown',
+      (
+        _pointer: Phaser.Input.Pointer,
+        _localX: number,
+        _localY: number,
+        event: Phaser.Types.Input.EventData,
+      ) => {
+        event.stopPropagation()
+      },
+    )
+
+    const title = this.add
+      .text(0, -panelHeight / 2 + 30, 'DAILY REWARD', this.ui.overlayTitleStyle)
+      .setOrigin(0.5, 0.5)
+    const statusStyle = {
+      ...this.ui.statLabelStyle,
+      fontSize: '14px',
+      color: this.ui.statLabelStyle.color,
+    }
+    this.dailyRewardStatusText = this.add.text(0, -24, 'READY', statusStyle).setOrigin(0.5, 0.5)
+
+    const dayStyle = {
+      ...this.ui.statValueStyle,
+      fontSize: '20px',
+    }
+    this.dailyRewardDayText = this.add.text(0, 4, 'DAY 1', dayStyle).setOrigin(0.5, 0.5)
+
+    this.dailyRewardCoinsText = this.add
+      .text(0, 30, '+0 COINS', this.ui.statValueStyle)
+      .setOrigin(0.5, 0.5)
+
+    const claim = this.createShopActionButton('CLAIM', () => this.handleDailyRewardClaim())
+    claim.container.setPosition(0, panelHeight / 2 - 42)
+    this.dailyRewardClaimBase = claim.base
+    this.dailyRewardClaimLabel = claim.label
+    this.dailyRewardClaimContainer = claim.container
+
+    const content = this.add.container(GAME_DIMENSIONS.width / 2, GAME_DIMENSIONS.height / 2, [
+      panel,
+      title,
+      this.dailyRewardStatusText,
+      this.dailyRewardDayText,
+      this.dailyRewardCoinsText,
+      claim.container,
+    ])
+
+    this.dailyRewardContainer = this.add.container(0, 0, [backdrop, content])
+    this.dailyRewardContainer.setDepth(7)
+    this.dailyRewardContainer.setVisible(false)
+  }
+
+  private toggleDailyReward(): void {
+    if (!this.dailyRewardContainer) {
+      return
+    }
+    if (this.stateMachine.state === 'PLAYING') {
+      return
+    }
+    this.dailyRewardOpen = !this.dailyRewardOpen
+    this.dailyRewardContainer.setVisible(this.dailyRewardOpen)
+    if (this.dailyRewardBackdrop) {
+      this.dailyRewardBackdrop.setVisible(this.dailyRewardOpen)
+      if (this.dailyRewardOpen) {
+        this.dailyRewardBackdrop.setInteractive()
+      } else {
+        this.dailyRewardBackdrop.disableInteractive()
+      }
+    }
+    if (this.dailyRewardOpen) {
+      this.updateDailyRewardUI()
+    }
+    if (this.dailyRewardOpen && this.settingsOpen) {
+      this.toggleSettingsPanel()
+    }
+    if (this.dailyRewardOpen && this.shopOpen) {
+      this.toggleShop()
+    }
+    if (this.dailyRewardOpen && this.debugMenuOpen) {
+      this.toggleDebugMenu()
+    }
+  }
+
+  private updateDailyRewardUI(): void {
+    if (
+      !this.dailyRewardStatusText ||
+      !this.dailyRewardDayText ||
+      !this.dailyRewardCoinsText ||
+      !this.dailyRewardClaimBase ||
+      !this.dailyRewardClaimLabel ||
+      !this.dailyRewardClaimContainer
+    ) {
+      return
+    }
+    const preview = this.streakSystem.getClaimPreview(this.getStreakState(), new Date())
+    this.dailyRewardStatusText.setText(preview.statusLabel)
+    this.dailyRewardDayText.setText(`DAY ${preview.dayIndex}`)
+    this.dailyRewardCoinsText.setText(`+${preview.coins} COINS`)
+    this.dailyRewardClaimLabel.setText(preview.canClaim ? 'CLAIM' : 'CLAIMED')
+    this.setShopButtonEnabled(
+      this.dailyRewardClaimBase,
+      this.dailyRewardClaimContainer,
+      preview.canClaim,
+    )
+  }
+
+  private handleDailyRewardClaim(): void {
+    if (!this.saveSystem) {
+      return
+    }
+    const result = this.streakSystem.claim(this.getStreakState(), new Date())
+    if (result.status !== 'claimed') {
+      return
+    }
+
+    const coins = this.totalCoins + result.coinsAwarded
+    this.totalCoins = coins
+    this.saveSystem.update((state) => ({
+      ...state,
+      coins,
+      streak: result.state,
+    }))
+    this.analyticsSystem.track('daily_reward_claimed', {
+      dayIndex: result.dayIndex,
+      coinsAwarded: result.coinsAwarded,
+      totalCoins: coins,
+    })
+    if (this.totalCoinsText) {
+      this.totalCoinsText.setText(String(this.totalCoins))
+    }
+    this.updateDailyRewardUI()
+    this.updateShopUI()
+    this.updateSettingsValues()
+  }
+
+  private getDailyRewardLabel(): string {
+    const preview = this.streakSystem.getClaimPreview(this.getStreakState(), new Date())
+    return preview.canClaim ? 'READY' : 'CLAIMED'
+  }
+
+  private getStreakState(): SaveState['streak'] {
+    return (
+      this.saveSystem?.getState().streak ?? {
+        lastClaimDate: null,
+        streakCount: 0,
+      }
+    )
   }
 
   private createDebugMenu(): void {
@@ -1272,12 +2095,16 @@ export class PlayScene extends Phaser.Scene {
     const reset = this.saveSystem.reset()
     this.coinsEarned = 0
     this.totalCoins = reset.coins
+    this.inventorySystem = new InventorySystem(reset.inventory)
     if (this.coinsEarnedText) {
       this.coinsEarnedText.setText('0')
     }
     if (this.totalCoinsText) {
       this.totalCoinsText.setText(String(this.totalCoins))
     }
+    this.applyCosmetics()
+    this.updateShopUI()
+    this.updateDailyRewardUI()
     this.analyticsSystem.track('save_reset')
   }
 
@@ -1350,6 +2177,12 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private toggleSettingsPanel(): void {
+    if (this.dailyRewardOpen) {
+      this.toggleDailyReward()
+    }
+    if (this.shopOpen) {
+      this.toggleShop()
+    }
     this.settingsOpen = !this.settingsOpen
     this.settingsPanel.setVisible(this.settingsOpen)
     if (this.settingsBackdrop) {
