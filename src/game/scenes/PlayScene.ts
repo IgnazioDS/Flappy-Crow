@@ -24,6 +24,7 @@ import { ScoreSystem } from '../systems/ScoreSystem'
 import { SpawnSystem } from '../systems/SpawnSystem'
 import { StoreSystem } from '../systems/StoreSystem'
 import { StreakSystem } from '../systems/StreakSystem'
+import { SoundSystem } from '../systems/SoundSystem'
 import { BackgroundSystem } from '../systems/BackgroundSystem'
 import { getActiveTheme, listThemes, setActiveThemeId } from '../theme'
 import { DEFAULT_ENV, ENVIRONMENTS } from '../theme/env'
@@ -82,7 +83,7 @@ import {
   type GameModeId,
 } from '../modes/modeConfig'
 import { PRACTICE_CONFIG } from '../modes/practiceConfig'
-import { computeDifficultyTuning } from '../modes/tuning'
+import { computeDifficultyTuning, type DifficultyTuning } from '../modes/tuning'
 import { ObstacleVariantSystem, type ObstacleVariant } from '../obstacles/ObstacleVariantSystem'
 import { ReplayRecorder } from '../replay/ReplayRecorder'
 import { ReplayPlayer } from '../replay/ReplayPlayer'
@@ -262,6 +263,8 @@ export class PlayScene extends Phaser.Scene {
   private storeSystem = new StoreSystem(STORE_CATALOG)
   private streakSystem = new StreakSystem(STREAK_REWARDS)
   private iapSystem = new IapSystem(createIapProvider())
+  private difficultyTuning: DifficultyTuning = { speedScale: 1, gap: PIPE_CONFIG.gap }
+  private soundSystem: SoundSystem | null = null
   private readonly debugToggleAllowed =
     import.meta.env.DEV || import.meta.env.VITE_ART_QA === 'true'
   private readonly e2eEnabled =
@@ -284,9 +287,11 @@ export class PlayScene extends Phaser.Scene {
     const hidden = document.visibilityState === 'hidden'
     if (hidden && !this.visibilityPaused) {
       this.visibilityPaused = true
+      this.inputSystem.clear()
       this.scene.pause()
     } else if (!hidden && this.visibilityPaused) {
       this.visibilityPaused = false
+      this.inputSystem.clear()
       this.scene.resume()
     }
   }
@@ -335,6 +340,7 @@ export class PlayScene extends Phaser.Scene {
     this.saveSystem = new SaveSystem()
     this.totalCoins = this.saveSystem.getState().coins
     this.initializeInventory()
+    this.soundSystem = new SoundSystem(this, { muted: this.isMuted })
     this.debugEnabled = this.debugToggleAllowed
       ? readStoredBool('flappy-hitboxes', false)
       : false
@@ -470,6 +476,9 @@ export class PlayScene extends Phaser.Scene {
       (_pointer: Phaser.Input.Pointer, currentlyOver: Phaser.GameObjects.GameObject[]) => {
         if (
           this.settingsOpen ||
+          this.shopOpen ||
+          this.dailyRewardOpen ||
+          this.debugMenuOpen ||
           this.telemetryConsentOpen ||
           (currentlyOver && currentlyOver.length > 0)
         ) {
@@ -479,7 +488,13 @@ export class PlayScene extends Phaser.Scene {
       },
     )
     this.input.keyboard?.on('keydown-SPACE', () => {
-      if (!this.settingsOpen && !this.telemetryConsentOpen) {
+      if (
+        !this.settingsOpen &&
+        !this.shopOpen &&
+        !this.dailyRewardOpen &&
+        !this.debugMenuOpen &&
+        !this.telemetryConsentOpen
+      ) {
         this.inputSystem.requestFlap()
       }
     })
@@ -590,12 +605,15 @@ export class PlayScene extends Phaser.Scene {
 
   private getDifficultyTuning(): { speedScale: number; gap: number } {
     if (this.e2eEnabled) {
-      return { speedScale: 1, gap: PIPE_CONFIG.gap }
+      this.difficultyTuning.speedScale = 1
+      this.difficultyTuning.gap = PIPE_CONFIG.gap
+      return this.difficultyTuning
     }
     return computeDifficultyTuning(
       this.scoreSystem.score,
       this.gameMode.tuning,
       this.practiceEnabled ? PRACTICE_CONFIG : null,
+      this.difficultyTuning,
     )
   }
 
@@ -1501,8 +1519,12 @@ export class PlayScene extends Phaser.Scene {
     if (this.stateMachine.state === 'PLAYING') {
       return
     }
+    if (this.telemetryConsentOpen) {
+      return
+    }
     this.shopOpen = !this.shopOpen
     this.shopContainer.setVisible(this.shopOpen)
+    this.playSfx(this.theme.audio.sfx?.uiTap)
     if (this.shopBackdrop) {
       this.shopBackdrop.setVisible(this.shopOpen)
       if (this.shopOpen) {
@@ -1907,8 +1929,12 @@ export class PlayScene extends Phaser.Scene {
     if (this.stateMachine.state === 'PLAYING') {
       return
     }
+    if (this.telemetryConsentOpen) {
+      return
+    }
     this.dailyRewardOpen = !this.dailyRewardOpen
     this.dailyRewardContainer.setVisible(this.dailyRewardOpen)
+    this.playSfx(this.theme.audio.sfx?.uiTap)
     if (this.dailyRewardBackdrop) {
       this.dailyRewardBackdrop.setVisible(this.dailyRewardOpen)
       if (this.dailyRewardOpen) {
@@ -2073,8 +2099,12 @@ export class PlayScene extends Phaser.Scene {
     if (!this.debugMenuEnabled || !this.debugMenu) {
       return
     }
+    if (this.telemetryConsentOpen) {
+      return
+    }
     this.debugMenuOpen = !this.debugMenuOpen
     this.debugMenu.setVisible(this.debugMenuOpen)
+    this.playSfx(this.theme.audio.sfx?.uiTap)
     if (this.debugMenuBackdrop) {
       this.debugMenuBackdrop.setVisible(this.debugMenuOpen)
       if (this.debugMenuOpen) {
@@ -2174,9 +2204,21 @@ export class PlayScene extends Phaser.Scene {
     if (visible && this.settingsOpen) {
       this.toggleSettingsPanel()
     }
+    if (visible && this.shopOpen) {
+      this.toggleShop()
+    }
+    if (visible && this.dailyRewardOpen) {
+      this.toggleDailyReward()
+    }
+    if (visible && this.debugMenuOpen) {
+      this.toggleDebugMenu()
+    }
   }
 
   private toggleSettingsPanel(): void {
+    if (this.telemetryConsentOpen) {
+      return
+    }
     if (this.dailyRewardOpen) {
       this.toggleDailyReward()
     }
@@ -2185,6 +2227,7 @@ export class PlayScene extends Phaser.Scene {
     }
     this.settingsOpen = !this.settingsOpen
     this.settingsPanel.setVisible(this.settingsOpen)
+    this.playSfx(this.theme.audio.sfx?.uiTap)
     if (this.settingsBackdrop) {
       this.settingsBackdrop.setVisible(this.settingsOpen)
       if (this.settingsOpen) {
@@ -2899,8 +2942,16 @@ export class PlayScene extends Phaser.Scene {
     })
   }
 
+  private playSfx(key?: string): void {
+    if (!key || !this.soundSystem) {
+      return
+    }
+    this.soundSystem.play(key)
+  }
+
   private toggleMute(): void {
     this.isMuted = !this.isMuted
+    this.soundSystem?.setMuted(this.isMuted)
     const uiAssets = this.theme.visuals.ui
     if (
       this.muteIcon &&
@@ -2916,6 +2967,7 @@ export class PlayScene extends Phaser.Scene {
     }
     storeBool('flappy-muted', this.isMuted)
     telemetry.track('mute_toggle', { muted: this.isMuted })
+    this.playSfx(this.theme.audio.sfx?.uiTap)
     this.updateSettingsValues()
   }
 

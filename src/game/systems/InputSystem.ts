@@ -10,4 +10,8 @@ export class InputSystem {
     this.flapQueued = false
     return shouldFlap
   }
+
+  clear(): void {
+    this.flapQueued = false
+  }
 }

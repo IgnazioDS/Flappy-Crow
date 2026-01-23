@@ -5,11 +5,17 @@ type PracticeTuning = {
   gapMultiplier: number
 }
 
+export type DifficultyTuning = {
+  speedScale: number
+  gap: number
+}
+
 export const computeDifficultyTuning = (
   score: number,
   tuning: GameModeTuning,
   practice?: PracticeTuning | null,
-): { speedScale: number; gap: number } => {
+  out?: DifficultyTuning,
+): DifficultyTuning => {
   const speedScalePerScore = tuning.speedScalePerScore ?? DIFFICULTY_CONFIG.speedScalePerScore
   const maxSpeedScale = tuning.maxSpeedScale ?? DIFFICULTY_CONFIG.maxSpeedScale
   const rawSpeedScale = (1 + score * speedScalePerScore) * tuning.speedMultiplier
@@ -23,6 +29,12 @@ export const computeDifficultyTuning = (
   if (practice) {
     speedScale *= practice.speedMultiplier
     gap *= practice.gapMultiplier
+  }
+
+  if (out) {
+    out.speedScale = speedScale
+    out.gap = gap
+    return out
   }
 
   return { speedScale, gap }
