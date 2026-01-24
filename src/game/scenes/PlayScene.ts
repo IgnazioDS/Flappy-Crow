@@ -8,7 +8,7 @@ import {
 } from '../config'
 import { ECONOMY_CONFIG } from '../economy/economyConfig'
 import { STREAK_REWARDS } from '../economy/streakConfig'
-import { IapSystem } from '../monetization/IapSystem'
+import { IapSystem, type RestoreResult } from '../monetization/IapSystem'
 import { createIapProvider } from '../monetization/provider'
 import { IAP_PRODUCTS, SUPPORTER_PACK_ITEM_IDS, type IapProductId } from '../monetization/products'
 import { Bird } from '../entities/Bird'
@@ -233,6 +233,10 @@ export class PlayScene extends Phaser.Scene {
   private dailyRewardClaimBase: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | null = null
   private dailyRewardClaimLabel: Phaser.GameObjects.Text | null = null
   private dailyRewardClaimContainer: Phaser.GameObjects.Container | null = null
+  private toastContainer: Phaser.GameObjects.Container | null = null
+  private toastBase: Phaser.GameObjects.Rectangle | null = null
+  private toastText: Phaser.GameObjects.Text | null = null
+  private toastTween: Phaser.Tweens.Tween | null = null
   private safeArea = { top: 0, right: 0, bottom: 0, left: 0 }
 
   private lastScore = -1
@@ -406,6 +410,7 @@ export class PlayScene extends Phaser.Scene {
     this.createSettingsPanel()
     this.createShopOverlay()
     this.createDailyRewardOverlay()
+    this.createToastOverlay()
     this.createDebugMenu()
     this.createTelemetryConsentOverlay()
     this.updateSafeAreaLayout()
@@ -1698,6 +1703,9 @@ export class PlayScene extends Phaser.Scene {
 
     this.iapRestoreState = 'restoring'
     this.updateIapUI()
+    this.analyticsSystem.track('iap_restore_start', {
+      available: this.iapSystem.isAvailable(),
+    })
 
     const result = await this.iapSystem.restore()
     if (result.status === 'restored') {
@@ -1707,18 +1715,72 @@ export class PlayScene extends Phaser.Scene {
           this.applySupporterPackRewards()
         }
       }
-      this.analyticsSystem.track('iap_restore', {
-        count: result.restored.length,
-      })
       this.iapRestoreState = 'restored'
     } else if (result.status === 'none') {
       this.iapRestoreState = 'none'
+    } else if (result.status === 'not_supported') {
+      this.iapRestoreState = 'failed'
     } else {
       this.iapRestoreState = 'failed'
     }
 
+    this.analyticsSystem.track('iap_restore_result', {
+      status: result.status,
+      count: result.restored.length,
+      products: result.restored,
+    })
+    this.showToast(this.getIapRestoreToastMessage(result))
     this.updateIapUI()
     this.updateShopUI()
+  }
+
+  private getIapRestoreToastMessage(result: RestoreResult): string {
+    if (result.status === 'restored') {
+      if (result.restored.length === 1) {
+        return 'Purchase restored'
+      }
+      return `Restored ${result.restored.length} purchases`
+    }
+    if (result.status === 'none') {
+      return 'No purchases found'
+    }
+    if (result.status === 'not_supported') {
+      return 'Restore unavailable'
+    }
+    return 'Restore failed'
+  }
+
+  private showToast(message: string): void {
+    if (!this.toastContainer || !this.toastText || !this.toastBase) {
+      return
+    }
+    this.toastText.setText(message)
+    const width = Math.max(180, this.toastText.width + 36)
+    const height = Math.max(34, this.toastText.height + 16)
+    this.toastBase.setSize(width, height)
+    this.toastContainer.setVisible(true)
+    this.toastContainer.setAlpha(0)
+    this.updateToastLayout()
+
+    this.toastTween?.stop()
+    this.toastTween = this.tweens.add({
+      targets: this.toastContainer,
+      alpha: 1,
+      duration: 160,
+      ease: 'Sine.easeOut',
+      onComplete: () => {
+        this.toastTween = this.tweens.add({
+          targets: this.toastContainer,
+          alpha: 0,
+          duration: 260,
+          ease: 'Sine.easeIn',
+          delay: 1800,
+          onComplete: () => {
+            this.toastContainer?.setVisible(false)
+          },
+        })
+      },
+    })
   }
 
   private isIapOwned(productId: IapProductId): boolean {
@@ -1995,6 +2057,22 @@ export class PlayScene extends Phaser.Scene {
     this.dailyRewardContainer = this.add.container(0, 0, [backdrop, content])
     this.dailyRewardContainer.setDepth(7)
     this.dailyRewardContainer.setVisible(false)
+  }
+
+  private createToastOverlay(): void {
+    const textStyle = {
+      ...this.ui.overlayBodyStyle,
+      fontSize: '16px',
+      color: this.ui.overlayBodyStyle.color,
+    }
+    this.toastBase = this.add
+      .rectangle(0, 0, 200, 34, this.ui.panel.fill, this.ui.panel.alpha)
+      .setStrokeStyle(this.ui.panel.strokeThickness, this.ui.panel.stroke)
+    this.toastText = this.add.text(0, 0, '', textStyle).setOrigin(0.5, 0.5)
+    this.toastContainer = this.add.container(0, 0, [this.toastBase, this.toastText])
+    this.toastContainer.setDepth(8)
+    this.toastContainer.setVisible(false)
+    this.toastContainer.setAlpha(0)
   }
 
   private toggleDailyReward(): void {
@@ -3359,6 +3437,17 @@ export class PlayScene extends Phaser.Scene {
         this.ui.layout.gameOver.y + offsetY,
       )
     }
+    this.updateToastLayout()
+  }
+
+  private updateToastLayout(): void {
+    if (!this.toastContainer) {
+      return
+    }
+    const offsetX = (this.safeArea.left - this.safeArea.right) / 2
+    const x = GAME_DIMENSIONS.width / 2 + offsetX
+    const y = 70 + this.safeArea.top
+    this.toastContainer.setPosition(x, y)
   }
 
   private toggleGhost(): void {
