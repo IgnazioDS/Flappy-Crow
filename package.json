@@ -35,5 +35,8 @@
     "@capacitor/core": "^8.0.1",
     "cordova-plugin-purchase": "^13.12.1",
     "phaser": "^3.90.0"
+  },
+  "overrides": {
+    "tar": "^7.5.6"
   }
 }
