@@ -62,8 +62,10 @@ export class SoundSystem {
     if (this.active.get(key) === sound) {
       this.active.delete(key)
     }
-    if (!sound.isDestroyed) {
+    try {
       sound.destroy()
+    } catch {
+      // Ignore destroy errors; sound may already be cleaned up.
     }
   }
 }
