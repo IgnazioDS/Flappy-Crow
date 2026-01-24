@@ -4,16 +4,16 @@ Use this checklist before submitting a V6 build to the App Store.
 
 ## App Store Assets
 
-- [ ] App icon set updated (1024x1024 + iOS sizes).
-- [ ] Launch screen storyboard and splash images updated.
-- [ ] Store screenshots captured for all required device sizes.
+- [ ] App icon set updated (see `docs/APP_STORE_ASSETS.md`).
+- [ ] Launch screen storyboard and splash images updated (see `docs/APP_STORE_ASSETS.md`).
+- [ ] Store screenshots captured for all required device sizes (see `docs/app-store/screenshots/README.md`).
 - [ ] App preview video recorded (optional but recommended).
 
 ## App Store Listing
 
 - [ ] App name, subtitle, keywords, and category set.
-- [ ] Support URL and marketing URL updated (App Store Connect).
-- [ ] Privacy Policy URL set and reachable over HTTPS.
+- [ ] Support URL and marketing URL updated (see `docs/APP_STORE_LISTING.md`).
+- [ ] Privacy Policy URL set and reachable over HTTPS (see `docs/APP_STORE_LISTING.md`).
 - [ ] Age rating questionnaire completed.
 
 ## Privacy + Compliance
@@ -45,4 +45,3 @@ Use this checklist before submitting a V6 build to the App Store.
 - [ ] Pause/resume works when backgrounding the app.
 - [ ] Daily reward claim logic works across days.
 - [ ] Shop purchases persist and cosmetics apply correctly.
-
