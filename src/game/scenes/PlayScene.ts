@@ -220,6 +220,10 @@ export class PlayScene extends Phaser.Scene {
   private iapRows: IapRow[] = []
   private iapPurchaseInProgress = false
   private iapPendingProductId: IapProductId | null = null
+  private iapRestoreState: 'idle' | 'restoring' | 'restored' | 'none' | 'failed' = 'idle'
+  private iapRestoreBase: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | null = null
+  private iapRestoreLabel: Phaser.GameObjects.Text | null = null
+  private iapRestoreContainer: Phaser.GameObjects.Container | null = null
   private dailyRewardContainer: Phaser.GameObjects.Container | null = null
   private dailyRewardBackdrop: Phaser.GameObjects.Rectangle | null = null
   private dailyRewardOpen = false
@@ -1340,6 +1344,20 @@ export class PlayScene extends Phaser.Scene {
     y += 18
     this.createIapSection(content, 'SUPPORT', IAP_PRODUCTS, y, panelWidth)
 
+    const restoreLabel = this.add
+      .text(-panelWidth / 2 + 20, panelHeight / 2 - 60, 'RESTORE PURCHASES', this.ui.statLabelStyle)
+      .setOrigin(0, 0.5)
+    content.add(restoreLabel)
+
+    const restoreButton = this.createShopActionButton('RESTORE', () => {
+      void this.handleIapRestore()
+    })
+    restoreButton.container.setPosition(panelWidth / 2 - 56, panelHeight / 2 - 60)
+    content.add(restoreButton.container)
+    this.iapRestoreBase = restoreButton.base
+    this.iapRestoreLabel = restoreButton.label
+    this.iapRestoreContainer = restoreButton.container
+
     const closeButton = createSmallButton(this, this.ui, this.theme, 'CLOSE', () =>
       this.toggleShop(),
     )
@@ -1534,6 +1552,7 @@ export class PlayScene extends Phaser.Scene {
       }
     }
     if (this.shopOpen) {
+      this.iapRestoreState = 'idle'
       this.updateShopUI()
     }
     if (this.shopOpen && this.settingsOpen) {
@@ -1608,6 +1627,29 @@ export class PlayScene extends Phaser.Scene {
       row.actionLabel.setText(label)
       this.setShopButtonEnabled(row.actionBase, row.actionContainer, enabled)
     }
+
+    if (this.iapRestoreLabel && this.iapRestoreBase && this.iapRestoreContainer) {
+      const available = this.iapSystem.isAvailable()
+      let label = 'RESTORE'
+      let enabled = available
+
+      if (this.iapRestoreState === 'restoring') {
+        label = 'RESTORING'
+        enabled = false
+      } else if (this.iapRestoreState === 'restored') {
+        label = 'RESTORED'
+      } else if (this.iapRestoreState === 'none') {
+        label = 'NONE FOUND'
+      } else if (this.iapRestoreState === 'failed') {
+        label = 'FAILED'
+      } else if (!available) {
+        label = 'UNAVAILABLE'
+        enabled = false
+      }
+
+      this.iapRestoreLabel.setText(label)
+      this.setShopButtonEnabled(this.iapRestoreBase, this.iapRestoreContainer, enabled)
+    }
   }
 
   private async handleIapPurchase(productId: IapProductId): Promise<void> {
@@ -1640,6 +1682,39 @@ export class PlayScene extends Phaser.Scene {
       })
     } else if (result.status === 'not_supported') {
       this.analyticsSystem.track('iap_unavailable', { productId })
+    }
+
+    this.updateIapUI()
+    this.updateShopUI()
+  }
+
+  private async handleIapRestore(): Promise<void> {
+    if (!this.saveSystem) {
+      return
+    }
+    if (this.iapRestoreState === 'restoring') {
+      return
+    }
+
+    this.iapRestoreState = 'restoring'
+    this.updateIapUI()
+
+    const result = await this.iapSystem.restore()
+    if (result.status === 'restored') {
+      for (const productId of result.restored) {
+        this.setPurchaseOwned(productId)
+        if (productId === 'supporter_pack') {
+          this.applySupporterPackRewards()
+        }
+      }
+      this.analyticsSystem.track('iap_restore', {
+        count: result.restored.length,
+      })
+      this.iapRestoreState = 'restored'
+    } else if (result.status === 'none') {
+      this.iapRestoreState = 'none'
+    } else {
+      this.iapRestoreState = 'failed'
     }
 
     this.updateIapUI()

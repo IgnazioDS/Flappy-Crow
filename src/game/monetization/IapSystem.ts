@@ -6,6 +6,11 @@ export type PurchaseResult = {
   product: IapProduct | null
 }
 
+export type RestoreResult = {
+  status: 'restored' | 'none' | 'failed' | 'not_supported'
+  restored: IapProductId[]
+}
+
 export class IapSystem {
   private provider: IapProvider
 
@@ -47,23 +52,33 @@ export class IapSystem {
     return { status: 'failed', product }
   }
 
-  async restore(): Promise<IapProductId[]> {
+  async restore(): Promise<RestoreResult> {
     if (!this.provider.isAvailable()) {
-      return []
+      return { status: 'not_supported', restored: [] }
     }
-    const results = await this.provider.restore()
-    if (!results || results.length === 0) {
-      return []
-    }
-    const restored: IapProductId[] = []
-    for (const result of results) {
-      if (result.status === 'purchased') {
-        const product = IAP_PRODUCTS.find((item) => item.storeId === result.productId)
-        if (product) {
-          restored.push(product.id)
+    try {
+      const results = await this.provider.restore()
+      if (!results || results.length === 0) {
+        return { status: 'none', restored: [] }
+      }
+      if (results.some((result) => result.status === 'failed')) {
+        return { status: 'failed', restored: [] }
+      }
+      const restored: IapProductId[] = []
+      for (const result of results) {
+        if (result.status === 'purchased') {
+          const product = IAP_PRODUCTS.find((item) => item.storeId === result.productId)
+          if (product) {
+            restored.push(product.id)
+          }
         }
       }
+      return {
+        status: restored.length > 0 ? 'restored' : 'none',
+        restored,
+      }
+    } catch {
+      return { status: 'failed', restored: [] }
     }
-    return restored
   }
 }
