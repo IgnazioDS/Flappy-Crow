@@ -11,6 +11,8 @@ All gameplay rules live in deterministic systems so the logic is easy to test.
 - Casual / Hardcore presets for comfort vs mastery
 - Moving + pulsing obstacle variants tuned for readability
 - Shareable run card with seed link export (local)
+- Meta-progression with coins, run summary, and daily reward streaks
+- Cosmetic shop + inventory (skins, trails/frames) with App Store-ready IAPs
 - Accessibility: one-handed layout, text scaling, high contrast, reduced motion
 - Multiple themes (Classic Sky, Evil Forest Crow, Emerald Lake Swan)
 
@@ -41,6 +43,7 @@ Playwright runs the dev server with `VITE_TEST_SEED` and `VITE_E2E` to make runs
 - Spacebar: flap
 - Settings button opens toggles for mute, reduced motion, handedness, text scale, contrast,
   analytics opt-out, seed mode, difficulty, practice, ghost, and theme
+- Settings panel shortcuts for Shop and Daily Reward
 - H: toggle art QA hitbox overlay
 - M: toggle mute icon
 - R: toggle reduced motion
@@ -88,6 +91,9 @@ See `docs/PERFORMANCE.md` for the manual memory-growth checklist.
 - `docs/DEPLOYMENT.md` - deployment workflow and base path notes
 - `docs/TELEMETRY.md` - tracked events and privacy details
 - `docs/IOS.md` - iOS app shell workflow and App Store checklist
+- `docs/V6_APP_STORE_READINESS.md` - App Store readiness checklist
+- `docs/APP_STORE_ASSETS.md` - icon/splash asset prep guide
+- `docs/APP_STORE_LISTING.md` - Support/Marketing/Privacy URL placeholders
 
 ## Themes
 

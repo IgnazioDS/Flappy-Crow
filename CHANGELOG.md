@@ -5,6 +5,28 @@
 All notable changes to this project will be documented in this file.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [6.0.0] - 2026-01-24
+
+### Added
+
+- Versioned SaveState v2 with single-file persistence, migrations, and dev reset menu.
+- Meta-progression: coins, run summary screen, and lifetime stats tracking.
+- Cosmetic shop + inventory persistence (skins, frames/trails) with Supporter Pack bundle.
+- Daily reward streak system with claim UI and edge-case handling.
+- App Store IAP plumbing for Remove Ads + Supporter Pack, plus restore flow.
+- Local analytics logger and expanded gameplay/IAP event hooks.
+- App Store readiness docs for assets, listing URLs, and submission checks.
+
+### Changed
+
+- Performance hardening: no per-frame allocations in tuning, safer pause/resume input clearing.
+- Sound playback routed through a guarded SoundSystem to avoid duplicate instances.
+- Settings panel expanded with shop/daily reward shortcuts.
+
+### Fixed
+
+- Sound cleanup now avoids destroyed audio handles during scene teardown.
+
 ## [5.0.0] - 2026-01-22
 
 ### Added
