@@ -16,7 +16,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
-    "postinstall": "node scripts/patch-capacitor-tar.js"
+    "postinstall": "node scripts/patch-capacitor-tar.js && node scripts/patch-cordova-purchase-header.js"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.0.1",
