@@ -3544,6 +3544,13 @@ export class PlayScene extends Phaser.Scene {
       __flappyDebug?: E2EDebugState
       __forceLowPower?: () => void
       __clearLowPower?: () => void
+      __openShop?: () => void
+      __openDaily?: () => void
+      __openSettings?: () => void
+      __closeOverlays?: () => void
+      __startRun?: () => void
+      __forceGameOver?: () => void
+      __enterReady?: () => void
     }
     if (!win.__flappyDebug) {
       win.__flappyDebug = {
@@ -3562,6 +3569,60 @@ export class PlayScene extends Phaser.Scene {
       if (!win.__forceLowPower) {
         win.__forceLowPower = () => this.setLowPowerMode(true)
         win.__clearLowPower = () => this.setLowPowerMode(false)
+      }
+      if (!win.__openShop) {
+        win.__openShop = () => {
+          if (!this.shopOpen) {
+            this.toggleShop()
+          }
+        }
+      }
+      if (!win.__openDaily) {
+        win.__openDaily = () => {
+          if (!this.dailyRewardOpen) {
+            this.toggleDailyReward()
+          }
+        }
+      }
+      if (!win.__openSettings) {
+        win.__openSettings = () => {
+          if (!this.settingsOpen) {
+            this.toggleSettingsPanel()
+          }
+        }
+      }
+      if (!win.__closeOverlays) {
+        win.__closeOverlays = () => {
+          if (this.shopOpen) {
+            this.toggleShop()
+          }
+          if (this.dailyRewardOpen) {
+            this.toggleDailyReward()
+          }
+          if (this.settingsOpen) {
+            this.toggleSettingsPanel()
+          }
+        }
+      }
+      if (!win.__startRun) {
+        win.__startRun = () => {
+          if (this.stateMachine.state === 'READY') {
+            this.startPlaying()
+          }
+        }
+      }
+      if (!win.__forceGameOver) {
+        win.__forceGameOver = () => {
+          if (this.stateMachine.state !== 'PLAYING') {
+            this.startPlaying()
+          }
+          this.time.delayedCall(200, () => this.triggerGameOver())
+        }
+      }
+      if (!win.__enterReady) {
+        win.__enterReady = () => {
+          this.enterReady()
+        }
       }
     }
   }

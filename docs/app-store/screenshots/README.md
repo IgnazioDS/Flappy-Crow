@@ -22,3 +22,17 @@ Capture checklist:
 - Game Over
 - Shop
 - Daily Reward
+
+## Automated capture (optional)
+
+Run:
+
+```bash
+node scripts/capture-app-store-screenshots.mjs
+```
+
+Set a theme if desired:
+
+```bash
+SCREENSHOT_THEME=classic node scripts/capture-app-store-screenshots.mjs
+```
