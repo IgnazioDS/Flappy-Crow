@@ -5,6 +5,17 @@
 All notable changes to this project will be documented in this file.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [6.0.1] - 2026-01-25
+
+### Added
+
+- iOS privacy manifest template (`PrivacyInfo.xcprivacy`) for App Store compliance.
+
+### Fixed
+
+- Adopted UIScene lifecycle to avoid future iOS asserts.
+- Patched Cordova Purchase headers for SPM builds.
+
 ## [6.0.0] - 2026-01-24
 
 ### Added
