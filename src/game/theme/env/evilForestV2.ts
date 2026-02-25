@@ -167,6 +167,33 @@ export const EVIL_FOREST_V2: EnvironmentConfig = {
     ],
   },
 
+  // ─── Grade overlay ─────────────────────────────────────────────────────────
+  // Full-screen programmatic canvas: cool blue-purple tint + edge-darkening
+  // contrast curve.  Rendered at depth 3.50 — above all gameplay, below HUD.
+  // Raise alpha for a heavier cinematic look; lower for subtlety.
+  grade: {
+    depth: 3.50,
+    alpha: 0.14,
+  },
+
+  // ─── Film grain ────────────────────────────────────────────────────────────
+  // Tileable 256×256 noise TileSprite scrolled slowly left.  Very low alpha
+  // keeps it subliminal — adds texture without reading as noise.
+  grain: {
+    depth: 3.51,
+    alpha: 0.04,
+    scrollSpeed: 55,  // px/s horizontal drift
+  },
+
+  // ─── Foreground outline (rim separation) ───────────────────────────────────
+  // Behind-sprite slightly larger + tinted teal, so crow + gates visually pop
+  // against the painterly background regardless of background brightness.
+  outline: {
+    alpha: 0.42,
+    scale: 1.08,
+    tint: 0x4a8494,  // dark teal rim
+  },
+
   // ─── Low-power mode ────────────────────────────────────────────────────────
   lowPower: {
     disableFog: true,

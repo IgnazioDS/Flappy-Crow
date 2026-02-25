@@ -98,6 +98,45 @@ export type EnvironmentParticles = {
   fireflies?: ParticleConfig
 }
 
+/**
+ * Full-screen cinematic grade overlay (programmatic canvas texture).
+ * Adds a cool blue-purple tint + edge-darkening contrast to the entire scene,
+ * rendered at `depth` just below the HUD scrim (3.95).
+ */
+export type GradeConfig = {
+  /** Render depth — above gameplay (>2), below HUD scrim (3.95). Default: 3.50 */
+  depth: number
+  /** Sprite alpha (0–1). Controls how strongly the grade tints the scene. */
+  alpha: number
+}
+
+/**
+ * Tileable film-grain TileSprite (programmatic noise canvas texture).
+ * Adds subtle texture noise over the entire scene.
+ */
+export type GrainConfig = {
+  /** Render depth — just above grade overlay. Default: 3.51 */
+  depth: number
+  /** Sprite alpha (0–1). Keep very low (0.03–0.07) for subtlety. */
+  alpha: number
+  /** Horizontal scroll speed in px/s to animate the grain pattern (default: 55). */
+  scrollSpeed?: number
+}
+
+/**
+ * Foreground separation: a slightly-larger, tinted, semi-transparent sprite
+ * rendered *behind* the crow and gate sprites to create a soft rim/outline.
+ * Only applied for themes that define this config (evil-forest V2).
+ */
+export type OutlineConfig = {
+  /** Alpha of the behind-sprite (0–1). Range: 0.35–0.55. */
+  alpha: number
+  /** Scale multiplier vs. the main sprite (1.06–1.10). */
+  scale: number
+  /** Optional hex tint applied to the outline sprite (e.g. 0x4a8494 for dark teal). */
+  tint?: number
+}
+
 export type EnvironmentConfig = {
   key: EnvironmentKey
   label: string
@@ -110,4 +149,10 @@ export type EnvironmentConfig = {
   biolume?: BiolumeConfig
   particles: EnvironmentParticles
   lowPower?: EnvironmentLowPowerConfig
+  /** Cinematic grade overlay — cool tint + edge darkening over the full scene. */
+  grade?: GradeConfig
+  /** Film grain TileSprite — slow-scrolling noise for texture depth. */
+  grain?: GrainConfig
+  /** Foreground separation config for crow + gate rim sprites. */
+  outline?: OutlineConfig
 }
