@@ -73,6 +73,7 @@ import {
   defaultRng,
   getDailySeed,
   seedFromString,
+  type RandomSource,
 } from '../utils/rng'
 import {
   DEFAULT_GAME_MODE,
@@ -264,6 +265,7 @@ export class PlayScene extends Phaser.Scene {
   private seedMode: 'normal' | 'daily' | 'custom' = 'normal'
   private seedValue: number | null = null
   private seedLabel = 'NORMAL'
+  private envRng: RandomSource = defaultRng
   private debugEnabled = false
   private saveSystem: SaveSystem | null = null
   private analyticsSystem = new AnalyticsSystem({ logToConsole: import.meta.env.DEV })
@@ -368,6 +370,9 @@ export class PlayScene extends Phaser.Scene {
       this.seedValue === null ? null : (this.seedValue ^ 0x9e3779b9) >>> 0
     const variantRng = variantSeed === null ? defaultRng : new SeededRng(variantSeed)
     this.obstacleVariantSystem = new ObstacleVariantSystem(variantRng)
+    const envSeed =
+      this.seedValue === null ? null : (this.seedValue ^ 0x6b746a3f) >>> 0
+    this.envRng = envSeed === null ? defaultRng : new SeededRng(envSeed)
 
     const envDebugParam = this.readQueryParam('envDebug')
     if (this.debugToggleAllowed && envDebugParam !== null) {
@@ -2509,7 +2514,7 @@ export class PlayScene extends Phaser.Scene {
       getRandomPoint: (point) => {
         const rect =
           areaRects && areaRects.length
-            ? areaRects[Math.floor(Math.random() * areaRects.length)]
+            ? areaRects[Math.floor(this.envRng.next() * areaRects.length)]
             : zoneRect
         rect.getRandomPoint(scratchPoint)
         point.x = scratchPoint.x
