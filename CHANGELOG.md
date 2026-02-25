@@ -5,6 +5,42 @@
 All notable changes to this project will be documented in this file.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [6.1.3] - 2026-02-26
+
+### Added
+
+- **`createHudCapsule(scene, w, h)`** in `uiFactory.ts` — reusable glass/obsidian
+  backdrop for small HUD widgets (same material as `createPanelBackdrop` but
+  tuned for compact items: r=6, shadow offset +3/+4, stroke alpha 0.70).
+- **Score capsule backdrop** (`scoreCapsuleBackdrop`) — `createHudCapsule` placed
+  at depth 3.98 behind the score frame; repositioned by `updateSafeAreaLayout()`
+  so it tracks safe-area offsets correctly.  Active for themes that define
+  `ThemeUI.hud` (currently Evil Forest).
+- **Settings button capsule** — `createSettingsButton()` now uses `createHudCapsule`
+  (52×30 px) in place of the atlas button backing when `ui.hud` is defined,
+  giving the SET button the same material as panels and the score capsule.
+- **Icon cluster backdrop** (`iconClusterBackdrop`) — a shared `createHudCapsule`
+  capsule (78×40 px, depth 4.15) behind the mute + motion icon pair; position
+  is updated by `applyHandednessLayout()` in all three hand-mode configurations
+  (top-normal, bottom-left, bottom-right).
+
+### Changed
+
+- **`animateOverlay(container, 'ready')`** — READY panel enter animation gains an
+  upward Y-drift (+8 px → target Y) that layers with the existing bounce/scale,
+  giving the overlay a natural "descend into place" feel.  Reduced-motion toggle
+  suppresses all animation as before.
+- **`showReadyOverlay(true)`** — calls `updateOverlayLayout()` before starting the
+  animation to snap the container to its correct Y, preventing drift accumulation
+  across repeated enter/exit cycles.
+- **`applyHandednessLayout()`** — removed early `return` for the normal-mode branch;
+  refactored to an if/else so the icon cluster backdrop position can be updated
+  after all icon positions are set, regardless of hand mode.
+- **`overlayBodyStyle.fontSize`** `18px` → `19px` (+1 px per spec; more visual
+  presence for the "Tap or Space to Flap" hint line).
+- **`overlayBodyStyle.strokeThickness`** `5` → `4` (reduces cartoon-heavy outline;
+  matches title at proportional stroke weight for the slightly smaller font size).
+
 ## [6.1.2] - 2026-02-26
 
 ### Added

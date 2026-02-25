@@ -25,14 +25,14 @@ export const UI = {
     strokeThickness: 5,
     align: 'center',
   },
-  // Bumped to textPrimary + strokeThickness 5 in v6.1.2 for crisp readability
-  // over V2 painterly backgrounds.
+  // v6.1.2: textPrimary for contrast over painterly backgrounds.
+  // v6.1.3: +1 px (19px) for more presence; stroke 5→4 (crisp, not cartoon).
   overlayBodyStyle: {
     fontFamily: '"Cinzel", serif',
-    fontSize: '18px',
+    fontSize: '19px',
     color: PALETTE.textPrimary,
     stroke: PALETTE.night,
-    strokeThickness: 5,
+    strokeThickness: 4,
     align: 'center',
   },
   statLabelStyle: {

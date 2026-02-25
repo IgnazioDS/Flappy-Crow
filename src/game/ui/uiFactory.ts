@@ -174,6 +174,47 @@ export const createHudTopScrim = (
   return scene.add.image(0, 0, HUD_SCRIM_KEY).setOrigin(0, 0).setDepth(depth)
 }
 
+// ─── HUD capsule ──────────────────────────────────────────────────────────────
+
+/**
+ * Small-element HUD backdrop — same glass/obsidian material as
+ * {@link createPanelBackdrop} but tuned for compact HUD widgets (score
+ * capsule, SET button, icon cluster):
+ *   - Corner radius 6 (vs 8 for panels)
+ *   - Tighter drop-shadow offset (+3/+4)
+ *   - Slightly lower stroke alpha (0.70 vs 0.80)
+ *
+ * The Graphics origin is (0,0) so the shape is centred at the object's position.
+ *
+ * @param scene  Owning Phaser scene.
+ * @param width  Capsule width in px.
+ * @param height Capsule height in px.
+ */
+export const createHudCapsule = (
+  scene: Phaser.Scene,
+  width: number,
+  height: number,
+): Phaser.GameObjects.Graphics => {
+  const g = scene.add.graphics()
+  const r = 6
+  const hw = width / 2
+  const hh = height / 2
+
+  // 1. Drop shadow
+  g.fillStyle(0x000000, 0.45)
+  g.fillRoundedRect(-hw + 3, -hh + 4, width, height, r)
+
+  // 2. Obsidian fill
+  g.fillStyle(0x07090f, 0.93)
+  g.fillRoundedRect(-hw, -hh, width, height, r)
+
+  // 3. Teal accent stroke
+  g.lineStyle(2, PALETTE_NUM.panelStroke, 0.70)
+  g.strokeRoundedRect(-hw, -hh, width, height, r)
+
+  return g
+}
+
 // ─── Panel backdrop ───────────────────────────────────────────────────────────
 
 /**
