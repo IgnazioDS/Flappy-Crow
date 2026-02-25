@@ -44,6 +44,7 @@ import {
   applyButtonFeedback,
   applyMinHitArea,
   createButtonBase,
+  createHudCapsule,
   createHudTopScrim,
   createPanel,
   createPanelBackdrop,
@@ -174,6 +175,10 @@ export class PlayScene extends Phaser.Scene {
   private parallaxLayers: ParallaxLayer[] = []
   private fogLayer: Phaser.GameObjects.TileSprite | null = null
   private vignette: Phaser.GameObjects.Image | null = null
+  /** Unified obsidian capsule behind the score frame (depth 3.98). */
+  private scoreCapsuleBackdrop: Phaser.GameObjects.Graphics | null = null
+  /** Unified obsidian capsule behind the mute + motion icon pair. */
+  private iconClusterBackdrop: Phaser.GameObjects.Graphics | null = null
   private screenFlash: ScreenFlash | null = null
   private impactBurst: ImpactBurst | null = null
 
@@ -858,6 +863,18 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private createScoreFrame(): Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle {
+    // Unified HUD capsule backdrop behind the score frame (depth 3.98 → below
+    // scoreFrame at 4).  Only created for themes that define ui.hud (evil-forest).
+    if (this.ui.hud) {
+      this.scoreCapsuleBackdrop = createHudCapsule(
+        this,
+        this.ui.scoreFrameSize.width,
+        this.ui.scoreFrameSize.height,
+      )
+        .setPosition(this.ui.score.x, this.ui.score.y)
+        .setDepth(3.98)
+    }
+
     const uiAssets = this.theme.visuals.ui
     if (uiAssets.kind === 'atlas' && uiAssets.atlasKey && uiAssets.frames?.scoreFrame) {
       return this.add
@@ -1082,6 +1099,18 @@ export class PlayScene extends Phaser.Scene {
         .setInteractive(hitConfig)
       this.muteIcon.on('pointerdown', () => this.toggleMute())
       this.applyIconContrast(this.muteIcon)
+
+      // Unified capsule backdrop behind the icon pair (depth 4.15 → below
+      // icons at 4.2, above HUD scrim at 3.95).
+      if (this.ui.hud) {
+        const iconSize = this.ui.icon.size
+        const spacing = iconSize + 10   // gap between icon centres (36 px)
+        const clusterW = spacing + iconSize + 16  // left-pad + right-pad (78 px)
+        const clusterH = iconSize + 14             // vertical pad each side (40 px)
+        this.iconClusterBackdrop = createHudCapsule(this, clusterW, clusterH)
+          .setDepth(4.15)
+        // Initial position will be set by applyHandednessLayout() below.
+      }
     } else {
       this.motionIcon = null
       this.muteIcon = null
@@ -1092,7 +1121,6 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private createSettingsButton(): void {
-    const buttonImage = createButtonBase(this, this.ui, this.theme, 0.42)
     const labelStyle = {
       ...this.ui.statLabelStyle,
       fontSize: '12px',
@@ -1100,12 +1128,28 @@ export class PlayScene extends Phaser.Scene {
     }
     const label = this.add.text(0, 1, 'SET', labelStyle).setOrigin(0.5, 0.5)
 
-    this.settingsButton = this.add.container(this.ui.icon.padding + 34, 28, [buttonImage, label])
+    // Use the unified HUD capsule when the theme defines hud config (evil-forest),
+    // otherwise fall back to the standard atlas/shape button for bright themes.
+    let backing: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Graphics
+    let hitW: number
+    let hitH: number
+
+    if (this.ui.hud) {
+      const capsuleW = 52
+      const capsuleH = 30
+      backing = createHudCapsule(this, capsuleW, capsuleH)
+      hitW = 52
+      hitH = 44  // minimum comfortable touch target
+    } else {
+      backing = createButtonBase(this, this.ui, this.theme, 0.42)
+      hitW = Math.max(backing.displayWidth, 44)
+      hitH = Math.max(backing.displayHeight, 44)
+    }
+
+    this.settingsButton = this.add.container(this.ui.icon.padding + 34, 28, [backing, label])
     this.settingsButton.setDepth(4.2)
-    const hitWidth = Math.max(buttonImage.displayWidth, 44)
-    const hitHeight = Math.max(buttonImage.displayHeight, 44)
-    const hitArea = new Phaser.Geom.Rectangle(-hitWidth / 2, -hitHeight / 2, hitWidth, hitHeight)
-    this.settingsButton.setSize(hitWidth, hitHeight)
+    const hitArea = new Phaser.Geom.Rectangle(-hitW / 2, -hitH / 2, hitW, hitH)
+    this.settingsButton.setSize(hitW, hitH)
     this.settingsButton.setInteractive({
       hitArea,
       hitAreaCallback: Phaser.Geom.Rectangle.Contains,
@@ -1151,18 +1195,25 @@ export class PlayScene extends Phaser.Scene {
       this.settingsButton.setPosition(padding + 34, topY)
       this.motionIcon?.setPosition(rightX - spacing, topY)
       this.muteIcon?.setPosition(rightX, topY)
-      return
+    } else {
+      const y = bottomY
+      if (this.handMode === 'left') {
+        this.settingsButton.setPosition(leftX + settingsOffset, y)
+        this.motionIcon?.setPosition(leftX, y)
+        this.muteIcon?.setPosition(leftX + spacing, y)
+      } else {
+        this.settingsButton.setPosition(rightX - settingsOffset, y)
+        this.motionIcon?.setPosition(rightX - spacing, y)
+        this.muteIcon?.setPosition(rightX, y)
+      }
     }
 
-    const y = bottomY
-    if (this.handMode === 'left') {
-      this.settingsButton.setPosition(leftX + settingsOffset, y)
-      this.motionIcon?.setPosition(leftX, y)
-      this.muteIcon?.setPosition(leftX + spacing, y)
-    } else {
-      this.settingsButton.setPosition(rightX - settingsOffset, y)
-      this.motionIcon?.setPosition(rightX - spacing, y)
-      this.muteIcon?.setPosition(rightX, y)
+    // Keep the icon cluster backdrop centred over the mute + motion icons.
+    if (this.iconClusterBackdrop && this.motionIcon && this.muteIcon) {
+      this.iconClusterBackdrop.setPosition(
+        (this.motionIcon.x + this.muteIcon.x) / 2,
+        this.motionIcon.y,
+      )
     }
   }
 
@@ -3062,6 +3113,9 @@ export class PlayScene extends Phaser.Scene {
 
   private showReadyOverlay(visible: boolean): void {
     if (visible) {
+      // Snap to correct layout position before reading Y for the drift animation
+      // (guards against interrupted mid-tween Y from a previous show/hide cycle).
+      this.updateOverlayLayout()
       this.readyContainer.setVisible(true)
       this.animateOverlay(this.readyContainer, 'ready')
     } else {
@@ -3087,24 +3141,40 @@ export class PlayScene extends Phaser.Scene {
       return
     }
 
-    const tweenRef = kind === 'ready' ? this.readyTween : this.gameOverTween
-    tweenRef?.stop()
+    if (kind === 'ready') {
+      this.readyTween?.stop()
+    } else {
+      this.gameOverTween?.stop()
+    }
 
     container.setAlpha(0)
     const bounceEnabled = this.fx.overlayBounce.enabled
     container.setScale(bounceEnabled ? this.fx.overlayBounce.startScale : 0.98)
 
-    const tween = this.tweens.add({
-      targets: container,
-      alpha: 1,
-      scale: 1,
-      duration: bounceEnabled ? this.fx.overlayBounce.durationMs : 220,
-      ease: bounceEnabled ? 'Back.Out' : 'Sine.Out',
-    })
+    let tween: Phaser.Tweens.Tween
 
     if (kind === 'ready') {
+      // Tasteful enter: fade in + scale + gentle upward drift (8 px → target Y).
+      // Works alongside the bounce scale so both effects layer naturally.
+      const targetY = container.y
+      container.y = targetY + 8
+      tween = this.tweens.add({
+        targets: container,
+        alpha: 1,
+        scale: 1,
+        y: targetY,
+        duration: bounceEnabled ? this.fx.overlayBounce.durationMs : 220,
+        ease: bounceEnabled ? 'Back.Out' : 'Sine.Out',
+      })
       this.readyTween = tween
     } else {
+      tween = this.tweens.add({
+        targets: container,
+        alpha: 1,
+        scale: 1,
+        duration: bounceEnabled ? this.fx.overlayBounce.durationMs : 220,
+        ease: bounceEnabled ? 'Back.Out' : 'Sine.Out',
+      })
       this.gameOverTween = tween
     }
   }
@@ -3431,6 +3501,7 @@ export class PlayScene extends Phaser.Scene {
     const scoreY = this.ui.score.y + this.safeArea.top
     this.scoreFrame?.setPosition(this.ui.score.x, scoreY)
     this.scoreText?.setPosition(this.ui.score.x, scoreY + 2)
+    this.scoreCapsuleBackdrop?.setPosition(this.ui.score.x, scoreY)
     this.applyHandednessLayout()
     this.updateOverlayLayout()
   }
