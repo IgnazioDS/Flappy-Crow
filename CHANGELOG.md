@@ -5,6 +5,35 @@
 All notable changes to this project will be documented in this file.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [6.1.2] - 2026-02-26
+
+### Added
+
+- **HUD top-gradient scrim** (`createHudTopScrim()` in `uiFactory.ts`) — a
+  programmatic canvas texture that fades from semi-opaque dark purple-black at
+  y=0 to transparent at `hud.topScrimHeight` (72 px default).  Placed at depth
+  3.95 (above all background layers, below score/icon UI at 4+).  Ensures the
+  score capsule and top icons are always readable over bright or painterly
+  backgrounds (V2 sky, V1 daylight sky, etc.).
+- **Panel backdrop** (`createPanelBackdrop()` in `uiFactory.ts`) — Phaser
+  `Graphics` layer rendered behind every overlay panel, providing a layered
+  glass/obsidian look: drop shadow → dark fill → 2 px teal accent stroke with
+  8 px corner radius.  Used in READY and GAME OVER containers.
+- **`ThemeUI.hud`** — optional config block (`topScrimHeight`, `topScrimAlpha`,
+  `safeTop`) on every theme UI; the Evil Forest theme sets concrete defaults
+  (`72 px / 0.62 alpha / 8 px safeTop`).
+- **`ThemeUI.spacing`** — 8-pt spacing scale (`xs=8`, `sm=12`, `md=16`,
+  `lg=24`) added to the type and to the Evil Forest `UI` object.
+
+### Changed
+
+- **`overlayBodyStyle.color`** upgraded from `PALETTE.textMuted` (#9fb2c1) to
+  `PALETTE.textPrimary` (#d7f5ff) — the "Tap or Space to Flap" hint in the
+  READY panel now matches heading brightness instead of appearing washed-out
+  over painterly backgrounds.
+- **`overlayBodyStyle.strokeThickness`** bumped from 4 → 5 for parity with
+  `overlayTitleStyle` and consistent halo width at all contrast levels.
+
 ## [6.1.1] - 2026-02-25
 
 ### Added

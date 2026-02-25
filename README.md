@@ -90,6 +90,18 @@ node scripts/render-v2-assets.mjs
 Switch to V1 (classic flat look) via `?env=v1`. V2 QA overlay (`?qa=1`)
 shows per-layer texture dimensions alongside FPS and env label.
 
+#### HUD / UI polish knobs (v6.1.2+)
+
+| Feature | Location | Default |
+|---|---|---|
+| Top-scrim height | `ui.hud.topScrimHeight` | 72 px |
+| Top-scrim peak opacity | `ui.hud.topScrimAlpha` | 0.62 |
+| HUD safe-top gap | `ui.hud.safeTop` | 8 px |
+| Spacing scale | `ui.spacing.xs/sm/md/lg` | 8 / 12 / 16 / 24 |
+| Body text colour | `ui.overlayBodyStyle.color` | `textPrimary` |
+| Body stroke thickness | `ui.overlayBodyStyle.strokeThickness` | 5 |
+| Panel backdrop corner radius | hardcoded in `createPanelBackdrop` | 8 px |
+
 #### V2 composition knobs (v6.1.1+)
 
 | Feature | Config field | Default |

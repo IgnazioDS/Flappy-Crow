@@ -44,7 +44,9 @@ import {
   applyButtonFeedback,
   applyMinHitArea,
   createButtonBase,
+  createHudTopScrim,
   createPanel,
+  createPanelBackdrop,
   createSmallButton,
 } from '../ui/uiFactory'
 import { createSettingsPanel, type SettingsPanelHandle } from '../ui/settingsPanel'
@@ -409,6 +411,17 @@ export class PlayScene extends Phaser.Scene {
       .setOrigin(0.5, 0.5)
       .setDepth(4.1)
     this.applyCosmetics()
+
+    // ── HUD top scrim — dark gradient behind score + icons (depth 3.95).
+    // No reference stored; Phaser scene lifecycle manages cleanup.
+    if (this.ui.hud) {
+      createHudTopScrim(
+        this,
+        GAME_DIMENSIONS.width,
+        this.ui.hud.topScrimHeight,
+        this.ui.hud.topScrimAlpha,
+      )
+    }
 
     this.createReadyOverlay()
     this.createGameOverOverlay()
@@ -897,6 +910,9 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private createReadyOverlay(): void {
+    const panelWidth = this.ui.panelSize.small.width
+    const panelHeight = this.ui.panelSize.small.height
+    const backdrop = createPanelBackdrop(this, panelWidth, panelHeight)
     const panel = createPanel(this, this.ui, this.theme, 'small')
     const title = this.add.text(0, -20, 'GET READY', this.ui.overlayTitleStyle).setOrigin(0.5, 0.5)
     const subtitle = this.add
@@ -904,6 +920,7 @@ export class PlayScene extends Phaser.Scene {
       .setOrigin(0.5, 0.5)
 
     this.readyContainer = this.add.container(this.ui.layout.ready.x, this.ui.layout.ready.y, [
+      backdrop,
       panel,
       title,
       subtitle,
@@ -915,6 +932,7 @@ export class PlayScene extends Phaser.Scene {
   private createGameOverOverlay(): void {
     const panelWidth = this.ui.panelSize.large.width
     const panelHeight = 240
+    const backdrop = createPanelBackdrop(this, panelWidth, panelHeight)
     const panel = createPanel(this, this.ui, this.theme, 'large', panelWidth, panelHeight)
     const title = this.add
       .text(0, -panelHeight / 2 + 30, 'RUN SUMMARY', this.ui.overlayTitleStyle)
@@ -949,6 +967,7 @@ export class PlayScene extends Phaser.Scene {
       .setOrigin(0, 0.5)
 
     const overlayItems: Phaser.GameObjects.GameObject[] = [
+      backdrop,
       panel,
       title,
       scoreLabel,
