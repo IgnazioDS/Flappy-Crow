@@ -21,7 +21,7 @@ const formatIssues = (issues: ThemeContractIssue[]): string =>
   issues.map((issue) => `${issue.field}: ${issue.message}`).join('; ')
 
 export const validateThemeDefinition = (theme: ThemeDefinition): ThemeDefinition => {
-  if (!import.meta.env.DEV) {
+  if (!import.meta.env.DEV && import.meta.env.VITE_ART_QA !== 'true') {
     return theme
   }
 
