@@ -10,6 +10,19 @@ import type { EnvironmentConfig, EnvironmentFogLayer } from '../theme/env/types'
 const VIGNETTE_TEX_KEY = 'v2-vignette-tex'
 
 /**
+ * Key for the full-screen grade overlay canvas texture.
+ * Cool blue-purple tint + edge-darkening contrast curve.
+ * Created once per session; alpha is controlled per-sprite, not baked in.
+ */
+const GRADE_TEX_KEY = 'v2-grade-tex'
+
+/**
+ * Key for the tileable 256×256 film-grain noise canvas texture.
+ * Created once; the TileSprite drifts its tile position each frame.
+ */
+const GRAIN_TEX_KEY = 'v2-grain-tex'
+
+/**
  * Depth of the background vignette — above all background layers (max 0.84)
  * but below gameplay elements (pipes/obstacles at 1.0, bird at 2.0).
  */
@@ -37,6 +50,10 @@ export class BackgroundSystemV2 extends BackgroundSystem {
   private v2Scene: Phaser.Scene
   private v2Env: EnvironmentConfig
   private vignetteSprite: Phaser.GameObjects.Image | null = null
+  private gradeSprite: Phaser.GameObjects.Image | null = null
+  private grainSprite: Phaser.GameObjects.TileSprite | null = null
+  /** Accumulated horizontal offset for grain TileSprite animation (px). */
+  private grainScrollX = 0
 
   constructor(scene: Phaser.Scene, env: EnvironmentConfig) {
     super(scene, env)
@@ -54,6 +71,8 @@ export class BackgroundSystemV2 extends BackgroundSystem {
   override create(): void {
     super.create()
     this.v2CreateVignette()
+    this.v2CreateGrade()
+    this.v2CreateGrain()
   }
 
   override destroy(): void {
@@ -62,7 +81,24 @@ export class BackgroundSystemV2 extends BackgroundSystem {
       this.vignetteSprite.destroy()
       this.vignetteSprite = null
     }
+    if (this.gradeSprite) {
+      this.gradeSprite.destroy()
+      this.gradeSprite = null
+    }
+    if (this.grainSprite) {
+      this.grainSprite.destroy()
+      this.grainSprite = null
+    }
     super.destroy()
+  }
+
+  override update(dt: number): void {
+    super.update(dt)
+    // Animate grain by slowly scrolling its tile position each frame.
+    if (this.grainSprite && this.v2Env.grain) {
+      this.grainScrollX += dt * (this.v2Env.grain.scrollSpeed ?? 55)
+      this.grainSprite.setTilePosition(this.grainScrollX % 256, 0)
+    }
   }
 
   override setEnvironment(env: EnvironmentConfig): void {
@@ -122,6 +158,17 @@ export class BackgroundSystemV2 extends BackgroundSystem {
       return `  ${asset.key}: ${src?.width ?? '?'}×${src?.height ?? '?'}`
     })
 
+    // ── grade / grain / outline
+    const gradeStr = this.v2Env.grade
+      ? `α=${this.v2Env.grade.alpha.toFixed(2)} depth=${this.v2Env.grade.depth.toFixed(2)}`
+      : 'disabled'
+    const grainStr = this.v2Env.grain
+      ? `α=${this.v2Env.grain.alpha.toFixed(2)} depth=${this.v2Env.grain.depth.toFixed(2)} spd=${(this.v2Env.grain.scrollSpeed ?? 55).toFixed(0)}`
+      : 'disabled'
+    const outlineStr = this.v2Env.outline
+      ? `α=${this.v2Env.outline.alpha.toFixed(2)} scale=${this.v2Env.outline.scale.toFixed(2)} tint=${this.v2Env.outline.tint !== undefined ? '#' + this.v2Env.outline.tint.toString(16).padStart(6, '0') : 'none'}`
+      : 'disabled'
+
     return [
       `env: ${this.v2Env.key} — ${this.v2Env.label} (${W}×${H})`,
       '',
@@ -137,12 +184,107 @@ export class BackgroundSystemV2 extends BackgroundSystem {
       'PARTICLES (max, enabled):',
       ...particleLines,
       '',
+      'GRADE/GRAIN/OUTLINE:',
+      `  grade:   ${gradeStr}`,
+      `  grain:   ${grainStr}`,
+      `  outline: ${outlineStr}`,
+      '',
       'TEXTURES:',
       ...texLines,
     ]
   }
 
   // ─── Private helpers ────────────────────────────────────────────────────────
+
+  /**
+   * Creates the full-screen grade overlay.
+   *
+   * The canvas texture is generated once (cool blue-purple base tint with an
+   * additive radial edge-darkening pass) and reused across env switches.
+   * The sprite alpha (from `env.grade.alpha`) controls the blend strength.
+   *
+   * Depth: `env.grade.depth` (default 3.50) — above all gameplay, below HUD.
+   */
+  private v2CreateGrade(): void {
+    if (!this.v2Env.grade) return
+    const { width, height } = GAME_DIMENSIONS
+
+    if (!this.v2Scene.textures.exists(GRADE_TEX_KEY)) {
+      const canvas = document.createElement('canvas')
+      canvas.width = width
+      canvas.height = height
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        // Layer 1: Cool blue-purple tint — desaturates warm tones, adds cinematic cool cast.
+        ctx.fillStyle = 'rgba(18, 28, 72, 0.70)'
+        ctx.fillRect(0, 0, width, height)
+
+        // Layer 2: Radial edge-darkening — adds contrast by dimming corners while
+        // keeping the center corridor bright and readable.
+        const cx = width / 2
+        const cy = height * 0.46  // slightly above center to protect the play lane
+        const r = Math.sqrt(cx * cx + (cy * 1.1) * (cy * 1.1)) * 1.05
+        const edgeGrad = ctx.createRadialGradient(cx, cy, r * 0.35, cx, cy, r)
+        edgeGrad.addColorStop(0,    'rgba(0,0,0,0)')     // transparent at play center
+        edgeGrad.addColorStop(0.65, 'rgba(0,0,0,0)')     // hold clear through play corridor
+        edgeGrad.addColorStop(1,    'rgba(0,0,0,0.50)')  // darken edges
+        ctx.fillStyle = edgeGrad
+        ctx.fillRect(0, 0, width, height)
+      }
+      this.v2Scene.textures.addCanvas(GRADE_TEX_KEY, canvas)
+    }
+
+    this.gradeSprite = this.v2Scene.add
+      .image(0, 0, GRADE_TEX_KEY)
+      .setOrigin(0, 0)
+      .setAlpha(this.v2Env.grade.alpha)
+      .setDepth(this.v2Env.grade.depth)
+  }
+
+  /**
+   * Creates a tileable 256×256 film-grain noise TileSprite.
+   *
+   * The noise canvas is generated with a seeded-style uniform random pass so
+   * it tiles seamlessly (all edges wrap modulo 256).  The TileSprite covers
+   * the full game canvas; `update()` advances `grainScrollX` each frame for
+   * a slow horizontal drift that avoids static-pattern perception.
+   *
+   * Depth: `env.grain.depth` (default 3.51) — directly above grade overlay.
+   */
+  private v2CreateGrain(): void {
+    if (!this.v2Env.grain) return
+    const { width, height } = GAME_DIMENSIONS
+    const TILE = 256
+
+    if (!this.v2Scene.textures.exists(GRAIN_TEX_KEY)) {
+      const canvas = document.createElement('canvas')
+      canvas.width = TILE
+      canvas.height = TILE
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        const imgData = ctx.createImageData(TILE, TILE)
+        const data = imgData.data
+        for (let i = 0; i < TILE * TILE; i++) {
+          // Simple pseudo-random luminance noise.
+          const v = Math.floor(Math.random() * 256)
+          const idx = i * 4
+          data[idx]     = v
+          data[idx + 1] = v
+          data[idx + 2] = v
+          data[idx + 3] = 255
+        }
+        ctx.putImageData(imgData, 0, 0)
+      }
+      this.v2Scene.textures.addCanvas(GRAIN_TEX_KEY, canvas)
+    }
+
+    this.grainScrollX = 0
+    this.grainSprite = this.v2Scene.add
+      .tileSprite(0, 0, width, height, GRAIN_TEX_KEY)
+      .setOrigin(0, 0)
+      .setAlpha(this.v2Env.grain.alpha)
+      .setDepth(this.v2Env.grain.depth)
+  }
 
   /**
    * Creates a soft radial vignette using a programmatic HTML canvas.

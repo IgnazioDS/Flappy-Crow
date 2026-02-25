@@ -102,6 +102,19 @@ shows per-layer texture dimensions alongside FPS and env label.
 | Body stroke thickness | `ui.overlayBodyStyle.strokeThickness` | 5 |
 | Panel backdrop corner radius | hardcoded in `createPanelBackdrop` | 8 px |
 
+#### V2 grade / grain / outline knobs (v6.1.4+)
+
+| Feature | Config field | Default |
+|---|---|---|
+| Grade overlay alpha | `grade.alpha` | 0.14 |
+| Grade render depth | `grade.depth` | 3.50 |
+| Grain TileSprite alpha | `grain.alpha` | 0.04 |
+| Grain scroll speed | `grain.scrollSpeed` | 55 px/s |
+| Grain render depth | `grain.depth` | 3.51 |
+| Outline alpha (crow + gates) | `outline.alpha` | 0.42 |
+| Outline scale multiplier | `outline.scale` | 1.08× |
+| Outline tint | `outline.tint` | `0x4a8494` (dark teal) |
+
 #### V2 composition knobs (v6.1.1+)
 
 | Feature | Config field | Default |

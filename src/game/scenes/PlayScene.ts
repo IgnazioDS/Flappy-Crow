@@ -109,6 +109,9 @@ type PipeSprites = {
   bottom: Phaser.GameObjects.Image
   topGlow?: Phaser.GameObjects.Image
   bottomGlow?: Phaser.GameObjects.Image
+  /** Behind-sprite rim for foreground separation (evil-forest V2 only). */
+  topOutline?: Phaser.GameObjects.Image
+  bottomOutline?: Phaser.GameObjects.Image
 }
 
 type ParallaxLayer = {
@@ -166,6 +169,8 @@ export class PlayScene extends Phaser.Scene {
   private bird!: Bird
   private birdSprite!: Phaser.GameObjects.Sprite | Phaser.GameObjects.Image
   private birdGlow: Phaser.GameObjects.Image | null = null
+  /** Behind-sprite rim for foreground separation (V2 evil-forest, gated by env.outline). */
+  private birdOutline: Phaser.GameObjects.Image | null = null
   private birdVisualState: BirdVisualState = 'idle'
   private birdBobTime = 0
 
@@ -859,6 +864,26 @@ export class PlayScene extends Phaser.Scene {
       this.birdGlow.setScale(birdScale * 0.75)
     } else {
       this.birdGlow = null
+    }
+
+    // ── Foreground outline (rim separation) — rendered behind bird at depth 1.99.
+    // Only created for environments that define outline config (evil-forest V2).
+    const outlineCfg = this.environmentConfig?.outline
+    if (outlineCfg) {
+      const frame = bird.type === 'atlas' ? bird.idleFrame : undefined
+      const ox = bird.type === 'atlas' ? 0.45 : 0.5
+      const oy = bird.type === 'atlas' ? 0.55 : 0.5
+      this.birdOutline = this.add
+        .image(this.bird.x, this.bird.y, bird.key, frame)
+        .setDepth(1.99)
+        .setOrigin(ox, oy)
+        .setScale(birdScale * outlineCfg.scale)
+        .setAlpha(outlineCfg.alpha)
+      if (outlineCfg.tint !== undefined) {
+        this.birdOutline.setTint(outlineCfg.tint)
+      }
+    } else {
+      this.birdOutline = null
     }
   }
 
@@ -3038,7 +3063,33 @@ export class PlayScene extends Phaser.Scene {
       }
     }
 
-    return { top, bottom, topGlow, bottomGlow }
+    // ── Foreground outline (rim separation behind gates) ─────────────────────
+    // Created only when the environment defines outline config (evil-forest V2).
+    // Depth 0.99 — just behind the main pipe sprite at depth 1.
+    let topOutline: Phaser.GameObjects.Image | undefined
+    let bottomOutline: Phaser.GameObjects.Image | undefined
+    const outlineCfg = this.environmentConfig?.outline
+    if (outlineCfg) {
+      topOutline = this.add
+        .image(0, 0, obstacles.key, obstacles.topKey ?? obstacles.topFrames?.[0])
+        .setOrigin(0, 1)
+        .setDepth(0.99)
+        .setAlpha(outlineCfg.alpha)
+      bottomOutline = this.add
+        .image(0, 0, obstacles.key, obstacles.bottomKey ?? obstacles.bottomFrames?.[0])
+        .setOrigin(0, 0)
+        .setDepth(0.99)
+        .setAlpha(outlineCfg.alpha)
+      if (outlineCfg.tint !== undefined) {
+        topOutline.setTint(outlineCfg.tint)
+        bottomOutline.setTint(outlineCfg.tint)
+      }
+      if (obstacles.type === 'image' && obstacles.flipTop) {
+        topOutline.setFlipY(true)
+      }
+    }
+
+    return { top, bottom, topGlow, bottomGlow, topOutline, bottomOutline }
   }
 
   private applyObstacleVariant(sprites: PipeSprites): void {
@@ -3053,6 +3104,8 @@ export class PlayScene extends Phaser.Scene {
     sprites.bottom.setTexture(obstacles.key, bottomFrame)
     sprites.topGlow?.setTexture(obstacles.key, topFrame)
     sprites.bottomGlow?.setTexture(obstacles.key, bottomFrame)
+    sprites.topOutline?.setTexture(obstacles.key, topFrame)
+    sprites.bottomOutline?.setTexture(obstacles.key, bottomFrame)
   }
 
   private updatePipeSprites(pipe: PipePair, sprites: PipeSprites): void {
@@ -3085,6 +3138,25 @@ export class PlayScene extends Phaser.Scene {
       sprites.bottomGlow.setRotation(sway)
       sprites.bottomGlow.setVisible(bottomHeight > 0)
     }
+
+    // ── Outline sprites (foreground separation rim) ───────────────────────────
+    // Expand by a fixed overhang on all sides so the tinted rim peeks out from
+    // behind the main sprite.  Origin (0,1) for top / (0,0) for bottom means
+    // the gap-facing edges expand into the gap while side edges expand sideways.
+    if (sprites.topOutline) {
+      const overhang = Math.round(PIPE_CONFIG.width * 0.06)  // ~6 % of pipe width
+      sprites.topOutline.setPosition(pipe.x - overhang, topHeight + overhang)
+      sprites.topOutline.setDisplaySize(PIPE_CONFIG.width + overhang * 2, topHeight + overhang)
+      sprites.topOutline.setRotation(-sway)
+      sprites.topOutline.setVisible(topHeight > 0)
+    }
+    if (sprites.bottomOutline) {
+      const overhang = Math.round(PIPE_CONFIG.width * 0.06)
+      sprites.bottomOutline.setPosition(pipe.x - overhang, pipe.bottomY - overhang)
+      sprites.bottomOutline.setDisplaySize(PIPE_CONFIG.width + overhang * 2, bottomHeight + overhang)
+      sprites.bottomOutline.setRotation(sway)
+      sprites.bottomOutline.setVisible(bottomHeight > 0)
+    }
   }
 
   private updateBirdVisual(dt: number): void {
@@ -3101,6 +3173,9 @@ export class PlayScene extends Phaser.Scene {
     if (this.birdGlow) {
       this.birdGlow.setPosition(this.bird.x + 8, this.bird.y - 2 + bobOffset)
     }
+    if (this.birdOutline) {
+      this.birdOutline.setPosition(this.bird.x, this.bird.y + bobOffset)
+    }
 
     const range = BIRD_CONFIG.maxFallSpeed - BIRD_CONFIG.maxRiseSpeed
     const t = Phaser.Math.Clamp((this.bird.velocity - BIRD_CONFIG.maxRiseSpeed) / range, 0, 1)
@@ -3108,6 +3183,9 @@ export class PlayScene extends Phaser.Scene {
     this.birdSprite.setRotation(rotation)
     if (this.birdGlow) {
       this.birdGlow.setRotation(rotation)
+    }
+    if (this.birdOutline) {
+      this.birdOutline.setRotation(rotation)
     }
   }
 

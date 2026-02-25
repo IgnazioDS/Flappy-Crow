@@ -5,6 +5,39 @@
 All notable changes to this project will be documented in this file.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [6.1.4] - 2026-02-26
+
+### Added
+
+- **Grade overlay** — full-screen programmatic canvas texture (cool blue-purple
+  tint + radial edge-darkening contrast curve) rendered at depth 3.50 — above
+  all gameplay elements, below the HUD scrim.  Alpha controlled per-env via
+  `EnvironmentConfig.grade.alpha` (default 0.14 for Evil Forest V2).  Generated
+  once using the existing canvas-texture pattern; no extra asset file needed.
+- **Film grain** — tileable 256×256 noise `TileSprite` at depth 3.51, scrolled
+  horizontally each frame at `grain.scrollSpeed` (default 55 px/s) for a
+  subliminal texture layer.  Alpha default 0.04 — keeps the grain below
+  conscious perception while adding tactile depth.
+- **Foreground outline (rim separation)** — semi-transparent, tinted
+  behind-sprites for crow and gates (Option 1 approach):
+  - *Bird outline* at depth 1.99, scale `birdScale × outline.scale` (1.08×),
+    tint `0x4a8494` (dark teal), alpha 0.42.  Position and rotation tracked
+    in `updateBirdVisual()` alongside the glow sprite.
+  - *Gate outlines* at depth 0.99, expanded ~6 % on all sides using the same
+    fixed-overhang pattern as the existing screen-blend glow sprites.  Frame
+    and texture are synced in `applyObstacleVariant()` for atlas themes.
+  - Gated by `environmentConfig?.outline` — Classic and Emerald Lake themes
+    are unaffected.  Outline sprites are pooled inside `PipeSprites`.
+- **Three new `EnvironmentConfig` knobs** in `types.ts`:
+  `grade?: GradeConfig`, `grain?: GrainConfig`, `outline?: OutlineConfig`.
+- **QA debug overlay** (`getDebugLines()`) now includes a `GRADE/GRAIN/OUTLINE`
+  section showing alpha, depth, scroll speed, tint, and scale values.
+
+### Changed
+
+- `BackgroundSystemV2.update()` override added to advance grain tile offset.
+- `BackgroundSystemV2.destroy()` now cleans up grade and grain sprites.
+
 ## [6.1.3] - 2026-02-26
 
 ### Added
