@@ -17,6 +17,10 @@ export type EnvironmentLayer = {
 
 export type EnvironmentFogLayer = EnvironmentLayer & {
   blendMode?: 'normal' | 'screen' | 'add'
+  /** Hex tint applied to the fog TileSprite (e.g. 0xb4c4d8 for blue-gray). */
+  tint?: number
+  /** Vertical drift speed as a fraction of world scroll speed. Creates slow up/down oscillation. */
+  driftSpeed?: number
 }
 
 export type EnvironmentLowPowerConfig = {

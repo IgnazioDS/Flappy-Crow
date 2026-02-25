@@ -68,73 +68,106 @@ export const EVIL_FOREST_V2: EnvironmentConfig = {
       pathWebp: 'assets/theme/evil_forest_v2/biolume_glow_splotches.webp',
     },
   ],
+
+  // ─── Parallax layers ───────────────────────────────────────────────────────
+  // Speeds are multipliers against world scroll (pipe speed).
+  // Far→near: 0.08x → 0.12x → 0.18x → 0.28x → 0.40x for clear depth bands.
+  //
+  // READABILITY SAFEGUARDS
+  //   swampNear alpha 0.82: mild dimming keeps the near layer from competing
+  //   with obstacles/pipes in the play corridor. SVG has dark banks; this
+  //   prevents them from matching obstacle value on low-brightness displays.
   layers: [
-    { key: V2_KEYS.skyFar, name: 'Sky Far', speed: 0.02, depth: 0 },
-    { key: V2_KEYS.mountains, name: 'Mountains', speed: 0.035, depth: 0.12 },
-    { key: V2_KEYS.treesFar, name: 'Trees Far', speed: 0.055, depth: 0.24 },
-    { key: V2_KEYS.treesMid, name: 'Trees Mid', speed: 0.085, depth: 0.42 },
-    { key: V2_KEYS.swampNear, name: 'Swamp Near', speed: 0.14, depth: 0.66 },
+    { key: V2_KEYS.skyFar,    name: 'Sky Far',    speed: 0.08, depth: 0 },
+    { key: V2_KEYS.mountains, name: 'Mountains',  speed: 0.12, depth: 0.12 },
+    { key: V2_KEYS.treesFar,  name: 'Trees Far',  speed: 0.18, depth: 0.24 },
+    { key: V2_KEYS.treesMid,  name: 'Trees Mid',  speed: 0.28, depth: 0.42 },
+    { key: V2_KEYS.swampNear, name: 'Swamp Near', speed: 0.40, depth: 0.66, alpha: 0.82 },
   ],
+
+  // ─── Fog bands ─────────────────────────────────────────────────────────────
+  // Fog A: far/low — very low contrast, blue-gray tint, slow vertical drift.
+  // Fog B: closer — slightly violet-gray, faster drift for parallax separation.
   fogLayers: [
     {
       key: V2_KEYS.fogSoft,
       name: 'Fog A',
-      speed: 0.02,
-      depth: 0.3,
-      alpha: 0.2,
+      speed: 0.05,
+      depth: 0.31,
+      alpha: 0.22,
       scale: 1.1,
       blendMode: 'normal',
+      tint: 0xb4c4d8,   // cool blue-gray
+      driftSpeed: 0.008,
     },
     {
       key: V2_KEYS.fogSoft,
       name: 'Fog B',
-      speed: 0.045,
-      depth: 0.6,
-      alpha: 0.26,
-      scale: 1.18,
+      speed: 0.12,
+      depth: 0.61,
+      alpha: 0.11,
+      scale: 1.2,
       blendMode: 'normal',
+      tint: 0xc0b8d4,   // subtle violet-gray
+      driftSpeed: 0.015,
     },
   ],
+
+  // ─── Foreground framing ────────────────────────────────────────────────────
+  // Branches frame the edges; alpha kept below 0.50 so play corridor is clear.
   foregroundLayers: [
     {
       key: V2_KEYS.fgBranches,
       name: 'Branches',
-      speed: 0.18,
+      speed: 0.55,
       depth: 0.84,
-      alpha: 0.35,
+      alpha: 0.42,
     },
   ],
+
+  // ─── Light rays ────────────────────────────────────────────────────────────
+  // Very subtle SCREEN blend; slow alpha pulse. Must not blur the playfield.
   lightRays: {
     key: V2_KEYS.lightRays,
-    depth: 0.5,
-    alpha: 0.08,
-    pulseSpeed: 0.6,
+    depth: 0.52,
+    alpha: 0.07,
+    pulseSpeed: 0.35,
     scale: 1,
     blendMode: 'screen',
   },
+
+  // ─── Water reflection ──────────────────────────────────────────────────────
+  // BitmapMask via water_reflection_mask keeps reflection below waterlineY.
+  // Speeds match main layer speeds so the reflection tiles in sync.
   reflection: {
     maskKey: V2_KEYS.waterMask,
     depth: 0.58,
     waterlineY: 380,
-    height: 200,
-    rippleSpeed: 0.6,
-    rippleAmplitude: 3,
+    height: 210,
+    rippleSpeed: 0.5,
+    rippleAmplitude: 2.5,
     layers: [
-      { key: V2_KEYS.treesMid, speed: 0.085, alpha: 0.14 },
-      { key: V2_KEYS.swampNear, speed: 0.14, alpha: 0.18 },
+      { key: V2_KEYS.treesMid,  speed: 0.28, alpha: 0.12 },
+      { key: V2_KEYS.swampNear, speed: 0.40, alpha: 0.16 },
     ],
   },
+
+  // ─── Biolume glow patches ──────────────────────────────────────────────────
+  // ADD blend, slow breathing pulse. Positioned within game width (360px).
+  // biolume_glow_splotches is 512×512; at scale 0.38–0.44 → ~195–225 px sprite.
   biolume: {
     key: V2_KEYS.biolume,
     depth: 0.72,
     blendMode: 'add',
     patches: [
-      { x: 160, y: 440, scale: 0.62, alpha: 0.36, pulseSpeed: 0.9 },
-      { x: 320, y: 480, scale: 0.72, alpha: 0.4, pulseSpeed: 0.7 },
-      { x: 520, y: 450, scale: 0.68, alpha: 0.36, pulseSpeed: 0.8 },
-      { x: 720, y: 490, scale: 0.76, alpha: 0.4, pulseSpeed: 0.75 },
+      { x:  58, y: 490, scale: 0.38, alpha: 0.40, pulseSpeed: 0.90 },
+      { x: 155, y: 510, scale: 0.42, alpha: 0.44, pulseSpeed: 0.70 },
+      { x: 255, y: 480, scale: 0.40, alpha: 0.38, pulseSpeed: 0.80 },
+      { x: 332, y: 505, scale: 0.36, alpha: 0.36, pulseSpeed: 0.75 },
     ],
   },
+
+  // ─── Low-power mode ────────────────────────────────────────────────────────
   lowPower: {
     disableFog: true,
     disableForeground: true,
@@ -143,6 +176,10 @@ export const EVIL_FOREST_V2: EnvironmentConfig = {
     disableBiolume: true,
     disableLayers: ['Trees Mid', 'Swamp Near'],
   },
+
+  // ─── Particles ─────────────────────────────────────────────────────────────
+  // Total hard cap: embers(6) + dust(10) + fireflies(14) = 30. Pooled.
+  // Firefly areas kept within game width (360px).
   particles: {
     embers: {
       enabled: true,
@@ -163,16 +200,16 @@ export const EVIL_FOREST_V2: EnvironmentConfig = {
     },
     dust: {
       enabled: true,
-      frequency: 1500,
-      maxParticles: 18,
+      frequency: 1600,
+      maxParticles: 10,   // reduced from 18 → total = 30
       speedMin: 2,
       speedMax: 8,
       driftMin: -3,
       driftMax: 3,
       scaleMin: 0.2,
       scaleMax: 0.4,
-      alphaMin: 0.08,
-      alphaMax: 0.2,
+      alphaMin: 0.06,
+      alphaMax: 0.18,
       lifespanMin: 2200,
       lifespanMax: 5200,
       blendMode: 'normal',
@@ -209,11 +246,12 @@ export const EVIL_FOREST_V2: EnvironmentConfig = {
       lifespanMax: 3200,
       tint: 0xb56bff,
       blendMode: 'add',
+      // Areas kept within 360px game width, clustered near biolume patches
       areas: [
-        { x: 80, y: 400, width: 180, height: 120 },
-        { x: 260, y: 430, width: 180, height: 140 },
-        { x: 460, y: 410, width: 200, height: 140 },
-        { x: 660, y: 430, width: 200, height: 140 },
+        { x:  20, y: 420, width: 140, height: 120 },
+        { x: 100, y: 450, width: 140, height: 100 },
+        { x: 200, y: 430, width: 130, height: 110 },
+        { x: 270, y: 455, width: 100, height: 100 },
       ],
     },
   },
