@@ -1,39 +1,40 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="640" viewBox="0 0 1024 640">
   <defs>
-    <!-- Gradient: transparent (black) at top, white at bottom where water is -->
-    <linearGradient id="mask_grad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%"   stop-color="black" stop-opacity="1"/>
-      <stop offset="52%"  stop-color="black" stop-opacity="1"/>
-      <stop offset="68%"  stop-color="white" stop-opacity="0.3"/>
-      <stop offset="75%"  stop-color="white" stop-opacity="0.7"/>
-      <stop offset="82%"  stop-color="white" stop-opacity="0.9"/>
-      <stop offset="100%" stop-color="white" stop-opacity="1"/>
+    <!--
+      BitmapMask convention: white = reveal masked object, black = hide it.
+      Goal: fully hide reflection above waterline (~y 380), reveal below.
+      Sharp transition band: y 368–398 (57.5%–62.2% of 640).
+    -->
+    <linearGradient id="mask_main" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"    stop-color="#000000"/>
+      <stop offset="57%"   stop-color="#000000"/>
+      <stop offset="60.5%" stop-color="#606060"/>
+      <stop offset="64%"   stop-color="#ffffff"/>
+      <stop offset="100%"  stop-color="#ffffff"/>
     </linearGradient>
-    <!-- Ripple variation: slightly uneven mask edge for natural look -->
-    <linearGradient id="ripple_grad" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%"  stop-color="black"/>
-      <stop offset="58%" stop-color="black"/>
-      <stop offset="66%" stop-color="white" stop-opacity="0.5"/>
-      <stop offset="72%" stop-color="white"/>
-      <stop offset="100%" stop-color="white"/>
+
+    <!-- Soft fade at bottom so reflection doesn't hard-cut at scene edge -->
+    <linearGradient id="bottom_fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="20%"  stop-color="#ffffff" stop-opacity="0"/>
+      <stop offset="90%"  stop-color="#cccccc" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#aaaaaa" stop-opacity="1"/>
     </linearGradient>
   </defs>
 
-  <!-- Mask: black = hidden (no reflection), white = visible (reflection shows) -->
-  <!-- Top portion is black (no reflection above waterline) -->
-  <rect width="1024" height="640" fill="url(#mask_grad)"/>
+  <!-- Base mask: black above, white below, sharp transition at waterline -->
+  <rect width="1024" height="640" fill="url(#mask_main)"/>
 
-  <!-- Slightly irregular waterline using ripple gradient on a narrower strip -->
-  <!-- This creates a more natural, undulating waterline edge -->
-  <rect x="0" y="360" width="1024" height="280" fill="url(#ripple_grad)" opacity="0.4"/>
+  <!-- Organic waterline: small sinusoidal black ellipses along the edge
+       create a natural undulation instead of a ruler-straight cut -->
+  <ellipse cx="80"  cy="381" rx="90"  ry="7" fill="#000" opacity="0.55"/>
+  <ellipse cx="230" cy="376" rx="75"  ry="6" fill="#000" opacity="0.45"/>
+  <ellipse cx="370" cy="383" rx="85"  ry="7" fill="#000" opacity="0.50"/>
+  <ellipse cx="510" cy="378" rx="70"  ry="6" fill="#000" opacity="0.42"/>
+  <ellipse cx="645" cy="380" rx="80"  ry="7" fill="#000" opacity="0.48"/>
+  <ellipse cx="785" cy="376" rx="75"  ry="6" fill="#000" opacity="0.44"/>
+  <ellipse cx="920" cy="382" rx="85"  ry="7" fill="#000" opacity="0.50"/>
 
-  <!-- Add subtle horizontal variation to waterline for realism -->
-  <!-- Low-amplitude sinusoidal variation emulated with small rectangles -->
-  <rect x="0"   y="375" width="120" height="8" fill="black" opacity="0.3"/>
-  <rect x="150" y="378" width="100" height="8" fill="black" opacity="0.25"/>
-  <rect x="280" y="372" width="130" height="8" fill="black" opacity="0.3"/>
-  <rect x="440" y="376" width="110" height="8" fill="black" opacity="0.25"/>
-  <rect x="580" y="373" width="140" height="8" fill="black" opacity="0.28"/>
-  <rect x="750" y="377" width="120" height="8" fill="black" opacity="0.25"/>
-  <rect x="900" y="374" width="124" height="8" fill="black" opacity="0.3"/>
+  <!-- Soft bottom fade so reflection fades out naturally -->
+  <rect x="0" y="480" width="1024" height="160" fill="url(#bottom_fade)"/>
 </svg>

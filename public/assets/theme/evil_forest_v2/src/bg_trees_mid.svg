@@ -1,117 +1,151 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="640" viewBox="0 0 1024 640">
   <defs>
+    <!-- Vertical depth fade — atmospheric haze at mid distance -->
     <linearGradient id="treemid_fade" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%"   stop-color="#050a07" stop-opacity="0"/>
-      <stop offset="20%"  stop-color="#050a07" stop-opacity="0.2"/>
-      <stop offset="55%"  stop-color="#040808" stop-opacity="0.65"/>
-      <stop offset="100%" stop-color="#030606" stop-opacity="0.88"/>
+      <stop offset="20%"  stop-color="#050a07" stop-opacity="0.18"/>
+      <stop offset="65%"  stop-color="#030806" stop-opacity="0.52"/>
+      <stop offset="100%" stop-color="#020504" stop-opacity="0.80"/>
     </linearGradient>
-    <linearGradient id="treemid_fog" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0%"  stop-color="#7aacc0" stop-opacity="0"/>
-      <stop offset="55%" stop-color="#7aacc0" stop-opacity="0.08"/>
-      <stop offset="100%" stop-color="#98c0d4" stop-opacity="0.2"/>
+
+    <!-- Atmospheric perspective — slight violet haze on far edge -->
+    <linearGradient id="atmo_haze" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#2a1a40" stop-opacity="0.28"/>
+      <stop offset="45%"  stop-color="#1a0e28" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#0a0610" stop-opacity="0"/>
     </linearGradient>
-    <!-- Violet biolume accent at tree roots -->
-    <radialGradient id="rootglow1" cx="25%" cy="90%" r="18%">
-      <stop offset="0%"  stop-color="#7a30cc" stop-opacity="0.22"/>
-      <stop offset="100%" stop-color="#7a30cc" stop-opacity="0"/>
+
+    <!-- Biolume glow at root zones -->
+    <radialGradient id="bio1" cx="10%" cy="92%" r="16%">
+      <stop offset="0%"   stop-color="#9030e8" stop-opacity="0.40"/>
+      <stop offset="55%"  stop-color="#5818b8" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#380890" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="rootglow2" cx="62%" cy="92%" r="16%">
-      <stop offset="0%"  stop-color="#4dffcc" stop-opacity="0.15"/>
-      <stop offset="100%" stop-color="#4dffcc" stop-opacity="0"/>
+    <radialGradient id="bio2" cx="36%" cy="96%" r="14%">
+      <stop offset="0%"   stop-color="#30f0cc" stop-opacity="0.30"/>
+      <stop offset="55%"  stop-color="#18c090" stop-opacity="0.10"/>
+      <stop offset="100%" stop-color="#087860" stop-opacity="0"/>
     </radialGradient>
-    <radialGradient id="rootglow3" cx="82%" cy="88%" r="14%">
-      <stop offset="0%"  stop-color="#7a30cc" stop-opacity="0.18"/>
-      <stop offset="100%" stop-color="#7a30cc" stop-opacity="0"/>
+    <radialGradient id="bio3" cx="62%" cy="93%" r="15%">
+      <stop offset="0%"   stop-color="#8828e0" stop-opacity="0.36"/>
+      <stop offset="55%"  stop-color="#4e10b0" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#300880" stop-opacity="0"/>
     </radialGradient>
+    <radialGradient id="bio4" cx="88%" cy="95%" r="14%">
+      <stop offset="0%"   stop-color="#28e8c8" stop-opacity="0.28"/>
+      <stop offset="55%"  stop-color="#10b890" stop-opacity="0.09"/>
+      <stop offset="100%" stop-color="#087060" stop-opacity="0"/>
+    </radialGradient>
+
+    <!-- Root/trunk base gradient -->
+    <linearGradient id="root_shade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#040a06"/>
+      <stop offset="100%" stop-color="#020504"/>
+    </linearGradient>
   </defs>
 
-  <!-- Wider, heavier tree silhouettes with some mangrove character -->
+  <!-- ── Tree clusters ────────────────────────────────────────────────────── -->
+  <!--  10 heavy tree clusters tiled across 1024px.                          -->
+  <!--  Silhouettes are DARK against lighter sky for clear reflection.       -->
 
-  <!-- Tree cluster 1 (left) — large cypress grouping -->
-  <polygon points="0,640 0,340 12,320 20,298 28,280 38,262 48,248 60,268 70,252 80,265 90,248 100,262 110,248 118,258 124,272 130,285 134,295 138,310 140,325 142,640"
-        fill="#050a07" opacity="0.92"/>
-  <!-- Roots spread -->
-  <polygon points="-5,640 0,580 8,565 20,558 35,562 45,568 55,558 65,562 75,568 85,558 90,575 85,590 70,600 50,608 20,615 0,618"
-        fill="#040808" opacity="0.85"/>
+  <!-- Tree 1 — far left -->
+  <polygon points="55,640 48,490 42,448 50,398 58,358 66,330 72,310
+                   78,330 84,358 90,398 96,448 90,490 83,640"
+           fill="#030908" opacity="0.96"/>
+  <!-- Canopy spread top -->
+  <polygon points="42,390 28,420 18,452 14,480 24,470 38,440 52,412 66,390 80,412 92,438 100,462 108,480 100,468 88,444 74,418 60,395 Z"
+           fill="#030908" opacity="0.92"/>
+  <!-- Root tangles -->
+  <path d="M55,530 Q40,560 32,600 Q44,572 56,542 Q60,565 57,582 Q65,562 67,548 Z" fill="#020706"/>
+  <path d="M72,528 Q88,558 96,598 Q84,572 72,544 Q68,568 71,584 Q62,564 60,550 Z" fill="#020706"/>
+  <!-- Hanging moss -->
+  <path d="M50,390 Q44,418 42,455" stroke="#030a06" stroke-width="2.2" fill="none" opacity="0.70"/>
+  <path d="M66,368 Q60,398 58,436" stroke="#030a06" stroke-width="2"   fill="none" opacity="0.65"/>
+  <path d="M80,388 Q86,416 88,453" stroke="#030a06" stroke-width="2.2" fill="none" opacity="0.70"/>
 
-  <!-- Hanging moss / draped branches cluster 1 -->
-  <path d="M30,300 Q22,340 18,390 Q25,350 32,310 Z" fill="#040808" opacity="0.5"/>
-  <path d="M70,270 Q65,320 60,380 Q68,330 74,280 Z" fill="#040808" opacity="0.45"/>
-  <path d="M100,260 Q96,315 92,378 Q100,325 106,268 Z" fill="#040808" opacity="0.5"/>
+  <!-- Tree 2 -->
+  <polygon points="165,640 158,480 152,432 160,376 168,336 176,306 182,285
+                   188,306 194,336 200,376 206,432 200,480 193,640"
+           fill="#030908" opacity="0.96"/>
+  <polygon points="150,372 134,406 124,440 120,470 130,458 146,428 160,400 174,378 188,400 200,428 210,454 218,472 210,460 198,434 184,408 170,382 Z"
+           fill="#030908" opacity="0.92"/>
+  <path d="M165,522 Q150,552 142,592 Q154,562 166,534 Q170,557 167,574 Q175,554 177,540 Z" fill="#020706"/>
+  <path d="M182,520 Q198,550 206,590 Q194,562 182,536 Q178,560 181,576 Q172,556 170,542 Z" fill="#020706"/>
+  <path d="M158,376 Q152,408 150,448" stroke="#030a06" stroke-width="2.2" fill="none" opacity="0.70"/>
+  <path d="M174,354 Q168,386 166,426" stroke="#030a06" stroke-width="2"   fill="none" opacity="0.65"/>
+  <path d="M190,374 Q196,406 198,446" stroke="#030a06" stroke-width="2.2" fill="none" opacity="0.70"/>
 
-  <!-- Tree cluster 2 -->
-  <polygon points="155,640 160,308 168,285 176,262 185,242 195,225 205,240 215,225 225,240 232,258 238,275 244,292 248,308 250,640"
-        fill="#060c08" opacity="0.9"/>
-  <polygon points="150,640 155,565 165,550 180,545 195,548 205,555 215,548 225,554 235,548 245,562 240,580 225,592 200,600 170,606 150,610"
-        fill="#040808" opacity="0.82"/>
-  <path d="M185,250 Q178,305 172,368 Q180,315 188,258 Z" fill="#040808" opacity="0.5"/>
-  <path d="M215,238 Q210,295 205,360 Q213,308 218,248 Z" fill="#040808" opacity="0.45"/>
+  <!-- Tree 3 -->
+  <polygon points="285,640 278,502 272,456 280,398 288,358 296,328 302,308
+                   308,328 314,358 320,398 326,456 320,502 312,640"
+           fill="#030908" opacity="0.96"/>
+  <polygon points="272,392 256,426 246,460 242,492 252,480 268,450 282,420 296,396 310,420 322,448 332,474 340,492 332,480 320,454 306,428 292,400 Z"
+           fill="#030908" opacity="0.92"/>
+  <path d="M285,540 Q270,570 262,610 Q275,580 286,552 Q290,575 287,592 Q296,572 298,558 Z" fill="#020706"/>
 
-  <!-- Tree cluster 3 — taller, thinner -->
-  <polygon points="292,640 296,278 302,254 308,232 315,212 322,196 330,212 338,196 345,212 350,230 354,248 358,268 360,640"
-        fill="#050a07" opacity="0.88"/>
-  <polygon points="288,640 292,555 300,538 315,533 328,537 340,532 350,540 358,552 350,572 330,585 305,593 285,598"
-        fill="#040808" opacity="0.8"/>
+  <!-- Tree 4 -->
+  <polygon points="405,640 398,488 392,442 400,384 408,344 416,314 422,292
+                   428,314 434,344 440,384 446,442 440,488 432,640"
+           fill="#030908" opacity="0.96"/>
+  <polygon points="390,378 374,412 364,448 360,480 370,468 386,438 400,410 414,386 428,410 440,438 450,464 458,482 450,470 438,444 424,418 410,388 Z"
+           fill="#030908" opacity="0.92"/>
+  <path d="M405,526 Q390,556 382,596 Q395,566 406,538 Q410,561 407,578 Q416,558 418,544 Z" fill="#020706"/>
+  <path d="M422,524 Q438,554 446,594 Q434,566 422,540 Q418,564 421,580 Q412,560 410,546 Z" fill="#020706"/>
 
-  <!-- Tree cluster 4 -->
-  <polygon points="382,640 387,318 393,295 400,272 408,250 416,230 425,248 434,230 442,248 449,268 454,288 458,308 460,640"
-        fill="#060c08" opacity="0.92"/>
-  <polygon points="378,640 382,562 390,548 405,542 418,546 430,542 440,548 450,555 448,572 432,584 405,592 382,598"
-        fill="#040808" opacity="0.82"/>
-  <path d="M408,255 Q400,312 395,378 Q402,322 410,262 Z" fill="#040808" opacity="0.5"/>
+  <!-- Tree 5 -->
+  <polygon points="525,640 518,498 512,452 520,394 528,354 536,324 542,302
+                   548,324 554,354 560,394 566,452 560,498 552,640"
+           fill="#030908" opacity="0.96"/>
+  <polygon points="512,388 496,422 486,456 482,488 492,476 508,446 522,418 536,394 550,418 562,446 572,472 580,490 572,478 560,452 546,426 532,398 Z"
+           fill="#030908" opacity="0.92"/>
+  <path d="M525,534 Q510,564 502,604 Q515,574 526,546 Q530,569 527,586 Q536,566 538,552 Z" fill="#020706"/>
+  <path d="M526,528 Q524,548 524,566" stroke="#030a06" stroke-width="2.2" fill="none" opacity="0.65"/>
 
-  <!-- Tree cluster 5 (tall, imposing center-left) -->
-  <polygon points="490,640 494,262 500,238 506,215 513,194 520,175 528,194 536,175 543,194 548,215 552,238 555,262 558,640"
-        fill="#050a07" opacity="0.92"/>
-  <polygon points="485,640 490,560 498,542 515,536 528,540 540,536 550,544 556,558 548,578 528,590 500,598 485,604"
-        fill="#040808" opacity="0.85"/>
-  <path d="M513,198 Q505,260 500,328 Q508,272 516,208 Z" fill="#040808" opacity="0.52"/>
-  <path d="M530,182 Q523,242 518,312 Q527,255 534,192 Z" fill="#040808" opacity="0.48"/>
+  <!-- Tree 6 -->
+  <polygon points="640,640 633,490 627,444 635,386 643,346 651,316 657,294
+                   663,316 669,346 675,386 681,444 675,490 667,640"
+           fill="#030908" opacity="0.96"/>
+  <polygon points="626,380 610,414 600,450 596,482 606,470 622,440 636,412 650,388 664,412 676,440 686,466 694,484 686,472 674,446 660,420 646,392 Z"
+           fill="#030908" opacity="0.92"/>
+  <path d="M640,528 Q625,558 617,598 Q630,568 641,540 Q645,563 642,580 Q651,560 653,546 Z" fill="#020706"/>
+  <path d="M657,526 Q673,556 681,596 Q669,568 657,542 Q653,566 656,582 Q647,562 645,548 Z" fill="#020706"/>
 
-  <!-- Tree cluster 6 -->
-  <polygon points="582,640 586,302 592,278 599,255 607,234 615,215 623,234 631,215 638,234 643,255 647,278 650,302 652,640"
-        fill="#060c08" opacity="0.9"/>
-  <polygon points="578,640 582,568 590,552 605,546 618,550 628,546 638,552 648,560 644,578 625,590 598,598 578,604"
-        fill="#040808" opacity="0.82"/>
+  <!-- Tree 7 -->
+  <polygon points="755,640 748,486 742,440 750,382 758,342 766,312 772,290
+                   778,312 784,342 790,382 796,440 790,486 782,640"
+           fill="#030908" opacity="0.96"/>
+  <polygon points="742,376 726,410 716,446 712,478 722,466 738,436 752,408 766,384 780,408 792,436 802,462 810,480 802,468 790,442 776,416 762,388 Z"
+           fill="#030908" opacity="0.92"/>
+  <path d="M755,524 Q740,554 732,594 Q745,564 756,536 Q760,559 757,576 Q766,556 768,542 Z" fill="#020706"/>
 
-  <!-- Tree cluster 7 -->
-  <polygon points="672,640 677,285 683,262 690,240 697,218 705,200 713,218 720,200 727,218 732,238 736,258 740,278 742,640"
-        fill="#050a07" opacity="0.88"/>
-  <polygon points="668,640 672,558 680,542 695,536 708,540 720,536 730,542 740,552 735,570 718,582 692,590 668,596"
-        fill="#040808" opacity="0.8"/>
-  <path d="M697,222 Q690,282 685,352 Q693,298 700,232 Z" fill="#040808" opacity="0.5"/>
+  <!-- Tree 8 -->
+  <polygon points="868,640 861,502 855,456 863,398 871,358 879,328 885,306
+                   891,328 897,358 903,398 909,456 903,502 895,640"
+           fill="#030908" opacity="0.96"/>
+  <polygon points="856,392 840,426 830,462 826,494 836,482 852,452 866,424 880,400 894,424 906,452 916,478 924,496 916,484 904,458 890,432 876,404 Z"
+           fill="#030908" opacity="0.92"/>
+  <path d="M868,538 Q853,568 845,608 Q858,578 869,550 Q873,573 870,590 Q879,570 881,556 Z" fill="#020706"/>
+  <path d="M885,536 Q901,566 909,606 Q897,578 885,552 Q881,576 884,592 Q875,572 873,558 Z" fill="#020706"/>
 
-  <!-- Tree cluster 8 -->
-  <polygon points="762,640 766,295 772,272 778,250 785,228 792,210 800,228 808,210 815,228 820,248 824,268 828,290 830,640"
-        fill="#060c08" opacity="0.9"/>
-  <polygon points="758,640 762,562 770,546 785,540 798,544 810,540 820,546 828,555 824,572 808,584 782,592 758,598"
-        fill="#040808" opacity="0.82"/>
+  <!-- Tree 9 -->
+  <polygon points="975,640 968,492 962,446 970,388 978,348 986,318 992,296
+                   998,318 1004,348 1010,388 1016,446 1010,492 1002,640"
+           fill="#030908" opacity="0.96"/>
+  <polygon points="962,382 946,416 936,452 932,484 942,472 958,442 972,414 986,390 1000,414 1012,442 1022,468 1024,484 1016,472 1004,446 990,420 976,394 Z"
+           fill="#030908" opacity="0.92"/>
+  <path d="M975,528 Q960,558 952,598 Q965,568 976,540 Q980,563 977,580 Q986,560 988,546 Z" fill="#020706"/>
 
-  <!-- Tree cluster 9 -->
-  <polygon points="852,640 856,308 862,284 868,260 875,238 882,218 890,238 898,218 905,238 910,258 914,278 918,298 920,640"
-        fill="#050a07" opacity="0.92"/>
-  <polygon points="848,640 852,565 860,548 875,542 888,546 900,542 910,548 920,558 915,576 898,588 870,596 848,602"
-        fill="#040808" opacity="0.85"/>
+  <!-- Tree 10 — wraps at right edge, partial clip -->
+  <polygon points="1024,640 1016,508 1010,462 1016,404 1022,364 1024,340 1024,640"
+           fill="#030908" opacity="0.96"/>
 
-  <!-- Tree cluster 10 (right edge) -->
-  <polygon points="945,640 950,278 956,254 963,232 970,210 978,192 986,210 994,192 1001,210 1006,232 1010,254 1013,278 1015,640"
-        fill="#060c08" opacity="0.9"/>
-  <polygon points="940,640 945,560 953,542 968,536 980,540 992,536 1002,542 1012,552 1008,570 990,582 962,590 940,596"
-        fill="#040808" opacity="0.82"/>
-  <path d="M970,215 Q963,275 958,345 Q965,290 972,225 Z" fill="#040808" opacity="0.5"/>
+  <!-- ── Atmospheric and biolume overlays ──────────────────────────────── -->
+  <rect width="1024" height="640" fill="url(#bio1)"/>
+  <rect width="1024" height="640" fill="url(#bio2)"/>
+  <rect width="1024" height="640" fill="url(#bio3)"/>
+  <rect width="1024" height="640" fill="url(#bio4)"/>
 
-  <!-- Right overhang -->
-  <polygon points="1010,640 1015,278 1020,255 1024,238 1024,640"
-        fill="#050a07" opacity="0.88"/>
-
-  <!-- Bioluminescent root glow accents -->
-  <rect width="1024" height="640" fill="url(#rootglow1)"/>
-  <rect width="1024" height="640" fill="url(#rootglow2)"/>
-  <rect width="1024" height="640" fill="url(#rootglow3)"/>
-
-  <!-- Atmospheric overlay -->
+  <!-- Depth fade / atmospheric haze -->
   <rect width="1024" height="640" fill="url(#treemid_fade)"/>
-  <!-- Fog at base -->
-  <rect x="0" y="500" width="1024" height="140" fill="url(#treemid_fog)"/>
+  <rect width="1024" height="640" fill="url(#atmo_haze)"/>
 </svg>
