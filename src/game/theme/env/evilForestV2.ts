@@ -72,12 +72,17 @@ export const EVIL_FOREST_V2: EnvironmentConfig = {
   // ─── Parallax layers ───────────────────────────────────────────────────────
   // Speeds are multipliers against world scroll (pipe speed).
   // Far→near: 0.08x → 0.12x → 0.18x → 0.28x → 0.40x for clear depth bands.
+  //
+  // READABILITY SAFEGUARDS
+  //   swampNear alpha 0.82: mild dimming keeps the near layer from competing
+  //   with obstacles/pipes in the play corridor. SVG has dark banks; this
+  //   prevents them from matching obstacle value on low-brightness displays.
   layers: [
     { key: V2_KEYS.skyFar,    name: 'Sky Far',    speed: 0.08, depth: 0 },
     { key: V2_KEYS.mountains, name: 'Mountains',  speed: 0.12, depth: 0.12 },
     { key: V2_KEYS.treesFar,  name: 'Trees Far',  speed: 0.18, depth: 0.24 },
     { key: V2_KEYS.treesMid,  name: 'Trees Mid',  speed: 0.28, depth: 0.42 },
-    { key: V2_KEYS.swampNear, name: 'Swamp Near', speed: 0.40, depth: 0.66 },
+    { key: V2_KEYS.swampNear, name: 'Swamp Near', speed: 0.40, depth: 0.66, alpha: 0.82 },
   ],
 
   // ─── Fog bands ─────────────────────────────────────────────────────────────
@@ -109,13 +114,14 @@ export const EVIL_FOREST_V2: EnvironmentConfig = {
   ],
 
   // ─── Foreground framing ────────────────────────────────────────────────────
+  // Branches frame the edges; alpha kept below 0.50 so play corridor is clear.
   foregroundLayers: [
     {
       key: V2_KEYS.fgBranches,
       name: 'Branches',
       speed: 0.55,
       depth: 0.84,
-      alpha: 0.38,
+      alpha: 0.42,
     },
   ],
 
