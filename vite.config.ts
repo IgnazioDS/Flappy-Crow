@@ -7,6 +7,15 @@ export default defineConfig(({ command }) => {
 
   return {
     base,
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            phaser: ['phaser'],
+          },
+        },
+      },
+    },
     test: {
       environment: 'node',
       include: ['src/**/*.test.ts'],
