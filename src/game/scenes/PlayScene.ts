@@ -26,6 +26,7 @@ import { StoreSystem } from '../systems/StoreSystem'
 import { StreakSystem } from '../systems/StreakSystem'
 import { SoundSystem } from '../systems/SoundSystem'
 import { BackgroundSystem } from '../systems/BackgroundSystem'
+import { BackgroundSystemV2 } from '../background/BackgroundSystemV2'
 import { getActiveTheme, listThemes, setActiveThemeId } from '../theme'
 import { DEFAULT_ENV, ENVIRONMENTS } from '../theme/env'
 import type { EnvironmentConfig, EnvironmentKey, ParticleConfig } from '../theme/env/types'
@@ -688,7 +689,10 @@ export class PlayScene extends Phaser.Scene {
     const envKey = this.environmentKey ?? DEFAULT_ENV
     this.environmentKey = envKey
     this.environmentConfig = ENVIRONMENTS[envKey]
-    this.backgroundSystem = new BackgroundSystem(this, this.environmentConfig)
+    this.backgroundSystem =
+      envKey === 'v2'
+        ? new BackgroundSystemV2(this, this.environmentConfig)
+        : new BackgroundSystem(this, this.environmentConfig)
     this.backgroundSystem.setReducedMotion(this.isMotionReduced())
     this.backgroundSystem.create()
   }
@@ -784,7 +788,10 @@ export class PlayScene extends Phaser.Scene {
       this.backgroundSystem.setReducedMotion(this.isMotionReduced())
       this.backgroundSystem.setSpeedScale(this.speedScale)
     } else {
-      this.backgroundSystem = new BackgroundSystem(this, this.environmentConfig)
+      this.backgroundSystem =
+        envKey === 'v2'
+          ? new BackgroundSystemV2(this, this.environmentConfig)
+          : new BackgroundSystem(this, this.environmentConfig)
       this.backgroundSystem.setReducedMotion(this.isMotionReduced())
       this.backgroundSystem.setSpeedScale(this.speedScale)
       this.backgroundSystem.create()

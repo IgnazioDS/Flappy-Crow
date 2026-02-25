@@ -1,0 +1,136 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="640" viewBox="0 0 1024 640">
+  <defs>
+    <!-- Dark swamp base -->
+    <linearGradient id="swamp_bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#030608" stop-opacity="0"/>
+      <stop offset="40%"  stop-color="#030608" stop-opacity="0.4"/>
+      <stop offset="75%"  stop-color="#020405" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#020304" stop-opacity="0.95"/>
+    </linearGradient>
+    <!-- Water channel reflections -->
+    <linearGradient id="water1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#0a1528" stop-opacity="0.8"/>
+      <stop offset="50%" stop-color="#0d1c38" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#060c18" stop-opacity="0.95"/>
+    </linearGradient>
+    <!-- Violet biolume glow at bank -->
+    <radialGradient id="violet_glow1" cx="18%" cy="85%" r="20%">
+      <stop offset="0%"  stop-color="#9040e0" stop-opacity="0.35"/>
+      <stop offset="60%" stop-color="#6020b0" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#4010a0" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="violet_glow2" cx="48%" cy="92%" r="18%">
+      <stop offset="0%"  stop-color="#4dffd2" stop-opacity="0.22"/>
+      <stop offset="60%" stop-color="#20c090" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#10806a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="violet_glow3" cx="75%" cy="88%" r="22%">
+      <stop offset="0%"  stop-color="#9040e0" stop-opacity="0.3"/>
+      <stop offset="60%" stop-color="#5018a0" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#300880" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="teal_glow" cx="90%" cy="90%" r="14%">
+      <stop offset="0%"  stop-color="#4dffd2" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#4dffd2" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Water shimmer line -->
+    <linearGradient id="shimmer" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="#7abcde" stop-opacity="0"/>
+      <stop offset="15%"  stop-color="#7abcde" stop-opacity="0.18"/>
+      <stop offset="35%"  stop-color="#9acced" stop-opacity="0.28"/>
+      <stop offset="55%"  stop-color="#7abcde" stop-opacity="0.18"/>
+      <stop offset="75%"  stop-color="#5aaace" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#7abcde" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="fog_near" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#88b8d0" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#88b8d0" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#a0ccde" stop-opacity="0.3"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Water channels — reflective dark pools -->
+  <!-- Left water channel -->
+  <ellipse cx="160" cy="598" rx="165" ry="28" fill="url(#water1)" opacity="0.9"/>
+  <ellipse cx="160" cy="596" rx="160" ry="22" fill="#0a1225" opacity="0.7"/>
+
+  <!-- Central water channel -->
+  <ellipse cx="512" cy="608" rx="210" ry="32" fill="url(#water1)" opacity="0.88"/>
+  <ellipse cx="512" cy="606" rx="205" ry="26" fill="#0c1530" opacity="0.65"/>
+
+  <!-- Right water channel -->
+  <ellipse cx="870" cy="600" rx="180" ry="26" fill="url(#water1)" opacity="0.9"/>
+  <ellipse cx="870" cy="598" rx="175" ry="20" fill="#0a1228" opacity="0.7"/>
+
+  <!-- Water shimmer lines on channels -->
+  <rect x="20"  y="586" width="280" height="3" fill="url(#shimmer)" opacity="0.7" rx="2"/>
+  <rect x="340" y="594" width="340" height="3" fill="url(#shimmer)" opacity="0.65" rx="2"/>
+  <rect x="720" y="588" width="290" height="3" fill="url(#shimmer)" opacity="0.7" rx="2"/>
+
+  <!-- Left bank / marsh -->
+  <polygon points="0,640 0,558 15,545 30,532 48,520 65,510 82,502 98,510 112,498 128,508 142,515 155,508 168,515 180,522 192,515 205,522 215,530 222,540 228,552 232,565 235,580 238,640"
+        fill="#050c0a" opacity="0.9"/>
+
+  <!-- Left bank root tangle -->
+  <path d="M40,535 Q35,560 28,590 Q32,570 40,548 Q45,562 42,575 Q48,558 50,545 Z" fill="#030808" opacity="0.8"/>
+  <path d="M85,515 Q78,545 72,582 Q78,558 86,528 Q90,548 87,568 Q94,550 95,532 Z" fill="#030808" opacity="0.75"/>
+  <path d="M130,510 Q124,540 118,578 Q125,552 132,522 Q135,545 132,562 Q138,544 140,528 Z" fill="#030808" opacity="0.78"/>
+
+  <!-- Marsh reeds left -->
+  <line x1="52"  y1="640" x2="45"  y2="480" stroke="#060d08" stroke-width="2.5" opacity="0.8"/>
+  <line x1="58"  y1="640" x2="52"  y2="495" stroke="#060d08" stroke-width="2"   opacity="0.7"/>
+  <line x1="64"  y1="640" x2="60"  y2="475" stroke="#060d08" stroke-width="2.5" opacity="0.8"/>
+  <line x1="70"  y1="640" x2="68"  y2="490" stroke="#060d08" stroke-width="1.8" opacity="0.65"/>
+  <!-- Reed tips -->
+  <ellipse cx="45" cy="478" rx="4" ry="8" fill="#060d08" opacity="0.75"/>
+  <ellipse cx="52" cy="492" rx="3.5" ry="7" fill="#060d08" opacity="0.68"/>
+  <ellipse cx="60" cy="472" rx="4" ry="8" fill="#060d08" opacity="0.75"/>
+  <ellipse cx="68" cy="488" rx="3" ry="6" fill="#060d08" opacity="0.6"/>
+
+  <!-- Central island -->
+  <polygon points="320,640 325,548 338,530 352,515 368,502 385,492 402,485 418,492 432,480 448,492 462,502 474,512 484,522 490,535 494,548 496,640"
+        fill="#050c0a" opacity="0.92"/>
+  <!-- Central island roots -->
+  <path d="M360,510 Q352,538 345,570 Q354,548 362,522 Q366,542 363,560 Q370,542 372,526 Z" fill="#030808" opacity="0.8"/>
+  <path d="M415,488 Q408,518 402,552 Q410,530 417,500 Q420,520 418,540 Q425,522 426,505 Z" fill="#030808" opacity="0.75"/>
+  <!-- Central reeds -->
+  <line x1="342" y1="640" x2="336" y2="468" stroke="#060d08" stroke-width="2.5" opacity="0.78"/>
+  <line x1="350" y1="640" x2="345" y2="478" stroke="#060d08" stroke-width="2"   opacity="0.7"/>
+  <line x1="358" y1="640" x2="354" y2="462" stroke="#060d08" stroke-width="2.5" opacity="0.78"/>
+  <ellipse cx="336" cy="465" rx="4" ry="8" fill="#060d08" opacity="0.72"/>
+  <ellipse cx="345" cy="475" rx="3.5" ry="7" fill="#060d08" opacity="0.65"/>
+  <ellipse cx="354" cy="459" rx="4" ry="8" fill="#060d08" opacity="0.72"/>
+
+  <!-- Right bank -->
+  <polygon points="540,640 545,560 558,545 572,530 588,518 605,505 622,498 638,505 652,492 668,504 682,514 694,522 705,532 712,545 715,558 718,640"
+        fill="#050c0a" opacity="0.9"/>
+  <!-- Right bank roots -->
+  <path d="M595,512 Q588,540 582,572 Q590,550 597,522 Q601,542 598,560 Q605,542 606,526 Z" fill="#030808" opacity="0.78"/>
+  <path d="M638,500 Q631,530 625,562 Q633,540 640,512 Q643,532 641,550 Q647,532 648,516 Z" fill="#030808" opacity="0.75"/>
+
+  <!-- Far right bank -->
+  <polygon points="760,640 765,552 778,538 792,524 808,512 825,500 842,492 858,500 872,490 888,500 902,510 914,520 922,532 928,544 930,640"
+        fill="#050c0a" opacity="0.92"/>
+  <!-- Right reeds -->
+  <line x1="808" y1="640" x2="802" y2="472" stroke="#060d08" stroke-width="2.5" opacity="0.78"/>
+  <line x1="816" y1="640" x2="812" y2="482" stroke="#060d08" stroke-width="2"   opacity="0.7"/>
+  <line x1="824" y1="640" x2="820" y2="465" stroke="#060d08" stroke-width="2.5" opacity="0.78"/>
+  <ellipse cx="802" cy="469" rx="4" ry="8" fill="#060d08" opacity="0.72"/>
+  <ellipse cx="812" cy="479" rx="3.5" ry="7" fill="#060d08" opacity="0.65"/>
+  <ellipse cx="820" cy="462" rx="4" ry="8" fill="#060d08" opacity="0.72"/>
+
+  <!-- Right edge continuation -->
+  <polygon points="950,640 952,560 965,545 980,530 998,520 1012,512 1024,505 1024,640"
+        fill="#050c0a" opacity="0.9"/>
+
+  <!-- Bioluminescent glows at bank edges -->
+  <rect width="1024" height="640" fill="url(#violet_glow1)"/>
+  <rect width="1024" height="640" fill="url(#violet_glow2)"/>
+  <rect width="1024" height="640" fill="url(#violet_glow3)"/>
+  <rect width="1024" height="640" fill="url(#teal_glow)"/>
+
+  <!-- Atmospheric overlay -->
+  <rect width="1024" height="640" fill="url(#swamp_bg)"/>
+  <!-- Near fog -->
+  <rect x="0" y="540" width="1024" height="100" fill="url(#fog_near)"/>
+</svg>

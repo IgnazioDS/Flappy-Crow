@@ -1,0 +1,139 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="640" viewBox="0 0 1024 640">
+  <defs>
+    <linearGradient id="treefade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#080f0a" stop-opacity="0"/>
+      <stop offset="25%"  stop-color="#080f0a" stop-opacity="0.3"/>
+      <stop offset="65%"  stop-color="#060d08" stop-opacity="0.75"/>
+      <stop offset="100%" stop-color="#050a06" stop-opacity="0.92"/>
+    </linearGradient>
+    <!-- Fog veil at base of trees -->
+    <linearGradient id="treefog" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#8fb8cc" stop-opacity="0"/>
+      <stop offset="60%" stop-color="#8fb8cc" stop-opacity="0.1"/>
+      <stop offset="100%" stop-color="#a8cbdc" stop-opacity="0.22"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Thin cypress-type tree silhouettes, heavily atmospheric -->
+  <!-- Each tree: narrow, tall, slightly varied -->
+
+  <!-- Tree 1 -->
+  <polygon points="24,640 18,420 22,355 26,420 30,640" fill="#080e0b" opacity="0.6"/>
+  <polygon points="19,450 24,340 29,450" fill="#080e0b" opacity="0.55"/>
+  <polygon points="16,480 24,380 32,480" fill="#080e0b" opacity="0.45"/>
+  <polygon points="14,510 24,415 34,510" fill="#080e0b" opacity="0.38"/>
+
+  <!-- Tree 2 -->
+  <polygon points="62,640 56,395 60,325 64,395 68,640" fill="#060c09" opacity="0.65"/>
+  <polygon points="57,430 62,310 67,430" fill="#060c09" opacity="0.58"/>
+  <polygon points="54,465 62,355 70,465" fill="#060c09" opacity="0.48"/>
+
+  <!-- Tree 3 -->
+  <polygon points="102,640 97,440 101,368 105,440 109,640" fill="#080e0b" opacity="0.6"/>
+  <polygon points="97,470 102,355 107,470" fill="#080e0b" opacity="0.52"/>
+  <polygon points="94,500 102,390 110,500" fill="#080e0b" opacity="0.42"/>
+
+  <!-- Tree 4 -->
+  <polygon points="148,640 142,410 146,338 150,410 154,640" fill="#060c09" opacity="0.68"/>
+  <polygon points="143,445 148,325 153,445" fill="#060c09" opacity="0.6"/>
+  <polygon points="140,480 148,362 156,480" fill="#060c09" opacity="0.5"/>
+  <polygon points="138,512 148,398 158,512" fill="#060c09" opacity="0.4"/>
+
+  <!-- Tree 5 -->
+  <polygon points="192,640 187,428 191,358 195,428 199,640" fill="#070d0a" opacity="0.58"/>
+  <polygon points="187,460 192,345 197,460" fill="#070d0a" opacity="0.5"/>
+  <polygon points="184,492 192,380 200,492" fill="#070d0a" opacity="0.42"/>
+
+  <!-- Tree 6 -->
+  <polygon points="235,640 230,402 234,330 238,402 242,640" fill="#060c09" opacity="0.65"/>
+  <polygon points="230,438 235,318 240,438" fill="#060c09" opacity="0.55"/>
+  <polygon points="227,472 235,356 243,472" fill="#060c09" opacity="0.45"/>
+
+  <!-- Tree 7 -->
+  <polygon points="278,640 272,445 276,375 280,445 284,640" fill="#080e0b" opacity="0.6"/>
+  <polygon points="272,478 278,362 284,478" fill="#080e0b" opacity="0.52"/>
+
+  <!-- Tree 8 -->
+  <polygon points="322,640 316,418 320,345 324,418 328,640" fill="#060c09" opacity="0.68"/>
+  <polygon points="317,455 322,332 327,455" fill="#060c09" opacity="0.58"/>
+  <polygon points="314,490 322,370 330,490" fill="#060c09" opacity="0.48"/>
+
+  <!-- Tree 9 -->
+  <polygon points="365,640 360,432 364,360 368,432 372,640" fill="#070d0a" opacity="0.62"/>
+  <polygon points="360,465 365,348 370,465" fill="#070d0a" opacity="0.54"/>
+  <polygon points="357,498 365,385 373,498" fill="#070d0a" opacity="0.44"/>
+
+  <!-- Tree 10 -->
+  <polygon points="408,640 402,408 406,335 410,408 414,640" fill="#060c09" opacity="0.65"/>
+  <polygon points="403,445 408,322 413,445" fill="#060c09" opacity="0.56"/>
+  <polygon points="400,480 408,360 416,480" fill="#060c09" opacity="0.46"/>
+
+  <!-- Tree 11 -->
+  <polygon points="452,640 447,425 451,352 455,425 459,640" fill="#080e0b" opacity="0.6"/>
+  <polygon points="447,458 452,340 457,458" fill="#080e0b" opacity="0.52"/>
+
+  <!-- Tree 12 -->
+  <polygon points="495,640 489,412 493,340 497,412 501,640" fill="#060c09" opacity="0.7"/>
+  <polygon points="490,448 495,328 500,448" fill="#060c09" opacity="0.6"/>
+  <polygon points="487,482 495,365 503,482" fill="#060c09" opacity="0.5"/>
+
+  <!-- Tree 13 -->
+  <polygon points="538,640 532,438 536,365 540,438 544,640" fill="#070d0a" opacity="0.58"/>
+  <polygon points="533,470 538,352 543,470" fill="#070d0a" opacity="0.5"/>
+
+  <!-- Tree 14 -->
+  <polygon points="580,640 574,420 578,348 582,420 586,640" fill="#060c09" opacity="0.65"/>
+  <polygon points="575,455 580,335 585,455" fill="#060c09" opacity="0.56"/>
+  <polygon points="572,490 580,372 588,490" fill="#060c09" opacity="0.46"/>
+
+  <!-- Tree 15 -->
+  <polygon points="622,640 617,435 621,362 625,435 629,640" fill="#080e0b" opacity="0.62"/>
+  <polygon points="617,468 622,350 627,468" fill="#080e0b" opacity="0.54"/>
+  <polygon points="614,502 622,388 630,502" fill="#080e0b" opacity="0.44"/>
+
+  <!-- Tree 16 -->
+  <polygon points="665,640 659,415 663,342 667,415 671,640" fill="#060c09" opacity="0.68"/>
+  <polygon points="660,450 665,330 670,450" fill="#060c09" opacity="0.58"/>
+  <polygon points="657,485 665,368 673,485" fill="#060c09" opacity="0.48"/>
+
+  <!-- Tree 17 -->
+  <polygon points="708,640 702,428 706,355 710,428 714,640" fill="#070d0a" opacity="0.6"/>
+  <polygon points="702,462 708,342 714,462" fill="#070d0a" opacity="0.52"/>
+
+  <!-- Tree 18 -->
+  <polygon points="751,640 745,408 749,336 753,408 757,640" fill="#060c09" opacity="0.65"/>
+  <polygon points="745,444 751,322 757,444" fill="#060c09" opacity="0.56"/>
+  <polygon points="742,480 751,360 760,480" fill="#060c09" opacity="0.46"/>
+
+  <!-- Tree 19 -->
+  <polygon points="793,640 787,440 791,368 795,440 799,640" fill="#080e0b" opacity="0.62"/>
+  <polygon points="788,472 793,355 798,472" fill="#080e0b" opacity="0.54"/>
+
+  <!-- Tree 20 -->
+  <polygon points="835,640 829,420 833,348 837,420 841,640" fill="#060c09" opacity="0.68"/>
+  <polygon points="830,455 835,335 840,455" fill="#060c09" opacity="0.58"/>
+  <polygon points="827,490 835,372 843,490" fill="#060c09" opacity="0.48"/>
+
+  <!-- Tree 21 -->
+  <polygon points="878,640 872,432 876,358 880,432 884,640" fill="#070d0a" opacity="0.6"/>
+  <polygon points="872,466 878,346 884,466" fill="#070d0a" opacity="0.52"/>
+  <polygon points="869,500 878,385 887,500" fill="#070d0a" opacity="0.42"/>
+
+  <!-- Tree 22 -->
+  <polygon points="920,640 914,412 918,340 922,412 926,640" fill="#060c09" opacity="0.65"/>
+  <polygon points="915,448 920,328 925,448" fill="#060c09" opacity="0.56"/>
+  <polygon points="912,483 920,365 928,483" fill="#060c09" opacity="0.46"/>
+
+  <!-- Tree 23 -->
+  <polygon points="962,640 956,425 960,352 964,425 968,640" fill="#080e0b" opacity="0.62"/>
+  <polygon points="957,460 962,340 967,460" fill="#080e0b" opacity="0.54"/>
+
+  <!-- Tree 24 (right edge) -->
+  <polygon points="1000,640 994,438 998,365 1002,438 1006,640" fill="#060c09" opacity="0.68"/>
+  <polygon points="995,472 1000,352 1005,472" fill="#060c09" opacity="0.58"/>
+
+  <!-- Atmospheric depth overlay -->
+  <rect width="1024" height="640" fill="url(#treefade)"/>
+  <!-- Fog at base -->
+  <rect x="0" y="520" width="1024" height="120" fill="url(#treefog)"/>
+</svg>

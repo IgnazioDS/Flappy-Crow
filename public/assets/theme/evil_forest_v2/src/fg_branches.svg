@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="640" viewBox="0 0 1024 640">
+  <defs>
+    <linearGradient id="branch_fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#020506" stop-opacity="0.92"/>
+      <stop offset="40%" stop-color="#020506" stop-opacity="0.6"/>
+      <stop offset="75%" stop-color="#020506" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#020506" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="branch_fade2" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"  stop-color="#020506" stop-opacity="0.85"/>
+      <stop offset="30%" stop-color="#020506" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#020506" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="branch_fade3" x1="1" y1="0" x2="0" y2="0">
+      <stop offset="0%"  stop-color="#020506" stop-opacity="0.85"/>
+      <stop offset="30%" stop-color="#020506" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#020506" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Top-left branch mass (frame darkness) -->
+  <polygon points="0,0 0,220 8,200 4,180 10,158 6,138 12,118 8,98 16,80 12,60 22,42 18,22 30,8 15,0"
+        fill="#020506" opacity="0.9"/>
+  <!-- Main branch sweeping right from top-left -->
+  <path d="M0,0 L0,80 Q20,85 35,100 Q48,115 68,128 Q88,140 110,148 Q132,155 150,160 Q165,162 175,168 Q185,175 188,188 Q192,202 182,218 Q175,230 165,238 L155,248 Q148,256 145,268 L142,282 Q140,295 138,308 L135,325"
+        fill="none" stroke="#020506" stroke-width="12" opacity="0.88" stroke-linecap="round"/>
+  <!-- Sub-branch 1 from main -->
+  <path d="M88,142 Q95,158 98,178 Q100,195 92,210 Q86,222 82,238"
+        fill="none" stroke="#020506" stroke-width="7" opacity="0.7" stroke-linecap="round"/>
+  <!-- Sub-branch 2 -->
+  <path d="M130,156 Q138,172 136,192 Q133,210 125,226"
+        fill="none" stroke="#020506" stroke-width="6" opacity="0.65" stroke-linecap="round"/>
+  <!-- Hanging moss from main branch -->
+  <path d="M65,128 Q62,148 58,170 Q55,185 58,200 Q56,218 52,235 Q50,250 48,268"
+        fill="none" stroke="#020506" stroke-width="2" opacity="0.5" stroke-linecap="round"/>
+  <path d="M105,148 Q102,168 99,190 Q97,208 100,225 Q98,240 95,258"
+        fill="none" stroke="#020506" stroke-width="2" opacity="0.48" stroke-linecap="round"/>
+  <path d="M148,162 Q145,182 143,202 Q141,220 144,238"
+        fill="none" stroke="#020506" stroke-width="1.8" opacity="0.45" stroke-linecap="round"/>
+
+  <!-- Top-right branch mass -->
+  <polygon points="1024,0 1024,200 1016,185 1020,165 1014,148 1018,128 1010,108 1014,88 1004,68 1010,48 998,30 1004,12 990,0"
+        fill="#020506" opacity="0.88"/>
+  <!-- Main right branch sweeping left -->
+  <path d="M1024,0 L1024,72 Q1004,78 990,95 Q978,110 958,122 Q938,133 916,140 Q896,146 878,152 Q862,158 852,166 Q842,174 840,188 Q838,202 845,218 L850,232 Q856,244 858,260"
+        fill="none" stroke="#020506" stroke-width="11" opacity="0.85" stroke-linecap="round"/>
+  <!-- Sub-branch right -->
+  <path d="M936,136 Q928,154 930,174 Q932,190 940,206 Q944,220 940,235"
+        fill="none" stroke="#020506" stroke-width="6" opacity="0.65" stroke-linecap="round"/>
+  <!-- Hanging moss right side -->
+  <path d="M958,124 Q955,145 952,168 Q949,185 952,202 Q950,218 947,234 Q944,250 942,268"
+        fill="none" stroke="#020506" stroke-width="2" opacity="0.48" stroke-linecap="round"/>
+  <path d="M912,144 Q908,165 906,188 Q903,206 907,222"
+        fill="none" stroke="#020506" stroke-width="1.8" opacity="0.45" stroke-linecap="round"/>
+  <path d="M870,154 Q866,175 864,198 Q862,215 865,232"
+        fill="none" stroke="#020506" stroke-width="1.6" opacity="0.42" stroke-linecap="round"/>
+
+  <!-- Top center drooping branch cluster -->
+  <path d="M420,0 Q415,12 420,28 Q424,42 418,58 Q412,72 415,88 Q418,102 410,118 Q405,132 408,148 Q411,162 405,178"
+        fill="none" stroke="#020506" stroke-width="8" opacity="0.72" stroke-linecap="round"/>
+  <path d="M440,0 Q444,15 438,30 Q432,46 436,62 Q440,76 434,92 Q428,106 432,122"
+        fill="none" stroke="#020506" stroke-width="6" opacity="0.65" stroke-linecap="round"/>
+  <path d="M460,0 Q464,14 460,30 Q456,45 460,60 Q464,75 458,90 Q453,104 456,118"
+        fill="none" stroke="#020506" stroke-width="5" opacity="0.6" stroke-linecap="round"/>
+  <!-- Small hanging details from center cluster -->
+  <path d="M415,110 Q412,128 410,148 Q407,165 410,182"
+        fill="none" stroke="#020506" stroke-width="1.8" opacity="0.45" stroke-linecap="round"/>
+  <path d="M432,118 Q429,136 432,155"
+        fill="none" stroke="#020506" stroke-width="1.5" opacity="0.42" stroke-linecap="round"/>
+
+  <!-- Top edge solid mass (frame) -->
+  <rect x="0" y="0" width="1024" height="45" fill="url(#branch_fade)" opacity="0.95"/>
+
+  <!-- Left edge frame -->
+  <rect x="0" y="0" width="55" height="400" fill="url(#branch_fade2)" opacity="0.85"/>
+
+  <!-- Right edge frame -->
+  <rect x="969" y="0" width="55" height="400" fill="url(#branch_fade3)" opacity="0.85"/>
+</svg>

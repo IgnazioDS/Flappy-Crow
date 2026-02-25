@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="640" viewBox="0 0 1024 640">
+  <defs>
+    <!-- Gradient: transparent (black) at top, white at bottom where water is -->
+    <linearGradient id="mask_grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="black" stop-opacity="1"/>
+      <stop offset="52%"  stop-color="black" stop-opacity="1"/>
+      <stop offset="68%"  stop-color="white" stop-opacity="0.3"/>
+      <stop offset="75%"  stop-color="white" stop-opacity="0.7"/>
+      <stop offset="82%"  stop-color="white" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="white" stop-opacity="1"/>
+    </linearGradient>
+    <!-- Ripple variation: slightly uneven mask edge for natural look -->
+    <linearGradient id="ripple_grad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="black"/>
+      <stop offset="58%" stop-color="black"/>
+      <stop offset="66%" stop-color="white" stop-opacity="0.5"/>
+      <stop offset="72%" stop-color="white"/>
+      <stop offset="100%" stop-color="white"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Mask: black = hidden (no reflection), white = visible (reflection shows) -->
+  <!-- Top portion is black (no reflection above waterline) -->
+  <rect width="1024" height="640" fill="url(#mask_grad)"/>
+
+  <!-- Slightly irregular waterline using ripple gradient on a narrower strip -->
+  <!-- This creates a more natural, undulating waterline edge -->
+  <rect x="0" y="360" width="1024" height="280" fill="url(#ripple_grad)" opacity="0.4"/>
+
+  <!-- Add subtle horizontal variation to waterline for realism -->
+  <!-- Low-amplitude sinusoidal variation emulated with small rectangles -->
+  <rect x="0"   y="375" width="120" height="8" fill="black" opacity="0.3"/>
+  <rect x="150" y="378" width="100" height="8" fill="black" opacity="0.25"/>
+  <rect x="280" y="372" width="130" height="8" fill="black" opacity="0.3"/>
+  <rect x="440" y="376" width="110" height="8" fill="black" opacity="0.25"/>
+  <rect x="580" y="373" width="140" height="8" fill="black" opacity="0.28"/>
+  <rect x="750" y="377" width="120" height="8" fill="black" opacity="0.25"/>
+  <rect x="900" y="374" width="124" height="8" fill="black" opacity="0.3"/>
+</svg>

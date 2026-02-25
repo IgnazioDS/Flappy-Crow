@@ -60,6 +60,36 @@ Playwright runs the dev server with `VITE_TEST_SEED` and `VITE_E2E` to make runs
 Dark, mystical reskin featuring an occult-styled crow, deadwood gate obstacles,
 layered parallax forest silhouettes with fog and ember ambience, and gothic UI.
 
+### Environment V2 — Painterly (default)
+
+The default `v2` environment upgrades the background to a cinematic painterly
+style. Ten SVG source layers are rendered at 1024×640 (or 512×512 for tileable
+textures) via `scripts/render-v2-assets.mjs` and served as WebP with PNG
+fallback:
+
+| Layer | Size | Description |
+|---|---|---|
+| `bg_sky_far` | 1024×640 | Twilight sky — star field, cliff silhouettes, atmospheric gradients |
+| `bg_mountains` | 1024×640 | Three mountain ranges with depth-haze and fog bands |
+| `bg_trees_far` | 1024×640 | 24 cypress silhouettes with atmospheric depth fade |
+| `bg_trees_mid` | 1024×640 | Heavy trees with roots, hanging moss, biolume glow |
+| `bg_swamp_near` | 1024×640 | Water channels, reeds, violet/teal biolume accents |
+| `fg_branches` | 1024×640 | Foreground branch framing with edge darkness |
+| `fog_tile_soft` | 512×512 | Tileable organic fog (violet/teal tints) |
+| `light_rays` | 1024×640 | Subtle diagonal volumetric light rays |
+| `water_reflection_mask` | 1024×640 | B/W gradient mask for BitmapMask water reflection |
+| `biolume_glow_splotches` | 512×512 | Violet + teal radial glow patches |
+
+SVG source files live in `public/assets/theme/evil_forest_v2/src/`. To
+regenerate assets after editing SVGs:
+
+```bash
+node scripts/render-v2-assets.mjs
+```
+
+Switch to V1 (classic flat look) via `?env=v1`. V2 QA overlay (`?qa=1`)
+shows per-layer texture dimensions alongside FPS and env label.
+
 ## Tuning parameters
 
 All gameplay constants live in `src/game/config.ts`. Key values:

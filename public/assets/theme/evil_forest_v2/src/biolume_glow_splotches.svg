@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <!-- Violet glow patches -->
+    <radialGradient id="v1" cx="22%" cy="35%" r="30%">
+      <stop offset="0%"  stop-color="#c060ff" stop-opacity="0.88"/>
+      <stop offset="30%" stop-color="#9030e0" stop-opacity="0.55"/>
+      <stop offset="65%" stop-color="#6010c0" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#4000a0" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="v2" cx="72%" cy="28%" r="28%">
+      <stop offset="0%"  stop-color="#b856ff" stop-opacity="0.82"/>
+      <stop offset="35%" stop-color="#8828d8" stop-opacity="0.5"/>
+      <stop offset="70%" stop-color="#5808b0" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#3800a0" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="v3" cx="45%" cy="70%" r="32%">
+      <stop offset="0%"  stop-color="#d080ff" stop-opacity="0.75"/>
+      <stop offset="30%" stop-color="#a040e0" stop-opacity="0.45"/>
+      <stop offset="65%" stop-color="#7020c0" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#5010a8" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Teal glow patches -->
+    <radialGradient id="t1" cx="60%" cy="62%" r="26%">
+      <stop offset="0%"  stop-color="#40ffdc" stop-opacity="0.9"/>
+      <stop offset="30%" stop-color="#20d8a8" stop-opacity="0.55"/>
+      <stop offset="65%" stop-color="#10a878" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#008058" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="t2" cx="15%" cy="72%" r="24%">
+      <stop offset="0%"  stop-color="#50ffde" stop-opacity="0.75"/>
+      <stop offset="35%" stop-color="#28d0a0" stop-opacity="0.45"/>
+      <stop offset="70%" stop-color="#10a070" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#007858" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="t3" cx="85%" cy="75%" r="22%">
+      <stop offset="0%"  stop-color="#38ffcc" stop-opacity="0.7"/>
+      <stop offset="40%" stop-color="#18c890" stop-opacity="0.38"/>
+      <stop offset="80%" stop-color="#089060" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#006040" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Inner bright core for extra punch -->
+    <radialGradient id="core_v" cx="22%" cy="35%" r="10%">
+      <stop offset="0%"  stop-color="#f0c0ff" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#f0c0ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="core_t" cx="60%" cy="62%" r="8%">
+      <stop offset="0%"  stop-color="#c0fff0" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#c0fff0" stop-opacity="0"/>
+    </radialGradient>
+    <!-- Soft overall ambient from all the glows -->
+    <radialGradient id="ambient" cx="50%" cy="55%" r="70%">
+      <stop offset="0%"  stop-color="#8030d0" stop-opacity="0.1"/>
+      <stop offset="50%" stop-color="#4018a8" stop-opacity="0.04"/>
+      <stop offset="100%" stop-color="#201080" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Transparent base -->
+  <rect width="512" height="512" fill="none"/>
+
+  <!-- Violet glows -->
+  <rect width="512" height="512" fill="url(#v1)"/>
+  <rect width="512" height="512" fill="url(#v2)"/>
+  <rect width="512" height="512" fill="url(#v3)"/>
+
+  <!-- Teal glows -->
+  <rect width="512" height="512" fill="url(#t1)"/>
+  <rect width="512" height="512" fill="url(#t2)"/>
+  <rect width="512" height="512" fill="url(#t3)"/>
+
+  <!-- Bright inner cores -->
+  <rect width="512" height="512" fill="url(#core_v)"/>
+  <rect width="512" height="512" fill="url(#core_t)"/>
+
+  <!-- Ambient glow tie-in -->
+  <rect width="512" height="512" fill="url(#ambient)"/>
+</svg>

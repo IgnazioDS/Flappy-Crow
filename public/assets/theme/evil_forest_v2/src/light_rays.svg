@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="640" viewBox="0 0 1024 640">
+  <defs>
+    <!-- Base for each ray — linear gradient fading from source to transparent -->
+    <linearGradient id="ray1" x1="0.28" y1="0" x2="0.62" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0%"  stop-color="#f0d8a0" stop-opacity="0.2"/>
+      <stop offset="40%" stop-color="#e8c888" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#d0a860" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="ray2" x1="0.35" y1="0" x2="0.68" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0%"  stop-color="#f0d8a0" stop-opacity="0.15"/>
+      <stop offset="45%" stop-color="#e0c080" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#c8a050" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="ray3" x1="0.22" y1="0" x2="0.55" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0%"  stop-color="#f8e8c0" stop-opacity="0.12"/>
+      <stop offset="50%" stop-color="#e8d080" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#d0b060" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="ray4" x1="0.42" y1="0" x2="0.75" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0%"  stop-color="#e8d090" stop-opacity="0.1"/>
+      <stop offset="50%" stop-color="#d8b870" stop-opacity="0.04"/>
+      <stop offset="100%" stop-color="#c09848" stop-opacity="0"/>
+    </linearGradient>
+    <!-- Atmospheric glow at source -->
+    <radialGradient id="source_glow" cx="30%" cy="0%" r="45%">
+      <stop offset="0%"  stop-color="#ffe8b0" stop-opacity="0.18"/>
+      <stop offset="50%" stop-color="#f0c070" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#e0a040" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Source atmospheric glow (upper-left-center) -->
+  <rect width="1024" height="640" fill="url(#source_glow)"/>
+
+  <!-- Ray 1 — widest, most prominent -->
+  <polygon points="250,0 320,0 640,640 520,640" fill="url(#ray1)"/>
+
+  <!-- Ray 2 -->
+  <polygon points="310,0 360,0 720,640 620,640" fill="url(#ray2)"/>
+
+  <!-- Ray 3 — narrower -->
+  <polygon points="180,0 225,0 480,640 390,640" fill="url(#ray3)"/>
+
+  <!-- Ray 4 — faintest, rightmost -->
+  <polygon points="390,0 430,0 820,640 740,640" fill="url(#ray4)"/>
+
+  <!-- Secondary thin rays for detail -->
+  <polygon points="145,0 165,0 360,640 310,640" fill="#f0d890" opacity="0.04"/>
+  <polygon points="460,0 490,0 880,640 820,640" fill="#f0d890" opacity="0.035"/>
+</svg>

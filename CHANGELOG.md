@@ -5,6 +5,34 @@
 All notable changes to this project will be documented in this file.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [6.1.0] - 2026-02-25
+
+### Added
+
+- **Environment V2 — Evil Forest (Painterly)**: full upgrade of the V2 background
+  system with 10 hand-crafted SVG source layers rendered to PNG/WebP:
+  - `bg_sky_far` — twilight sky with star field, cliff silhouettes, and atmospheric gradients
+  - `bg_mountains` — three mountain ranges with depth-haze and fog bands
+  - `bg_trees_far` — 24 cypress silhouettes with atmospheric depth fade
+  - `bg_trees_mid` — heavy trees with gnarled roots, hanging moss, and biolume glow
+  - `bg_swamp_near` — water channels, marsh banks, reeds, and violet/teal biolume accents
+  - `fg_branches` — foreground branch framing with edge darkness
+  - `fog_tile_soft` — tileable organic fog (512×512, violet/teal tints)
+  - `light_rays` — subtle diagonal volumetric light rays
+  - `water_reflection_mask` — B/W gradient mask driving the BitmapMask water reflection
+  - `biolume_glow_splotches` — violet + teal radial glow patches (512×512)
+- `scripts/render-v2-assets.mjs` — Playwright + cwebp pipeline that renders
+  SVG source art to final PNG/WebP; re-run after editing SVGs to refresh assets.
+- `src/game/background/BackgroundSystemV2.ts` — thin subclass of BackgroundSystem
+  that adds texture-size reporting in the QA debug overlay (`getDebugLines()`).
+- PlayScene now instantiates `BackgroundSystemV2` for the `v2` environment key,
+  wiring the QA overlay with per-asset texture dimensions.
+
+### Changed
+
+- Default environment is `v2` (Evil Forest V2 — Painterly); V1 still reachable
+  via `?env=v1` query param.
+
 ## [6.0.2] - 2026-02-25
 
 ### Added
