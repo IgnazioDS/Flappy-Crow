@@ -13,6 +13,8 @@ type LayerInstance = {
   sprite: Phaser.GameObjects.TileSprite
   speed: number
   name: string
+  /** Vertical tile drift speed (fraction of world scroll speed). Fog only. */
+  driftSpeed?: number
 }
 
 type BiolumeInstance = {
@@ -183,6 +185,10 @@ export class BackgroundSystem {
     } else if (layer.blendMode === 'screen') {
       instance.sprite.setBlendMode(Phaser.BlendModes.SCREEN)
     }
+    if (layer.tint !== undefined) {
+      instance.sprite.setTint(layer.tint)
+    }
+    instance.driftSpeed = layer.driftSpeed
     return instance
   }
 
@@ -196,6 +202,9 @@ export class BackgroundSystem {
         continue
       }
       layer.sprite.tilePositionX += baseSpeed * layer.speed
+      if (layer.driftSpeed !== undefined) {
+        layer.sprite.tilePositionY += baseSpeed * layer.driftSpeed
+      }
     }
   }
 
