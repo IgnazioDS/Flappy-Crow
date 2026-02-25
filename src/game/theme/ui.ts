@@ -25,12 +25,14 @@ export const UI = {
     strokeThickness: 5,
     align: 'center',
   },
+  // Bumped to textPrimary + strokeThickness 5 in v6.1.2 for crisp readability
+  // over V2 painterly backgrounds.
   overlayBodyStyle: {
     fontFamily: '"Cinzel", serif',
     fontSize: '18px',
-    color: PALETTE.textMuted,
+    color: PALETTE.textPrimary,
     stroke: PALETTE.night,
-    strokeThickness: 4,
+    strokeThickness: 5,
     align: 'center',
   },
   statLabelStyle: {
@@ -85,5 +87,23 @@ export const UI = {
   icon: {
     size: 26,
     padding: 10,
+  },
+  // ─── HUD scrim ──────────────────────────────────────────────────────────────
+  // Dark gradient behind score + top icons so they read over bright/painterly
+  // skies (e.g. V2 evil forest).
+  hud: {
+    /** Height in px of the gradient band at the top of the screen. */
+    topScrimHeight: 72,
+    /** Peak opacity of the scrim at y=0. */
+    topScrimAlpha: 0.62,
+    /** Minimum vertical gap between the top safe edge and HUD content (px). */
+    safeTop: 8,
+  },
+  // ─── 8-pt spacing scale ─────────────────────────────────────────────────────
+  spacing: {
+    xs: 8,
+    sm: 12,
+    md: 16,
+    lg: 24,
   },
 } as const

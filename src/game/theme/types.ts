@@ -51,6 +51,25 @@ export type ThemeUI = {
     size: number
     padding: number
   }
+  /**
+   * HUD gradient scrim shown behind score + icons.
+   * Omitted by themes that don't need a scrim (e.g. bright-background themes).
+   */
+  hud?: {
+    /** Height in px of the top gradient scrim (default: 72). */
+    topScrimHeight: number
+    /** Peak opacity of the scrim at y=0 (default: 0.62). */
+    topScrimAlpha: number
+    /** Minimum gap between the top safe edge and HUD elements (default: 8). */
+    safeTop: number
+  }
+  /** 8-pt spacing scale used across UI layout. */
+  spacing?: {
+    xs: number  // 8
+    sm: number  // 12
+    md: number  // 16
+    lg: number  // 24
+  }
 }
 
 export type ThemeFx = {

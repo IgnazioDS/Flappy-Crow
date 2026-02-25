@@ -1,5 +1,10 @@
 import Phaser from 'phaser'
 import type { ThemeDefinition, ThemeUI } from '../theme/types'
+import { PALETTE_NUM } from '../theme/palette'
+
+// ─── Canvas-texture keys ────────────────────────────────────────────────────
+// Programmatic textures are generated once per scene session and reused.
+const HUD_SCRIM_KEY = 'hud-top-scrim'
 
 export const createPanel = (
   scene: Phaser.Scene,
@@ -125,4 +130,87 @@ export const createSmallButton = (
   )
 
   return scene.add.container(0, 0, [buttonImage, text])
+}
+
+// ─── HUD scrim ────────────────────────────────────────────────────────────────
+
+/**
+ * Creates (or reuses) a programmatic canvas texture that fades from a dark
+ * semi-opaque colour at the top to fully transparent at the bottom, then
+ * returns it as a full-width Image placed at (0, 0) with origin top-left.
+ *
+ * The texture is created once per scene session (keyed by HUD_SCRIM_KEY) and
+ * reused across hot-reloads / env switches.  It is automatically cleaned up
+ * when the Phaser scene is destroyed.
+ *
+ * @param scene       Owning Phaser scene.
+ * @param width       Width of the scrim band in px (should equal game width).
+ * @param scrimHeight Height of the gradient in px.
+ * @param scrimAlpha  Peak opacity at y=0 (0–1).
+ * @param depth       Render depth (default 3.95 — above bg, below UI at 4+).
+ */
+export const createHudTopScrim = (
+  scene: Phaser.Scene,
+  width: number,
+  scrimHeight: number,
+  scrimAlpha: number,
+  depth = 3.95,
+): Phaser.GameObjects.Image => {
+  if (!scene.textures.exists(HUD_SCRIM_KEY)) {
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = scrimHeight
+    const ctx = canvas.getContext('2d')
+    if (ctx) {
+      const grad = ctx.createLinearGradient(0, 0, 0, scrimHeight)
+      grad.addColorStop(0,    `rgba(2,1,10,${scrimAlpha.toFixed(3)})`)
+      grad.addColorStop(0.55, `rgba(2,1,10,${(scrimAlpha * 0.45).toFixed(3)})`)
+      grad.addColorStop(1,    'rgba(2,1,10,0)')
+      ctx.fillStyle = grad
+      ctx.fillRect(0, 0, width, scrimHeight)
+    }
+    scene.textures.addCanvas(HUD_SCRIM_KEY, canvas)
+  }
+  return scene.add.image(0, 0, HUD_SCRIM_KEY).setOrigin(0, 0).setDepth(depth)
+}
+
+// ─── Panel backdrop ───────────────────────────────────────────────────────────
+
+/**
+ * Creates a "glass / obsidian" backdrop for overlay panels using Phaser
+ * Graphics.  Draws (centred at 0,0) in order:
+ *   1. Drop shadow — offset black rounded rect
+ *   2. Dark fill — main panel body
+ *   3. Teal stroke — thin border matching the theme accent colour
+ *
+ * Add this as the *first* child in the panel Container so it renders behind
+ * the panel sprite / text.
+ *
+ * @param scene  Owning Phaser scene.
+ * @param width  Panel width in px.
+ * @param height Panel height in px.
+ */
+export const createPanelBackdrop = (
+  scene: Phaser.Scene,
+  width: number,
+  height: number,
+): Phaser.GameObjects.Graphics => {
+  const g = scene.add.graphics()
+  const r = 8    // corner radius
+  const hw = width / 2
+  const hh = height / 2
+
+  // 1. Drop shadow (offset right+down)
+  g.fillStyle(0x000000, 0.50)
+  g.fillRoundedRect(-hw + 4, -hh + 5, width, height, r)
+
+  // 2. Dark obsidian fill
+  g.fillStyle(0x07090f, 0.93)
+  g.fillRoundedRect(-hw, -hh, width, height, r)
+
+  // 3. Teal accent stroke
+  g.lineStyle(2, PALETTE_NUM.panelStroke, 0.80)
+  g.strokeRoundedRect(-hw, -hh, width, height, r)
+
+  return g
 }
