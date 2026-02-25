@@ -5,6 +5,42 @@
 All notable changes to this project will be documented in this file.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [6.0.2] - 2026-02-25
+
+### Added
+
+- `.nvmrc` pinning Node 20 for local and CI consistency (P1-1).
+- `docs/AUDIO.md` documenting intentional SFX deferral and Path A migration
+  guide for when audio assets are ready (P1-2).
+- Dedicated `envRng` (seeded `RandomSource`) for firefly area selection, fixing
+  visual non-determinism in daily/custom-seed modes (P2-2).
+- Google Fonts preconnect hints in `index.html` to reduce font-swap latency
+  on first load (P2-5).
+- `art-qa` CI job: builds with `VITE_ART_QA=true` so theme contract validation
+  runs in CI, not just local dev (P2-6).
+- `docs/PLAYSCENE_DECOMPOSITION.md` — 10-slice plan for incrementally
+  extracting the PlayScene god-class into focused managers (P2-1).
+
+### Changed
+
+- Vite `manualChunks` splits Phaser into a stable vendor chunk; app chunk
+  drops from 1,336 KB to 127 KB, improving browser cache utilisation (P1-5).
+- `validateThemeDefinition` now also activates when `VITE_ART_QA=true`, making
+  it reachable in production builds without touching the dev-only guard (P2-6).
+
+### Fixed
+
+- `birdBobTime` now wraps with `% (Math.PI * 2)` to prevent unbounded
+  float growth during long idle sessions (P2-3).
+
+### Removed
+
+- `public/assets/theme/atlas.svg` (13 KB vector source; runtime uses
+  PNG/WebP only) (P1-3).
+- 9 legacy unused SVGs from `public/assets/`: `background.svg`,
+  `crow_idle/dead/flap_0-2.svg`, `ember.svg`, `obstacle_top/bottom.svg` (P1-4).
+- `ios/App/App/config 2.xml` — stray Finder-duplicate Cordova stub (P2-4).
+
 ## [6.0.1] - 2026-01-25
 
 ### Added
