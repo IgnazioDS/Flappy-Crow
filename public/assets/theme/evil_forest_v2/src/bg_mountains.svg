@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="640" viewBox="0 0 1024 640">
+  <defs>
+    <!-- Atmospheric perspective gradient — fade to near-transparent at top -->
+    <linearGradient id="atmo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#0a0820" stop-opacity="0"/>
+      <stop offset="30%"  stop-color="#100e28" stop-opacity="0.15"/>
+      <stop offset="60%"  stop-color="#150d2e" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#0d1122" stop-opacity="0.9"/>
+    </linearGradient>
+    <!-- Violet haze for distant mountains -->
+    <linearGradient id="vhaze" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#2a1650" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#2a1650" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#150b2e" stop-opacity="0.6"/>
+    </linearGradient>
+    <!-- Fog band gradient -->
+    <linearGradient id="fogband1" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#8fb8cc" stop-opacity="0"/>
+      <stop offset="40%" stop-color="#8fb8cc" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#8fb8cc" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="fogband2" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#b0cede" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#b0cede" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#b0cede" stop-opacity="0.04"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Farthest mountain range — most fog, lightest silhouette -->
+  <polygon points="0,640 0,360 30,340 60,322 90,308 120,295 155,280 188,268 220,278 252,260 285,245 320,232 355,245 388,228 420,215 452,228 484,212 516,198 548,210 580,198 612,208 644,198 676,210 708,198 740,210 772,198 804,212 836,224 868,212 900,225 932,212 964,225 996,215 1024,208 1024,640"
+        fill="#16112e" opacity="0.55"/>
+
+  <!-- Second mountain range — moderate fog -->
+  <polygon points="0,640 0,420 25,405 52,390 80,375 110,358 142,342 175,330 208,345 240,328 272,312 305,298 338,312 370,298 402,285 435,272 468,285 500,272 532,285 564,272 596,288 628,275 660,288 692,275 724,290 756,278 788,290 820,275 852,288 884,275 916,292 948,280 980,292 1012,280 1024,285 1024,640"
+        fill="#12102a" opacity="0.7"/>
+
+  <!-- Closer mountain range — stronger presence -->
+  <polygon points="0,640 0,480 20,468 45,455 72,440 100,424 130,408 162,392 195,408 228,392 262,376 296,362 330,376 365,360 400,344 435,358 470,342 505,356 540,342 575,358 610,344 645,360 680,344 715,360 750,344 785,360 820,348 855,362 890,348 925,360 960,345 995,358 1024,348 1024,640"
+        fill="#0e0d22" opacity="0.82"/>
+
+  <!-- Atmospheric violet haze overlay -->
+  <rect width="1024" height="640" fill="url(#vhaze)"/>
+
+  <!-- Atmospheric perspective -->
+  <rect width="1024" height="640" fill="url(#atmo)"/>
+
+  <!-- Fog bands at different heights -->
+  <rect x="0" y="280" width="1024" height="80"  fill="url(#fogband1)"/>
+  <rect x="0" y="380" width="1024" height="100" fill="url(#fogband2)"/>
+  <rect x="0" y="490" width="1024" height="80"  fill="url(#fogband1)"/>
+</svg>
