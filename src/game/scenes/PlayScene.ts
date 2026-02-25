@@ -3012,7 +3012,7 @@ export class PlayScene extends Phaser.Scene {
 
   private updateBirdVisual(dt: number): void {
     if (this.stateMachine.state === 'READY' && !this.isMotionReduced()) {
-      this.birdBobTime += dt * this.fx.readyBob.speed
+      this.birdBobTime = (this.birdBobTime + dt * this.fx.readyBob.speed) % (Math.PI * 2)
     }
 
     const bobOffset =
