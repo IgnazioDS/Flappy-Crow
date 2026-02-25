@@ -5,6 +5,53 @@
 All notable changes to this project will be documented in this file.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [6.1.1] - 2026-02-25
+
+### Added
+
+- **`EnvironmentFogLayer.tint`** — hex colour tint applied to fog TileSprites
+  (e.g. `0xb4c4d8` for cool blue-gray); handled in `BackgroundSystem.createFogLayer()`.
+- **`EnvironmentFogLayer.driftSpeed`** — vertical tile drift speed as a fraction
+  of world scroll; fog now slowly drifts up/down for organic parallax depth.
+- **Background vignette** in `BackgroundSystemV2` — programmatic radial-gradient
+  canvas texture at depth 0.92 (above bg, below gameplay at 1.0+); transparent
+  centre holds playfield readability, dark purple-black edges frame the scene.
+- **Rich QA debug overlay** (`BackgroundSystemV2.getDebugLines()`): env key + label,
+  all layer parallax speeds, fog α/spd/tint/drift, biolume patch count, configured
+  particle maxes, and per-asset loaded texture dimensions.
+
+### Changed
+
+- **Parallax speeds** corrected to match reference depth bands:
+  `0.08 / 0.12 / 0.18 / 0.28 / 0.40` × world scroll (was `0.02–0.14`).
+- **Fog A**: speed `0.05`, α `0.22`, blue-gray tint `#b4c4d8`, drift `0.008`.
+- **Fog B**: speed `0.12`, α `0.11`, violet-gray tint `#c0b8d4`, drift `0.015`.
+- **Light rays**: α `0.07`, SCREEN blend, pulse `0.35` — more subtle.
+- **Reflection layer speeds** synced to main parallax speeds (`0.28 / 0.40`)
+  so reflected tiles scroll in sync with the source layers.
+- **Biolume patches** repositioned within 360 px game width (x: 58–332, was
+  160–720 — two patches were entirely off-screen).
+- **Particle cap** enforced: dust `maxParticles` 18→10; total
+  embers(6) + dust(10) + fireflies(14) = **30 max, all pooled**.
+- **Firefly areas** constrained to 360 px game width with narrower spawn zones.
+- **`bg_swamp_near`** alpha `0.82` (was 1.0) — obstacle/pipe readability safeguard.
+- **`fg_branches`** alpha `0.42` (was `0.38`) — denser edge framing.
+
+### Assets (re-rendered via `scripts/render-v2-assets.mjs`)
+
+- **`water_reflection_mask`** — sharp 3-stop gradient (57 → 64% transition)
+  with sinusoidal ellipse bumps at waterline for natural undulation; soft
+  bottom fade so reflection dissolves rather than hard-cuts.
+- **`bg_swamp_near`** — water channels raised from cy≈600 → cy≈510–522 (visible
+  above ground line); 3 distinct high-contrast channels with specular sheen strips.
+- **`bg_trees_mid`** — 9 full tree clusters with expanded canopy spreads, root
+  tangles, hanging moss, and biolume root glows; strong dark silhouettes for
+  clear BitmapMask reflection when flipped.
+- **`biolume_glow_splotches`** — rebuilt with higher-opacity cores (0.90–0.95),
+  steeper falloff, and white sparkle points at each pool centre.
+- **`light_rays`** — 5 overlapping diagonal shaft polygons with per-shaft opacity
+  stagger (0.60–0.95) and a warm source halo at upper-centre.
+
 ## [6.1.0] - 2026-02-25
 
 ### Added

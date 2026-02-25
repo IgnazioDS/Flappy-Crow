@@ -90,6 +90,18 @@ node scripts/render-v2-assets.mjs
 Switch to V1 (classic flat look) via `?env=v1`. V2 QA overlay (`?qa=1`)
 shows per-layer texture dimensions alongside FPS and env label.
 
+#### V2 composition knobs (v6.1.1+)
+
+| Feature | Config field | Default |
+|---|---|---|
+| Parallax speed (per layer) | `layers[n].speed` | 0.08 → 0.40 |
+| Fog tint | `fogLayers[n].tint` | `0xb4c4d8` / `0xc0b8d4` |
+| Fog vertical drift | `fogLayers[n].driftSpeed` | 0.008 / 0.015 |
+| Background vignette depth | `VIGNETTE_DEPTH` in BackgroundSystemV2 | 0.92 |
+| Water reflection ripple | `reflection.rippleAmplitude` | 2.5 px |
+| Biolume pulse | `biolume.patches[n].pulseSpeed` | 0.70–0.90 |
+| Particle hard cap | `particles.*.maxParticles` | 30 total |
+
 ## Tuning parameters
 
 All gameplay constants live in `src/game/config.ts`. Key values:
