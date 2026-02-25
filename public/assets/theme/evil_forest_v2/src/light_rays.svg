@@ -1,50 +1,71 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="640" viewBox="0 0 1024 640">
+  <!--
+    Light rays — rendered as a full-screen SCREEN-blend overlay.
+    Final alpha is controlled by BackgroundSystem (0.07 base, slow pulse).
+    Rays should be clearly shaped in the texture so at low alpha they
+    read as subtle volumetric shafts without blowing out the playfield.
+  -->
   <defs>
-    <!-- Base for each ray — linear gradient fading from source to transparent -->
-    <linearGradient id="ray1" x1="0.28" y1="0" x2="0.62" y2="1" gradientUnits="objectBoundingBox">
-      <stop offset="0%"  stop-color="#f0d8a0" stop-opacity="0.2"/>
-      <stop offset="40%" stop-color="#e8c888" stop-opacity="0.08"/>
-      <stop offset="100%" stop-color="#d0a860" stop-opacity="0"/>
+    <!-- Each ray: pale warm white at source, fades to transparent -->
+    <linearGradient id="ray1" x1="0.32" y1="0" x2="0.55" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0%"   stop-color="#f8eecc" stop-opacity="0.85"/>
+      <stop offset="30%"  stop-color="#f0e0a8" stop-opacity="0.45"/>
+      <stop offset="70%"  stop-color="#e8d090" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#d8c080" stop-opacity="0"/>
     </linearGradient>
-    <linearGradient id="ray2" x1="0.35" y1="0" x2="0.68" y2="1" gradientUnits="objectBoundingBox">
-      <stop offset="0%"  stop-color="#f0d8a0" stop-opacity="0.15"/>
-      <stop offset="45%" stop-color="#e0c080" stop-opacity="0.06"/>
-      <stop offset="100%" stop-color="#c8a050" stop-opacity="0"/>
+    <linearGradient id="ray2" x1="0.40" y1="0" x2="0.60" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0%"   stop-color="#f8f0d8" stop-opacity="0.75"/>
+      <stop offset="28%"  stop-color="#f0e4b0" stop-opacity="0.38"/>
+      <stop offset="68%"  stop-color="#e8d898" stop-opacity="0.13"/>
+      <stop offset="100%" stop-color="#d8c888" stop-opacity="0"/>
     </linearGradient>
-    <linearGradient id="ray3" x1="0.22" y1="0" x2="0.55" y2="1" gradientUnits="objectBoundingBox">
-      <stop offset="0%"  stop-color="#f8e8c0" stop-opacity="0.12"/>
-      <stop offset="50%" stop-color="#e8d080" stop-opacity="0.05"/>
-      <stop offset="100%" stop-color="#d0b060" stop-opacity="0"/>
+    <linearGradient id="ray3" x1="0.48" y1="0" x2="0.65" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0%"   stop-color="#fff0d0" stop-opacity="0.90"/>
+      <stop offset="25%"  stop-color="#f8e4a8" stop-opacity="0.52"/>
+      <stop offset="65%"  stop-color="#f0d898" stop-opacity="0.20"/>
+      <stop offset="100%" stop-color="#e0c880" stop-opacity="0"/>
     </linearGradient>
-    <linearGradient id="ray4" x1="0.42" y1="0" x2="0.75" y2="1" gradientUnits="objectBoundingBox">
-      <stop offset="0%"  stop-color="#e8d090" stop-opacity="0.1"/>
-      <stop offset="50%" stop-color="#d8b870" stop-opacity="0.04"/>
-      <stop offset="100%" stop-color="#c09848" stop-opacity="0"/>
+    <linearGradient id="ray4" x1="0.55" y1="0" x2="0.70" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0%"   stop-color="#f8ecc8" stop-opacity="0.70"/>
+      <stop offset="30%"  stop-color="#f0e0a0" stop-opacity="0.35"/>
+      <stop offset="70%"  stop-color="#e8d490" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#d8c880" stop-opacity="0"/>
     </linearGradient>
-    <!-- Atmospheric glow at source -->
-    <radialGradient id="source_glow" cx="30%" cy="0%" r="45%">
-      <stop offset="0%"  stop-color="#ffe8b0" stop-opacity="0.18"/>
-      <stop offset="50%" stop-color="#f0c070" stop-opacity="0.06"/>
-      <stop offset="100%" stop-color="#e0a040" stop-opacity="0"/>
+    <linearGradient id="ray5" x1="0.24" y1="0" x2="0.50" y2="1" gradientUnits="objectBoundingBox">
+      <stop offset="0%"   stop-color="#f4e8c0" stop-opacity="0.55"/>
+      <stop offset="35%"  stop-color="#ecdca0" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#dcc888" stop-opacity="0"/>
+    </linearGradient>
+
+    <!-- Source glow at the upper beam origin -->
+    <radialGradient id="source_glow" cx="42%" cy="0%" r="28%">
+      <stop offset="0%"   stop-color="#fff8e0" stop-opacity="0.70"/>
+      <stop offset="35%"  stop-color="#f8f0c8" stop-opacity="0.28"/>
+      <stop offset="80%"  stop-color="#f0e4a8" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#e8d880" stop-opacity="0"/>
     </radialGradient>
   </defs>
 
-  <!-- Source atmospheric glow (upper-left-center) -->
+  <!-- Ray 1 — leftmost, wide angle -->
+  <polygon points="260,0 320,0 680,640 560,640"
+           fill="url(#ray1)" opacity="0.90"/>
+
+  <!-- Ray 2 — centre-left -->
+  <polygon points="330,0 390,0 710,640 620,640"
+           fill="url(#ray2)" opacity="0.82"/>
+
+  <!-- Ray 3 — centre (widest, most prominent) -->
+  <polygon points="395,0 470,0 760,640 660,640"
+           fill="url(#ray3)" opacity="0.95"/>
+
+  <!-- Ray 4 — centre-right -->
+  <polygon points="460,0 525,0 810,640 720,640"
+           fill="url(#ray4)" opacity="0.78"/>
+
+  <!-- Ray 5 — additional narrow left shaft for depth -->
+  <polygon points="200,0 246,0 540,640 460,640"
+           fill="url(#ray5)" opacity="0.60"/>
+
+  <!-- Source halo at beam origin (upper-centre) -->
   <rect width="1024" height="640" fill="url(#source_glow)"/>
-
-  <!-- Ray 1 — widest, most prominent -->
-  <polygon points="250,0 320,0 640,640 520,640" fill="url(#ray1)"/>
-
-  <!-- Ray 2 -->
-  <polygon points="310,0 360,0 720,640 620,640" fill="url(#ray2)"/>
-
-  <!-- Ray 3 — narrower -->
-  <polygon points="180,0 225,0 480,640 390,640" fill="url(#ray3)"/>
-
-  <!-- Ray 4 — faintest, rightmost -->
-  <polygon points="390,0 430,0 820,640 740,640" fill="url(#ray4)"/>
-
-  <!-- Secondary thin rays for detail -->
-  <polygon points="145,0 165,0 360,640 310,640" fill="#f0d890" opacity="0.04"/>
-  <polygon points="460,0 490,0 880,640 820,640" fill="#f0d890" opacity="0.035"/>
 </svg>
