@@ -55,6 +55,32 @@ const BOTTOM_SCRIM_DEPTH = 0.91
 const BOTTOM_SCRIM_H = 115
 
 /**
+ * Key for the programmatic bank-haze canvas texture.
+ * A subtle horizontal violet-blue gradient centred at the waterline that
+ * blends the swamp-near layer into the ground sprite.
+ */
+const BANK_HAZE_TEX_KEY = 'v2-bank-haze'
+
+/** Render depth: above swamp_near (0.66), below shimmer (0.70). */
+const BANK_HAZE_DEPTH = 0.685
+
+/** Height of the bank-haze stripe in game pixels. */
+const BANK_HAZE_H = 90
+
+/**
+ * Texture keys for ADD/SCREEN-blend assets that need alpha-floor sanitization.
+ * Even with omitBackground:true, SVG ambient gradients can leave alpha 1–5 at
+ * sprite edges, which ADD/SCREEN amplify into visible rectangular plates.
+ * Used by BootScene.sanitizeAlphaTexture() and by the QA corner-alpha overlay.
+ */
+const SANITIZE_TARGETS: Array<{ key: string; label: string; threshold: number }> = [
+  { key: 'v2-fog-soft',  label: 'fog_tile',  threshold: 12 },
+  { key: 'v2-light-rays',label: 'light_rays',threshold: 10 },
+  { key: 'v2-biolume',   label: 'biolume',   threshold: 16 },
+  { key: 'v2-water-mask',label: 'water_mask',threshold:  6 },
+]
+
+/**
  * BackgroundSystemV2 — extends BackgroundSystem with V2-specific features:
  *
  * COMPOSITION
@@ -89,6 +115,16 @@ export class BackgroundSystemV2 extends BackgroundSystem {
   // ── v6.1.6 layers ────────────────────────────────────────────────────────
   /** Dark-to-transparent gradient covering the bottom 18% — grounds the swamp. */
   private bottomScrimSprite: Phaser.GameObjects.Image | null = null
+  /** Horizontal violet-blue haze centred at waterlineY — blends swamp into ground. */
+  private bankHazeSprite: Phaser.GameObjects.Image | null = null
+
+  // ── v6.1.7 QA forensics ──────────────────────────────────────────────────
+  /** Currently soloed layer index (0-based). null = no solo. */
+  private v2SoloIndex: number | null = null
+  /** Whether the sprite-bounds overlay is visible. */
+  private v2ShowBounds = false
+  /** Graphics object used to draw per-sprite bounding rectangles in QA mode. */
+  private v2BoundsGraphics: Phaser.GameObjects.Graphics | null = null
 
   // ── v6.1.5 layers ────────────────────────────────────────────────────────
   private shimmerSprite: Phaser.GameObjects.TileSprite | null = null
@@ -122,12 +158,15 @@ export class BackgroundSystemV2 extends BackgroundSystem {
 
   override create(): void {
     super.create()
+    this.v2CreateBankHaze()
     this.v2CreateBottomScrim()
     this.v2CreateVignette()
     this.v2CreateGrade()
     this.v2CreateGrain()
     this.v2CreateWaterShimmer()
     this.v2CreateBiolumeSparklees()
+    // QA bounds graphics — lives above everything at depth 10
+    this.v2BoundsGraphics = this.v2Scene.add.graphics().setDepth(10).setVisible(false)
   }
 
   override destroy(): void {
@@ -137,6 +176,9 @@ export class BackgroundSystemV2 extends BackgroundSystem {
       return null
     }
     this.bottomScrimSprite = destroySprite(this.bottomScrimSprite)
+    this.bankHazeSprite  = destroySprite(this.bankHazeSprite)
+    this.v2BoundsGraphics?.destroy()
+    this.v2BoundsGraphics = null
     this.vignetteSprite  = destroySprite(this.vignetteSprite)
     this.gradeSprite     = destroySprite(this.gradeSprite)
     this.grainSprite     = destroySprite(this.grainSprite)
@@ -152,6 +194,10 @@ export class BackgroundSystemV2 extends BackgroundSystem {
 
   override update(dt: number): void {
     super.update(dt)
+
+    if (this.v2ShowBounds) {
+      this.v2UpdateBoundsGraphics()
+    }
 
     if (!this.v2ReducedMotion) {
       this.v2Elapsed += dt
@@ -194,6 +240,35 @@ export class BackgroundSystemV2 extends BackgroundSystem {
     this.v2LowPower = enabled
     super.setLowPowerMode(enabled)
     this.applyV2LowPowerVisibility()
+  }
+
+  // ─── QA forensics overrides ─────────────────────────────────────────────────
+
+  /**
+   * QA: Solo the layer at `index`. If already soloed at that index, exit solo
+   * and restore all layers to full visibility.
+   *
+   * In solo mode ALL sprites except the chosen layer are hidden, making it
+   * trivial to identify which layer carries a rectangular artifact.
+   */
+  override toggleSoloLayer(index: number): void {
+    this.v2SoloIndex = this.v2SoloIndex === index ? null : index
+    this.applyV2SoloVisibility()
+  }
+
+  /**
+   * QA: Toggle the sprite-bounds overlay.
+   * When on, a coloured rectangle is drawn around each visible overlay sprite
+   * every frame.  If a rectangle aligns with an artifact, that sprite is the
+   * culprit.
+   */
+  override toggleBounds(): void {
+    this.v2ShowBounds = !this.v2ShowBounds
+    if (!this.v2ShowBounds) {
+      this.v2BoundsGraphics?.clear().setVisible(false)
+    } else {
+      this.v2BoundsGraphics?.setVisible(true)
+    }
   }
 
   // ─── QA debug overlay ──────────────────────────────────────────────────────
@@ -277,12 +352,34 @@ export class BackgroundSystemV2 extends BackgroundSystem {
       `  bottom_scrim_h=${BOTTOM_SCRIM_H}px  depth=${BOTTOM_SCRIM_DEPTH}`,
     ]
 
-    // ── visible layers (QA isolation: keys 1–8 toggle)
+    // ── visible layers (QA isolation: keys 1–8 toggle, Shift+1–8 solo)
     const layerNames = this.getLayerNames()
     const layerVis   = this.getLayerVisibility()
+    const soloStr = this.v2SoloIndex !== null
+      ? `SOLO=[${this.v2SoloIndex + 1}] ${layerNames[this.v2SoloIndex] ?? '?'}`
+      : 'none'
     const visLines = layerNames.length > 0
-      ? layerNames.map((name, i) => `  [${i + 1}] ${layerVis[i] ? '●' : '○'} ${name}`)
+      ? layerNames.map((name, i) => {
+          const soloMark = this.v2SoloIndex === i ? ' ◀SOLO' : ''
+          return `  [${i + 1}] ${layerVis[i] ? '●' : '○'} ${name}${soloMark}`
+        })
       : ['  (none)']
+
+    // ── corner alpha (proves whether sanitization has been applied)
+    const cornerAlphaLines = SANITIZE_TARGETS.map(({ key, label }) => {
+      if (!this.v2Scene.textures.exists(key)) return `  ${label}: (not loaded)`
+      const tex = this.v2Scene.textures.get(key)
+      const src = tex.getSourceImage() as { width?: number; height?: number }
+      const w = (src?.width ?? 2) - 1
+      const h = (src?.height ?? 2) - 1
+      const tl = this.v2Scene.textures.getPixelAlpha(0, 0, key)
+      const tr = this.v2Scene.textures.getPixelAlpha(w, 0, key)
+      const bl = this.v2Scene.textures.getPixelAlpha(0, h, key)
+      const br = this.v2Scene.textures.getPixelAlpha(w, h, key)
+      const allZero = tl === 0 && tr === 0 && bl === 0 && br === 0
+      const flag = allZero ? '✓' : '✗'
+      return `  ${flag} ${label.padEnd(10)} α TL=${tl} TR=${tr} BL=${bl} BR=${br}`
+    })
 
     // ── textures
     const texLines = this.v2Env.assets.map((asset) => {
@@ -294,6 +391,12 @@ export class BackgroundSystemV2 extends BackgroundSystem {
 
     return [
       `env: ${this.v2Env.key} — ${this.v2Env.label} (${W}×${H})`,
+      '',
+      'QA FORENSICS (Shift+1–8 solo, B bounds):',
+      `  solo: ${soloStr}   bounds: ${this.v2ShowBounds ? 'ON' : 'OFF'}`,
+      '',
+      'CORNER α (✓=clean, ✗=artifact risk):',
+      ...cornerAlphaLines,
       '',
       'PARALLAX:',
       ...layerLines,
@@ -327,6 +430,125 @@ export class BackgroundSystemV2 extends BackgroundSystem {
   }
 
   // ─── Private helpers ────────────────────────────────────────────────────────
+
+  // ─── QA forensics private helpers ───────────────────────────────────────────
+
+  /**
+   * Apply solo/restore visibility across all V2 and parent sprites.
+   * In solo mode every sprite except the chosen layer is hidden so the viewer
+   * can confirm whether that layer carries a rectangular artifact.
+   */
+  private applyV2SoloVisibility(): void {
+    const solo = this.v2SoloIndex
+    const layerCount = this.getLayerNames().length
+
+    if (solo === null) {
+      // Exit solo — restore all layers and V2 sprites to full visibility.
+      this.setAllLayersVisible(true)
+      this.setLightRaysVisible(true)
+      this.setReflectionVisible(true)
+      this.setBiolumeVisible(true)
+      this.vignetteSprite?.setVisible(true)
+      this.gradeSprite?.setVisible(true)
+      this.grainSprite?.setVisible(true)
+      this.bottomScrimSprite?.setVisible(true)
+      this.bankHazeSprite?.setVisible(true)
+      this.shimmerSprite?.setVisible(true)
+      for (const e of this.v2SparkleEmitters) e.setVisible(true)
+    } else {
+      // Enter solo — show only the chosen numbered layer, hide everything else.
+      for (let i = 0; i < layerCount; i++) {
+        this.setLayerVisible(i, i === solo)
+      }
+      this.setLightRaysVisible(false)
+      this.setReflectionVisible(false)
+      this.setBiolumeVisible(false)
+      this.vignetteSprite?.setVisible(false)
+      this.gradeSprite?.setVisible(false)
+      this.grainSprite?.setVisible(false)
+      this.bottomScrimSprite?.setVisible(false)
+      this.bankHazeSprite?.setVisible(false)
+      this.shimmerSprite?.setVisible(false)
+      for (const e of this.v2SparkleEmitters) e.setVisible(false)
+    }
+  }
+
+  /**
+   * Redraws sprite-bounds rectangles each frame when `v2ShowBounds` is true.
+   * Each overlay sprite category gets a distinct colour so any rectangle that
+   * aligns with a visible artifact immediately identifies the culprit.
+   *
+   *  Red      — full-canvas parallax / fog / fg TileSprites
+   *  Orange   — light-rays Image
+   *  Yellow   — biolume patch Images
+   *  Cyan     — water shimmer TileSprite
+   *  Green    — grade Image
+   *  Magenta  — grain TileSprite
+   *  White    — bottom scrim + bank haze
+   */
+  private v2UpdateBoundsGraphics(): void {
+    if (!this.v2BoundsGraphics) return
+    const g = this.v2BoundsGraphics
+    g.clear()
+
+    const { width, height } = GAME_DIMENSIONS
+
+    // Full-canvas layer TileSprites (bg, fog, foreground)
+    const layerNames = this.getLayerNames()
+    const layerVis   = this.getLayerVisibility()
+    for (let i = 0; i < layerNames.length; i++) {
+      if (layerVis[i]) {
+        g.lineStyle(1, 0xff4444, 0.9)
+        g.strokeRect(i * 2, i * 2, width - i * 4, height - i * 4)
+      }
+    }
+
+    // Light-rays Image
+    if (this.v2Env.lightRays) {
+      g.lineStyle(1.5, 0xff8800, 0.9)
+      g.strokeRect(1, 1, width - 2, height - 2)
+    }
+
+    // Biolume patch Images
+    if (this.v2Env.biolume) {
+      g.lineStyle(1.5, 0xffff00, 0.9)
+      for (const patch of this.v2Env.biolume.patches) {
+        const half = Math.round((512 * patch.scale) / 2)
+        g.strokeRect(patch.x - half, patch.y - half, half * 2, half * 2)
+      }
+    }
+
+    // Water shimmer TileSprite
+    if (this.shimmerSprite?.visible) {
+      const wl = this.v2Env.reflection?.waterlineY ?? 380
+      const sy = Math.max(0, wl - 20)
+      g.lineStyle(1.5, 0x00ffff, 0.9)
+      g.strokeRect(0, sy, width, height - sy)
+    }
+
+    // Grade Image (full-canvas)
+    if (this.gradeSprite?.visible) {
+      g.lineStyle(1.5, 0x00ff00, 0.9)
+      g.strokeRect(3, 3, width - 6, height - 6)
+    }
+
+    // Grain TileSprite (full-canvas)
+    if (this.grainSprite?.visible) {
+      g.lineStyle(1.5, 0xff00ff, 0.9)
+      g.strokeRect(4, 4, width - 8, height - 8)
+    }
+
+    // Bottom scrim + bank haze
+    if (this.bottomScrimSprite?.visible) {
+      g.lineStyle(1.5, 0xffffff, 0.8)
+      g.strokeRect(0, height - BOTTOM_SCRIM_H, width, BOTTOM_SCRIM_H)
+    }
+    if (this.bankHazeSprite?.visible) {
+      const wl = this.v2Env.reflection?.waterlineY ?? 380
+      g.lineStyle(1.5, 0xaaaaff, 0.8)
+      g.strokeRect(0, wl - Math.round(BANK_HAZE_H / 2), width, BANK_HAZE_H)
+    }
+  }
 
   /** Apply low-power visibility to V2-exclusive objects (shimmer, sparkles). */
   private applyV2LowPowerVisibility(): void {
@@ -620,6 +842,44 @@ export class BackgroundSystemV2 extends BackgroundSystem {
    *
    * Texture created once per session via key guard; reused on env switches.
    */
+  /**
+   * Creates a horizontal violet-blue haze band centred at the waterline.
+   *
+   * This blends `bg_swamp_near` into the ground sprite by softening the
+   * hard visual edge where the water channels meet the playfield floor.
+   *
+   * Gradient: transparent at both top and bottom edges — opaque in the middle
+   * of the BANK_HAZE_H strip — so it reads as atmospheric mist, not a band.
+   *
+   * Depth BANK_HAZE_DEPTH (0.685): above swamp_near (0.66), below shimmer (0.70).
+   */
+  private v2CreateBankHaze(): void {
+    const { width } = GAME_DIMENSIONS
+    const waterlineY = this.v2Env.reflection?.waterlineY ?? 380
+
+    if (!this.v2Scene.textures.exists(BANK_HAZE_TEX_KEY)) {
+      const canvas = document.createElement('canvas')
+      canvas.width  = width
+      canvas.height = BANK_HAZE_H
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        const grad = ctx.createLinearGradient(0, 0, 0, BANK_HAZE_H)
+        grad.addColorStop(0,    'rgba(14, 20, 48, 0.00)')   // transparent at top edge
+        grad.addColorStop(0.35, 'rgba(14, 20, 48, 0.20)')   // faint violet-blue fog peak
+        grad.addColorStop(0.65, 'rgba(10, 16, 40, 0.14)')   // softer midsection
+        grad.addColorStop(1,    'rgba(6,  10, 28, 0.00)')   // transparent at bottom edge
+        ctx.fillStyle = grad
+        ctx.fillRect(0, 0, width, BANK_HAZE_H)
+      }
+      this.v2Scene.textures.addCanvas(BANK_HAZE_TEX_KEY, canvas)
+    }
+
+    this.bankHazeSprite = this.v2Scene.add
+      .image(0, waterlineY - Math.round(BANK_HAZE_H / 2), BANK_HAZE_TEX_KEY)
+      .setOrigin(0, 0)
+      .setDepth(BANK_HAZE_DEPTH)
+  }
+
   private v2CreateBottomScrim(): void {
     const { width, height } = GAME_DIMENSIONS
 

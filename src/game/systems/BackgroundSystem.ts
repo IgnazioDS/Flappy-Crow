@@ -164,6 +164,57 @@ export class BackgroundSystem {
     )
   }
 
+  /**
+   * QA: Set visibility of the layer at `index` to an explicit value.
+   * Order: bg layers → fog layers → foreground layers.
+   * Returns the layer name, or '' if index is out of range.
+   */
+  setLayerVisible(index: number, visible: boolean): string {
+    const all = [...this.layers, ...this.fogLayers, ...this.foregroundLayers]
+    if (index < 0 || index >= all.length) return ''
+    all[index].sprite.setVisible(visible)
+    return all[index].name
+  }
+
+  /** QA: Show or hide all bg / fog / foreground layer sprites. */
+  setAllLayersVisible(visible: boolean): void {
+    for (const l of [...this.layers, ...this.fogLayers, ...this.foregroundLayers]) {
+      l.sprite.setVisible(visible)
+    }
+  }
+
+  /** QA: Show or hide all biolume patch sprites. */
+  setBiolumeVisible(visible: boolean): void {
+    this.biolume.forEach((patch) => patch.sprite.setVisible(visible))
+  }
+
+  /** QA: Show or hide the light-rays sprite. */
+  setLightRaysVisible(visible: boolean): void {
+    this.lightRays?.sprite.setVisible(visible)
+  }
+
+  /** QA: Show or hide the water-reflection container. */
+  setReflectionVisible(visible: boolean): void {
+    this.reflection?.container.setVisible(visible)
+  }
+
+  /**
+   * QA: Solo the layer at `index`. Override in subclasses for full solo support.
+   * Base implementation is a no-op (subclass controls V2-specific sprites).
+   */
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  toggleSoloLayer(_index: number): void {
+    /* overridden in BackgroundSystemV2 */
+  }
+
+  /**
+   * QA: Toggle the sprite-bounds debug overlay.
+   * Override in subclasses that draw bounds.
+   */
+  toggleBounds(): void {
+    /* overridden in BackgroundSystemV2 */
+  }
+
   destroy(): void {
     this.layers.forEach((layer) => layer.sprite.destroy())
     this.fogLayers.forEach((layer) => layer.sprite.destroy())
