@@ -5,6 +5,45 @@
 All notable changes to this project will be documented in this file.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [6.1.6] - 2026-02-26
+
+### Fixed
+
+- **V2 rectangular artifact bug (root cause)** — `scripts/render-v2-assets.mjs`
+  used `omitBackground: false`, causing Playwright to bake a white background
+  into every exported PNG.  When Phaser loaded these textures and applied
+  `ADD` / `SCREEN` blend modes (biolume, fog, light-rays, water shimmer), the
+  white rectangular bounds of each sprite became visible as translucent
+  rectangles with glowing centres — the "purple square" artifacts.  Fixed by
+  setting `omitBackground: true`; all 10 V2 assets regenerated as proper RGBA
+  PNGs (corner-pixel alpha ≤ 3 vs. the prior 255).
+- **`bg_swamp_near.svg` fog-band seam** — the near-ground fog was a hard-edged
+  `<rect x="0" y="548" width="1024" height="92">` causing a visible horizontal
+  seam at y = 548.  Replaced with a full-canvas rect (`width="1024"
+  height="640"`) backed by an updated `fog_near` linear-gradient whose
+  non-zero stops begin at 76% (~486 px) so the transition is seamless:
+  `76% op=0 → 88% op=0.06 → 100% op=0.22`.
+
+### Added
+
+- **QA layer-visibility toggles (keys 1–8)** — when `VITE_ART_QA=true` or in
+  DEV mode, keys 1–8 toggle the visibility of individual V2 background layers
+  (order: bg layers → fog layers → foreground layers).  Enables rapid artifact
+  isolation without reloading.  The env debug overlay (`D` key) shows a
+  `VISIBLE_LAYERS (1–8 toggle):` section with ●/○ indicators per layer.
+  - `BackgroundSystem`: new `toggleLayerByIndex(index)`, `getLayerNames()`,
+    `getLayerVisibility()` public methods.
+  - `BackgroundSystemV2.getDebugLines()`: added `VISIBLE_LAYERS:` section.
+  - `PlayScene.setupInput()`: registers `keydown-1` through `keydown-8` when
+    `debugToggleAllowed`.
+- **Bottom fog scrim** — a programmatic 360×115 px dark-to-transparent gradient
+  at depth 0.91 (above background layers max 0.84, below vignette 0.92).
+  Teal-black at the bottom edge, fully transparent at the top, it grounds the
+  swamp scene and hides any seam between `bg_swamp_near` and the ground sprite.
+  Implemented as `v2CreateBottomScrim()` in `BackgroundSystemV2` using the
+  existing canvas-texture pattern; texture key `v2-bottom-scrim` created once
+  per session.  Reported in `getDebugLines()` FX budget section.
+
 ## [6.1.5] - 2026-02-26
 
 ### Added
