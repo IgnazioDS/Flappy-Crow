@@ -47,8 +47,28 @@ Playwright runs the dev server with `VITE_TEST_SEED` and `VITE_E2E` to make runs
 - H: toggle art QA hitbox overlay
 - M: toggle mute icon
 - R: toggle reduced motion
+- E: cycle V2 ↔ V1 environment (Evil Forest theme, DEV only)
 - Esc: close settings panel
 - Share button (Game Over): export run card + seed link
+
+### Art QA controls (DEV or `VITE_ART_QA=true`)
+
+These controls are only available when running with `npm run dev` or when the
+`VITE_ART_QA=true` environment variable is set.
+
+| Key | Action |
+|---|---|
+| `D` | Toggle environment debug overlay (parallax speeds, fog/biolume knobs, FX budget, corner-α) |
+| `1`–`8` | Toggle visibility of individual background layer (Sky Far → Branches) |
+| `Shift`+`1`–`8` | **Solo** a single layer — hides all other sprites for artifact isolation |
+| `Shift`+same digit | Exit solo mode, restore all layers |
+| `B` | Toggle sprite-bounds overlay — draws a coloured rectangle around every overlay sprite |
+
+The debug overlay sections:
+- **QA FORENSICS**: current solo status + bounds on/off
+- **CORNER α**: TL/TR/BL/BR alpha values for ADD/SCREEN-blend textures — `✓` means clean (0), `✗` means artifact risk
+- **VISIBLE_LAYERS**: ●/○ per layer with `◀SOLO` marker on the active solo
+- **FX BUDGET**: live sparkle count + all visible-layer alphas snapshot
 
 ## Query params
 

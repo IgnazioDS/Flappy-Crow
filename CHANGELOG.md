@@ -5,6 +5,58 @@
 All notable changes to this project will be documented in this file.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [6.1.7] - 2026-02-26
+
+### Fixed
+
+- **Rectangular glow-plate artifacts (definitive fix)** — v6.1.6 changed
+  Playwright's `omitBackground: false → true`, which converted exports from RGB
+  to RGBA.  However SVG ambient gradients still leave alpha 1–5 at sprite edges;
+  with ADD (`biolume`) and SCREEN (`light_rays`) blend modes even alpha=1 on a
+  near-white pixel produces a visible halo rectangle.  Fixed by
+  `BootScene.sanitizeAlphaTexture(key, threshold)`:
+  - Called once at boot for `v2-fog-soft` (12), `v2-light-rays` (10),
+    `v2-biolume` (16), `v2-water-mask` (6).
+  - Reads pixel data via `getImageData()`, clamps every alpha ≤ threshold to 0,
+    replaces the Phaser texture in-place (same key — no downstream changes).
+  - Runs in O(W×H) ≈ 0.3 ms per 512×512 texture; executed once before PlayScene.
+- **Bottom composition** — replaced the v6.1.6 dark-teal-black bottom scrim with
+  a cool violet-blue fog gradient that matches the V2 palette (grade overlay +
+  fog A/B tints).  Gradient: transparent → faint violet haze → cool purple shadow
+  → near-opaque cool edge.  No longer reads as a "flat band".
+- **Waterline seam** — new `v2CreateBankHaze()`: a 360×90 px transparent-peak-
+  transparent violet-blue stripe centred at `reflection.waterlineY` (380 px),
+  depth 0.685.  Blends `bg_swamp_near` into the ground sprite with atmospheric
+  mist rather than a hard edge.
+
+### Added
+
+- **Solo mode (`Shift`+`1`–`8`)** — in DEV / `VITE_ART_QA=true`, pressing
+  `Shift`+digit solos a single background layer (hides all other sprites
+  including V2-exclusive vignette, grade, grain, scrim, haze, shimmer, sparkles,
+  biolume).  Press the same combination to exit solo.  Enables instant artifact
+  attribution without reloading.
+  - `BackgroundSystemV2.toggleSoloLayer(index)` + `applyV2SoloVisibility()`.
+  - `PlayScene.setupInput()`: single `keydown` listener using `event.code`
+    (keyboard-layout independent) and `event.shiftKey`.
+- **Sprite-bounds overlay (`B` key)** — in QA mode, pressing `B` draws
+  colour-coded bounding rectangles around every visible overlay sprite
+  (red=layers, orange=light-rays, yellow=biolume, cyan=shimmer, green=grade,
+  magenta=grain, white=scrim/haze).  If a rectangle aligns with a visible
+  artifact, that sprite is the culprit.
+  - `BackgroundSystemV2.toggleBounds()` + `v2UpdateBoundsGraphics()` (redraws
+    every frame, zero allocations).
+- **Corner-α overlay in env debug** — new `CORNER α` section shows TL/TR/BL/BR
+  alpha for each ADD/SCREEN-blend suspect texture with ✓ (clean) / ✗ (risk).
+  `SANITIZE_TARGETS` constant in `BackgroundSystemV2` keeps thresholds in sync
+  with `BootScene`.
+- **QA FORENSICS section** in debug overlay: current solo index + bounds status.
+- New `BackgroundSystem` public methods: `setLayerVisible`, `setAllLayersVisible`,
+  `setBiolumeVisible`, `setLightRaysVisible`, `setReflectionVisible`,
+  `toggleSoloLayer` (no-op base), `toggleBounds` (no-op base).
+- **README QA controls table** — documents all art-QA keyboard shortcuts
+  including the new solo/bounds additions.
+
 ## [6.1.6] - 2026-02-26
 
 ### Fixed
