@@ -1,30 +1,33 @@
 import Phaser from 'phaser'
 import { getActiveTheme } from '../theme'
 import { getEnvironmentAssets } from '../theme/env'
+import {
+  sanitizeAdditiveTexture,
+  sampleTextureRGBA,
+  V2_SANITIZE_MANIFEST,
+} from '../graphics/TextureSanitizer'
 
 /**
- * ADD / SCREEN blend textures that need alpha-floor sanitization.
+ * Preloads visual assets before gameplay starts, then sanitizes ADD/SCREEN-blend
+ * textures so rectangular artifact plates cannot appear at runtime.
  *
- * Even with Playwright's omitBackground:true, SVG ambient gradients can leave
- * alpha 1–5 at sprite edges.  ADD and SCREEN blend modes amplify these faint
- * floors into visible rectangular plates (the "purple-square" artifact).
+ * ─── Why sanitization is needed ───────────────────────────────────────────────
+ * SVG ambient gradients leave alpha 1–28 at sprite edges even when rendered with
+ * omitBackground:true.  ADD and SCREEN blend modes read source RGB independently
+ * of source alpha, so even alpha=1 pixels with RGB=(200,200,200) contribute a
+ * white halo that manifests as a solid rectangular plate matching the sprite
+ * bounding box.
  *
- * sanitizeAlphaTexture() reads pixel data once at load time, clamps any alpha
- * ≤ threshold to 0, and replaces the Phaser texture in-place (same key).
- * This eliminates rectangles robustly, independent of how assets were exported.
+ * ─── What this does ───────────────────────────────────────────────────────────
+ * sanitizeAdditiveTexture() walks each pixel once (O(W×H)) and sets r=g=b=a=0
+ * for every pixel whose alpha ≤ threshold.  It runs in create() — after all
+ * textures are loaded but before PlayScene creates any sprites — so all
+ * downstream texture lookups see the cleaned data with no key changes required.
  *
- * Thresholds are conservative: glow cores have alpha >> 50, so only the
- * invisible fringe is removed.
- */
-const V2_SANITIZE: Array<{ key: string; threshold: number }> = [
-  { key: 'v2-fog-soft',   threshold: 12 },   // fog tile — remove edge floors
-  { key: 'v2-light-rays', threshold: 10 },   // SCREEN blend — kill outer plate
-  { key: 'v2-biolume',    threshold: 16 },   // ADD blend   — strongest sanitizer
-  { key: 'v2-water-mask', threshold:  6 },   // BitmapMask  — should be binary
-]
-
-/**
- * Preloads visual assets before gameplay starts.
+ * ─── v6.1.7 → v6.1.8 regression fix ─────────────────────────────────────────
+ * v6.1.7 sanitizeAlphaTexture() only zeroed alpha (walked `i=3; i+=4`).
+ * RGB remained non-zero in "transparent" pixels, so ADD still showed them.
+ * v6.1.8 uses sanitizeAdditiveTexture() which zeros ALL four channels.
  */
 export class BootScene extends Phaser.Scene {
   constructor() {
@@ -32,7 +35,7 @@ export class BootScene extends Phaser.Scene {
   }
 
   preload(): void {
-    const theme = getActiveTheme()
+    const theme       = getActiveTheme()
     const supportsWebp = this.supportsWebp()
     if (theme.assets.atlas) {
       const atlasImage = supportsWebp
@@ -52,12 +55,53 @@ export class BootScene extends Phaser.Scene {
   }
 
   create(): void {
-    // Sanitize ADD/SCREEN-blend V2 textures to eliminate alpha-floor rectangles.
-    // Runs once here — before PlayScene creates any sprites — so all subsequent
-    // texture lookups see the cleaned data.
-    if (this.textures.exists('v2-fog-soft')) {
-      for (const { key, threshold } of V2_SANITIZE) {
-        this.sanitizeAlphaTexture(key, threshold)
+    // Only run V2 sanitization when the Evil Forest V2 textures are present.
+    if (this.textures.exists('v2-biolume')) {
+
+      // STEP 1 — ART_QA: Log corner RGBA *before* sanitization so the PR can
+      // confirm RGB > 0 in near-transparent pixels (the artifact root cause).
+      if (import.meta.env.VITE_ART_QA === 'true') {
+        console.group('[ArtQA v6.1.8] Pre-sanitize corner RGBA')
+        for (const { key, label } of V2_SANITIZE_MANIFEST) {
+          const samples = sampleTextureRGBA(this, key)
+          if (samples.length === 0) {
+            console.log(`  ${label}: texture not loaded`)
+            continue
+          }
+          const hasArtifact = samples.some(
+            (s) => s.a <= 28 && (s.r > 0 || s.g > 0 || s.b > 0),
+          )
+          const flag = hasArtifact ? '⚠ RGB>0 in transparent — artifact risk' : '✓ clean'
+          console.log(
+            `  ${label.padEnd(12)} ${flag}`,
+            '\n  ',
+            samples.map((s) => `${s.label}=(${s.r},${s.g},${s.b},${s.a})`).join('  '),
+          )
+        }
+        console.groupEnd()
+      }
+
+      // STEP 2 — Sanitize: zero RGB+alpha for all low-alpha pixels.
+      // In-place replacement (dstKey === srcKey) so no sprite key changes needed.
+      for (const { key, threshold } of V2_SANITIZE_MANIFEST) {
+        sanitizeAdditiveTexture(this, key, key, threshold)
+      }
+
+      // STEP 1 (post-sanitize confirmation in ART_QA mode).
+      if (import.meta.env.VITE_ART_QA === 'true') {
+        console.group('[ArtQA v6.1.8] Post-sanitize corner RGBA (expect all 0,0,0,0)')
+        for (const { key, label } of V2_SANITIZE_MANIFEST) {
+          const samples = sampleTextureRGBA(this, key)
+          if (samples.length === 0) continue
+          const dirty = samples.some((s) => s.r > 0 || s.g > 0 || s.b > 0 || s.a > 0)
+          const flag = dirty ? '✗ STILL DIRTY' : '✓ clean'
+          console.log(
+            `  ${label.padEnd(12)} ${flag}`,
+            '\n  ',
+            samples.map((s) => `${s.label}=(${s.r},${s.g},${s.b},${s.a})`).join('  '),
+          )
+        }
+        console.groupEnd()
       }
     }
 
@@ -65,60 +109,6 @@ export class BootScene extends Phaser.Scene {
   }
 
   // ─── Private helpers ────────────────────────────────────────────────────────
-
-  /**
-   * Sanitize a loaded Phaser texture in-place: any pixel whose alpha ≤ threshold
-   * is set to alpha = 0.  Eliminates faint rectangular alpha floors that become
-   * visible when ADD or SCREEN blend modes are used.
-   *
-   * Algorithm:
-   *   1. Draw source image into a same-size off-screen canvas.
-   *   2. Read all pixel data with getImageData().
-   *   3. Walk alpha channel; clamp values ≤ threshold to 0.
-   *   4. Write back with putImageData() if any pixels were changed.
-   *   5. Remove the original Phaser texture entry and re-register the canvas.
-   *
-   * Must be called after preload() has completed loading the texture.
-   * Runs in O(W×H) time; executed once at boot, not per-frame.
-   */
-  private sanitizeAlphaTexture(key: string, threshold: number): void {
-    if (!this.textures.exists(key)) return
-
-    const tex = this.textures.get(key)
-    // getSourceImage() returns the HTMLImageElement / HTMLCanvasElement backing the frame.
-    const src = tex.getSourceImage() as HTMLImageElement & HTMLCanvasElement
-    const w = src.naturalWidth  || src.width  || 0
-    const h = src.naturalHeight || src.height || 0
-    if (w === 0 || h === 0) return
-
-    const canvas = document.createElement('canvas')
-    canvas.width  = w
-    canvas.height = h
-    const ctx = canvas.getContext('2d')
-    if (!ctx) return
-
-    ctx.drawImage(src, 0, 0)
-
-    const imageData = ctx.getImageData(0, 0, w, h)
-    const data      = imageData.data
-    let clamped     = 0
-
-    // Walk the alpha channel only — every 4th byte starting at index 3.
-    for (let i = 3; i < data.length; i += 4) {
-      if (data[i] <= threshold) {
-        data[i] = 0
-        clamped++
-      }
-    }
-
-    if (clamped === 0) return  // texture already clean; skip replace
-
-    ctx.putImageData(imageData, 0, 0)
-
-    // Replace the Phaser texture in-place (same key → no sprite key changes needed).
-    this.textures.remove(key)
-    this.textures.addCanvas(key, canvas)
-  }
 
   private supportsWebp(): boolean {
     try {

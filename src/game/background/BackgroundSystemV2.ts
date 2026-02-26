@@ -2,6 +2,7 @@ import Phaser from 'phaser'
 import { GAME_DIMENSIONS } from '../config'
 import { BackgroundSystem } from '../systems/BackgroundSystem'
 import type { EnvironmentConfig, EnvironmentFogLayer } from '../theme/env/types'
+import { V2_SANITIZE_MANIFEST } from '../graphics/TextureSanitizer'
 
 /**
  * Key for the programmatically-generated vignette canvas texture.
@@ -68,17 +69,10 @@ const BANK_HAZE_DEPTH = 0.685
 const BANK_HAZE_H = 90
 
 /**
- * Texture keys for ADD/SCREEN-blend assets that need alpha-floor sanitization.
- * Even with omitBackground:true, SVG ambient gradients can leave alpha 1–5 at
- * sprite edges, which ADD/SCREEN amplify into visible rectangular plates.
- * Used by BootScene.sanitizeAlphaTexture() and by the QA corner-alpha overlay.
+ * V2_SANITIZE_MANIFEST is imported from TextureSanitizer so the thresholds
+ * used in the QA corner-α overlay always match what BootScene actually applies.
+ * (Previously a local SANITIZE_TARGETS copy — removed in v6.1.8 to prevent drift.)
  */
-const SANITIZE_TARGETS: Array<{ key: string; label: string; threshold: number }> = [
-  { key: 'v2-fog-soft',  label: 'fog_tile',  threshold: 12 },
-  { key: 'v2-light-rays',label: 'light_rays',threshold: 10 },
-  { key: 'v2-biolume',   label: 'biolume',   threshold: 16 },
-  { key: 'v2-water-mask',label: 'water_mask',threshold:  6 },
-]
 
 /**
  * BackgroundSystemV2 — extends BackgroundSystem with V2-specific features:
@@ -365,20 +359,39 @@ export class BackgroundSystemV2 extends BackgroundSystem {
         })
       : ['  (none)']
 
-    // ── corner alpha (proves whether sanitization has been applied)
-    const cornerAlphaLines = SANITIZE_TARGETS.map(({ key, label }) => {
+    // ── corner RGBA (proves whether RGB+alpha sanitization has been applied)
+    // v6.1.8: shows full (r,g,b,a) not just alpha — artifact condition is
+    // alpha≈0 BUT RGB>0, not alpha>0 alone. ✗ means plate risk even if α=0.
+    const cornerAlphaLines = V2_SANITIZE_MANIFEST.map(({ key, label }) => {
       if (!this.v2Scene.textures.exists(key)) return `  ${label}: (not loaded)`
       const tex = this.v2Scene.textures.get(key)
       const src = tex.getSourceImage() as { width?: number; height?: number }
       const w = (src?.width ?? 2) - 1
       const h = (src?.height ?? 2) - 1
-      const tl = this.v2Scene.textures.getPixelAlpha(0, 0, key)
-      const tr = this.v2Scene.textures.getPixelAlpha(w, 0, key)
-      const bl = this.v2Scene.textures.getPixelAlpha(0, h, key)
-      const br = this.v2Scene.textures.getPixelAlpha(w, h, key)
-      const allZero = tl === 0 && tr === 0 && bl === 0 && br === 0
-      const flag = allZero ? '✓' : '✗'
-      return `  ${flag} ${label.padEnd(10)} α TL=${tl} TR=${tr} BL=${bl} BR=${br}`
+
+      // getPixel returns Phaser.Display.Color | null; safe fallback to {r:?,g:?,b:?,a:?}
+      const px = (x: number, y: number): string => {
+        const c = this.v2Scene.textures.getPixel(x, y, key)
+        if (!c) return '(?)'
+        return `(${c.red},${c.green},${c.blue},${c.alpha})`
+      }
+      const isDirty = (x: number, y: number): boolean => {
+        const c = this.v2Scene.textures.getPixel(x, y, key)
+        if (!c) return false
+        // Artifact condition: transparent-ish pixel with non-black RGB
+        return c.alpha <= 28 && (c.red > 0 || c.green > 0 || c.blue > 0)
+      }
+
+      const tlDirty = isDirty(0, 0)
+      const trDirty = isDirty(w, 0)
+      const blDirty = isDirty(0, h)
+      const brDirty = isDirty(w, h)
+      const anyDirty = tlDirty || trDirty || blDirty || brDirty
+      const flag = anyDirty ? '✗' : '✓'
+      return (
+        `  ${flag} ${label.padEnd(10)} ` +
+        `TL=${px(0,0)} TR=${px(w,0)} BL=${px(0,h)} BR=${px(w,h)}`
+      )
     })
 
     // ── textures

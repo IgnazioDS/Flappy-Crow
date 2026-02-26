@@ -5,6 +5,55 @@
 All notable changes to this project will be documented in this file.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [6.1.8] - 2026-02-26
+
+### Fixed
+
+- **RGB+alpha sanitization (definitive rectangular-plate fix)** — v6.1.7's
+  `sanitizeAlphaTexture()` only zeroed the **alpha channel** (`i=3; i+=4`).
+  ADD and SCREEN blend modes read **source RGB independently of source alpha**:
+  a pixel with `RGB=(200,200,200), alpha=0` still contributes a white offset to
+  every destination pixel it overlaps, producing a solid rectangular plate.
+  v6.1.8 zeros **all four channels** (r=g=b=a=0) for every pixel whose alpha ≤
+  threshold — the only correct fix for additive-blend artifacts.
+  Thresholds raised to cover the real SVG gradient fringe depth:
+  - `v2-biolume` 16 → **24** (ADD — SVG radial gradients reach alpha 20–28 at edges)
+  - `v2-light-rays` 10 → **16** (SCREEN — diagonal streaks leave alpha up to 14)
+  - `v2-fog-soft` 12 → **12** (unchanged; normal blend, sanitized for hygiene)
+  - `v2-water-mask` 6 → **6** (unchanged; BitmapMask, near-binary already)
+- **Export pipeline hardened** — `scripts/render-v2-assets.mjs` now runs an
+  in-browser pixel-sanitize pass (via `page.evaluate()` + Canvas 2D API) before
+  writing each ADD/SCREEN texture PNG.  Prevents shipping dirty textures and
+  reduces the work left for runtime sanitization.  No new Node dependencies.
+
+### Added
+
+- **`src/game/graphics/TextureSanitizer.ts`** — new module:
+  - `sanitizeAdditiveTexture(scene, srcKey, dstKey, threshold)`:
+    O(W×H) pixel walk; zeros r=g=b=a for alpha ≤ threshold.  Pass
+    `dstKey === srcKey` for in-place replacement (no downstream key changes).
+  - `sampleTextureRGBA(scene, key)`: samples 5 strategic points (TL, TR, BL,
+    BR, ML) and returns `{r,g,b,a}` per point for ART_QA boot logging.
+  - `V2_SANITIZE_MANIFEST`: single source of truth for V2 texture keys,
+    labels, and thresholds — imported by both `BootScene` and
+    `BackgroundSystemV2` so thresholds can never drift between sanitization and
+    QA display.
+- **ART_QA boot logging** — when `VITE_ART_QA=true`, `BootScene` logs
+  corner RGBA before _and_ after sanitization with artifact-risk flags
+  (`⚠ RGB>0 in transparent` / `✓ clean`).  Provides direct proof in the PR.
+- **Corner-α overlay upgraded to full RGBA** — `BackgroundSystemV2.getDebugLines()`
+  now uses `textures.getPixel()` instead of `textures.getPixelAlpha()` to show
+  `(r,g,b,a)` at each corner.  ✗ flag now triggers on `alpha≤28 AND RGB>0`
+  (the actual artifact condition) rather than `alpha>0` alone.
+
+### Changed
+
+- `BootScene` refactored: old private `sanitizeAlphaTexture()` removed; now
+  delegates entirely to `TextureSanitizer.sanitizeAdditiveTexture()` via the
+  shared `V2_SANITIZE_MANIFEST`.
+- `BackgroundSystemV2` local `SANITIZE_TARGETS` const removed; replaced by
+  `import { V2_SANITIZE_MANIFEST }` from `TextureSanitizer`.
+
 ## [6.1.7] - 2026-02-26
 
 ### Fixed
