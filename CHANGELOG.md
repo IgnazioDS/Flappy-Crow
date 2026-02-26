@@ -5,6 +5,44 @@
 All notable changes to this project will be documented in this file.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [6.1.5] - 2026-02-26
+
+### Added
+
+- **Water shimmer overlay** — tileable 128×64 specular-streak `TileSprite` (programmatic
+  canvas: 6 diagonal white-blue streaks on transparent background) at depth 0.70, SCREEN
+  blend, alpha 0.08.  Scrolls at 18 px/s horizontal + 6 px/s vertical with a slow sin
+  alpha pulse (±30 %, 0.22 Hz).  Masked to water channels via a `BitmapMask` reusing the
+  existing `water_reflection_mask` texture — no new asset file.  Disabled in
+  reducedMotion and lowPower mode.  Knobs: `env.waterShimmer.{enabled,alpha,scrollX,
+  scrollY,pulseAmp,pulseHz,depth}`.
+- **Biolume sparkle clusters** — one `ParticleEmitter` per biolume patch (4 total for
+  Evil Forest V2), emitting tiny ADD-blend blue-white dots (`v2-sparkle-dot`, a 16×16
+  radial-gradient canvas) that drift slowly upward within a 22 px radius of each patch
+  centre.  Hard cap: `sparkleMax=14` shared across all emitters (≤ 3 per patch), spawn
+  rate 850 ms — localized and budget-safe.  Pre-allocates `Phaser.Geom.Circle` and
+  `Phaser.Geom.Point` per emitter so the hot path has zero per-frame GC pressure.  Knobs:
+  `env.biolume.{sparkleMax,sparkleSpawnRate}`.
+- **FX budget QA section** in `BackgroundSystemV2.getDebugLines()` — live snapshot of all
+  visible layer alphas (fog / rays / grade / grain / shimmer / outline) and live sparkle
+  particle count, visible when `VITE_ART_QA=true` or `?qa=1`.
+- **`WaterShimmerConfig`** type added to `types.ts`.
+- **`BiolumeConfig.sparkleMax?` and `BiolumeConfig.sparkleSpawnRate?`** optional fields.
+- **`EnvironmentConfig.waterShimmer?`** optional field.
+
+### Changed
+
+- `BackgroundSystemV2.create()` — calls new `v2CreateWaterShimmer()` and
+  `v2CreateBiolumeSparklees()` after existing layer creation.
+- `BackgroundSystemV2.destroy()` — cleans up shimmer sprite, shimmer mask sprite, and all
+  sparkle `ParticleEmitter` instances.
+- `BackgroundSystemV2.update()` — guards shimmer scroll + pulse animation behind
+  `!v2ReducedMotion`.
+- `BackgroundSystemV2.setReducedMotion()` — overrides parent; hides sparkle emitters
+  when reducedMotion is enabled.
+- `BackgroundSystemV2.setLowPowerMode()` — overrides parent; calls
+  `applyV2LowPowerVisibility()` to hide shimmer and sparkles in low-power mode.
+
 ## [6.1.4] - 2026-02-26
 
 ### Added

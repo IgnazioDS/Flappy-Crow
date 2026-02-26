@@ -102,6 +102,20 @@ shows per-layer texture dimensions alongside FPS and env label.
 | Body stroke thickness | `ui.overlayBodyStyle.strokeThickness` | 5 |
 | Panel backdrop corner radius | hardcoded in `createPanelBackdrop` | 8 px |
 
+#### V2 water shimmer + biolume sparkle knobs (v6.1.5+)
+
+| Feature | Config field | Default |
+|---|---|---|
+| Water shimmer enabled | `waterShimmer.enabled` | `true` |
+| Shimmer alpha | `waterShimmer.alpha` | 0.08 |
+| Shimmer render depth | `waterShimmer.depth` | 0.70 |
+| Shimmer horizontal scroll | `waterShimmer.scrollX` | 18 px/s |
+| Shimmer vertical scroll | `waterShimmer.scrollY` | 6 px/s |
+| Shimmer pulse amplitude | `waterShimmer.pulseAmp` | 0.30 (±30 %) |
+| Shimmer pulse frequency | `waterShimmer.pulseHz` | 0.22 Hz |
+| Biolume sparkle cap | `biolume.sparkleMax` | 14 (total) |
+| Biolume sparkle rate | `biolume.sparkleSpawnRate` | 850 ms/patch |
+
 #### V2 grade / grain / outline knobs (v6.1.4+)
 
 | Feature | Config field | Default |
