@@ -1,7 +1,7 @@
 {
   "name": "flappy-bird-ex",
   "private": true,
-  "version": "6.1.8",
+  "version": "6.1.9",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -28,7 +28,7 @@
     "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "prettier": "^3.7.4",
-    "typescript": "~5.9.3",
+    "typescript": "^5.9.3",
     "vite": "^7.2.4",
     "vitest": "^3.2.4"
   },

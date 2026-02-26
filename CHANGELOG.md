@@ -5,6 +5,30 @@
 All notable changes to this project will be documented in this file.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [6.1.9] - 2026-02-26
+
+### Fixed
+
+- **Biolume rectangular plate (root cause found and eliminated)** — v6.1.8 raised
+  the sanitization threshold to 24 but the `ambient` radialGradient in
+  `biolume_glow_splotches.svg` has a peak `stop-opacity="0.12"` → **alpha = 31**.
+  Any pixel with alpha 25–31 (which exists across a ~138 px diameter region in
+  the centre of the sprite) survived the threshold=24 check and was ADD-blended
+  each frame as a faint violet rectangle the size of the full sprite bounding box.
+  Fixes:
+  - **Runtime threshold raised**: `V2_SANITIZE_MANIFEST` biolume threshold
+    `24 → 32` — now catches the entire ambient layer (peak alpha 31 < 32). All
+    intentional glow data is preserved (glow cores and mid-stops are alpha ≥ 35).
+  - **light_rays threshold raised**: `16 → 20` — `source_glow` radialGradient
+    80%-offset stop has `stop-opacity="0.08"` → alpha = 20; old threshold 16
+    missed it.
+  - **SVG source fixed**: `biolume_glow_splotches.svg` ambient gradient peak
+    lowered `stop-opacity="0.12" → "0.08"` (alpha 31 → 20) so future re-exports
+    are sanitizable at the standard threshold=24, and the export pipeline's
+    threshold=32 acts as defence-in-depth.
+  - `scripts/render-v2-assets.mjs` sanitize thresholds updated to match
+    (`biolume 24 → 32`, `light_rays 16 → 20`).
+
 ## [6.1.8] - 2026-02-26
 
 ### Fixed
