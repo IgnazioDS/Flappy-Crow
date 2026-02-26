@@ -135,6 +135,35 @@ export class BackgroundSystem {
     return lines
   }
 
+  /**
+   * QA: Toggle visibility of the combined background layer at `index` (0-based).
+   * Order: bg layers → fog layers → foreground layers.
+   * Returns the layer name, or '' if index is out of range.
+   */
+  toggleLayerByIndex(index: number): string {
+    const all = [...this.layers, ...this.fogLayers, ...this.foregroundLayers]
+    if (index < 0 || index >= all.length) return ''
+    const layer = all[index]
+    layer.sprite.setVisible(!layer.sprite.visible)
+    return layer.name
+  }
+
+  /**
+   * QA: Returns all layer names in toggle-index order (bg → fog → foreground).
+   */
+  getLayerNames(): string[] {
+    return [...this.layers, ...this.fogLayers, ...this.foregroundLayers].map((l) => l.name)
+  }
+
+  /**
+   * QA: Returns current visibility state for each layer in toggle-index order.
+   */
+  getLayerVisibility(): boolean[] {
+    return [...this.layers, ...this.fogLayers, ...this.foregroundLayers].map(
+      (l) => l.sprite.visible,
+    )
+  }
+
   destroy(): void {
     this.layers.forEach((layer) => layer.sprite.destroy())
     this.fogLayers.forEach((layer) => layer.sprite.destroy())

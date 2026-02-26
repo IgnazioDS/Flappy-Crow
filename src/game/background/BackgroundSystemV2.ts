@@ -41,6 +41,20 @@ const SPARKLE_DOT_KEY = 'v2-sparkle-dot'
 const VIGNETTE_DEPTH = 0.92
 
 /**
+ * Key for the programmatically-generated bottom-fog scrim canvas texture.
+ * A vertical dark-to-transparent gradient that covers the bottom 18% of the
+ * game canvas (≈115 px) to ground the swamp visually and hide any hard seam
+ * between the bg layers and the ground sprite.
+ */
+const BOTTOM_SCRIM_TEX_KEY = 'v2-bottom-scrim'
+
+/** Render depth: above all background layers (max 0.84), below vignette (0.92). */
+const BOTTOM_SCRIM_DEPTH = 0.91
+
+/** Height of the scrim in game pixels — 18% of GAME_DIMENSIONS.height (640). */
+const BOTTOM_SCRIM_H = 115
+
+/**
  * BackgroundSystemV2 — extends BackgroundSystem with V2-specific features:
  *
  * COMPOSITION
@@ -71,6 +85,10 @@ export class BackgroundSystemV2 extends BackgroundSystem {
   private grainSprite: Phaser.GameObjects.TileSprite | null = null
   /** Accumulated horizontal offset for grain TileSprite animation (px). */
   private grainScrollX = 0
+
+  // ── v6.1.6 layers ────────────────────────────────────────────────────────
+  /** Dark-to-transparent gradient covering the bottom 18% — grounds the swamp. */
+  private bottomScrimSprite: Phaser.GameObjects.Image | null = null
 
   // ── v6.1.5 layers ────────────────────────────────────────────────────────
   private shimmerSprite: Phaser.GameObjects.TileSprite | null = null
@@ -104,6 +122,7 @@ export class BackgroundSystemV2 extends BackgroundSystem {
 
   override create(): void {
     super.create()
+    this.v2CreateBottomScrim()
     this.v2CreateVignette()
     this.v2CreateGrade()
     this.v2CreateGrain()
@@ -117,6 +136,7 @@ export class BackgroundSystemV2 extends BackgroundSystem {
       s?.destroy()
       return null
     }
+    this.bottomScrimSprite = destroySprite(this.bottomScrimSprite)
     this.vignetteSprite  = destroySprite(this.vignetteSprite)
     this.gradeSprite     = destroySprite(this.gradeSprite)
     this.grainSprite     = destroySprite(this.grainSprite)
@@ -254,7 +274,15 @@ export class BackgroundSystemV2 extends BackgroundSystem {
       `  fog_α=${fogAStr}  rays_α=${(this.v2Env.lightRays?.alpha ?? 0).toFixed(2)}`,
       `  grade_α=${(this.v2Env.grade?.alpha ?? 0).toFixed(2)}  grain_α=${(this.v2Env.grain?.alpha ?? 0).toFixed(2)}`,
       `  shimmer_α=${(shimmerCfg?.alpha ?? 0).toFixed(2)}  outline_α=${(this.v2Env.outline?.alpha ?? 0).toFixed(2)}`,
+      `  bottom_scrim_h=${BOTTOM_SCRIM_H}px  depth=${BOTTOM_SCRIM_DEPTH}`,
     ]
+
+    // ── visible layers (QA isolation: keys 1–8 toggle)
+    const layerNames = this.getLayerNames()
+    const layerVis   = this.getLayerVisibility()
+    const visLines = layerNames.length > 0
+      ? layerNames.map((name, i) => `  [${i + 1}] ${layerVis[i] ? '●' : '○'} ${name}`)
+      : ['  (none)']
 
     // ── textures
     const texLines = this.v2Env.assets.map((asset) => {
@@ -272,6 +300,9 @@ export class BackgroundSystemV2 extends BackgroundSystem {
       '',
       'FOG:',
       ...fogLines,
+      '',
+      'VISIBLE_LAYERS (1–8 toggle):',
+      ...visLines,
       '',
       'BIOLUME:',
       ...biolumeLines,
@@ -572,6 +603,49 @@ export class BackgroundSystemV2 extends BackgroundSystem {
       emitter.setDepth(emitterDepth)
       this.v2SparkleEmitters.push(emitter)
     }
+  }
+
+  /**
+   * Creates a dark-to-transparent bottom fog scrim that grounds the swamp
+   * environment and eliminates any visible seam between the background layers
+   * and the ground sprite.
+   *
+   * The texture is a vertical linear gradient:
+   *   transparent at the top → dark swamp-teal-black at the bottom edge.
+   *
+   * The sprite is positioned at the very bottom of the game canvas, covering
+   * the lower BOTTOM_SCRIM_H (115) pixels at depth BOTTOM_SCRIM_DEPTH (0.91):
+   * above all background layers (max 0.84), below the background vignette (0.92),
+   * and well below gameplay elements (pipes 1.0, bird 2.0, ground 3.0).
+   *
+   * Texture created once per session via key guard; reused on env switches.
+   */
+  private v2CreateBottomScrim(): void {
+    const { width, height } = GAME_DIMENSIONS
+
+    if (!this.v2Scene.textures.exists(BOTTOM_SCRIM_TEX_KEY)) {
+      const canvas = document.createElement('canvas')
+      canvas.width  = width
+      canvas.height = BOTTOM_SCRIM_H
+      const ctx = canvas.getContext('2d')
+      if (ctx) {
+        // Top of scrim → fully transparent.
+        // Bottom edge → deep swamp-teal-black that ties into the ground.
+        const grad = ctx.createLinearGradient(0, 0, 0, BOTTOM_SCRIM_H)
+        grad.addColorStop(0,    'rgba(2, 7, 5, 0.00)')   // transparent at top
+        grad.addColorStop(0.30, 'rgba(2, 7, 5, 0.10)')   // slight presence
+        grad.addColorStop(0.65, 'rgba(1, 5, 4, 0.42)')   // building ground shadow
+        grad.addColorStop(1,    'rgba(1, 3, 2, 0.78)')   // near-opaque at bottom edge
+        ctx.fillStyle = grad
+        ctx.fillRect(0, 0, width, BOTTOM_SCRIM_H)
+      }
+      this.v2Scene.textures.addCanvas(BOTTOM_SCRIM_TEX_KEY, canvas)
+    }
+
+    this.bottomScrimSprite = this.v2Scene.add
+      .image(0, height - BOTTOM_SCRIM_H, BOTTOM_SCRIM_TEX_KEY)
+      .setOrigin(0, 0)
+      .setDepth(BOTTOM_SCRIM_DEPTH)
   }
 
   /**
