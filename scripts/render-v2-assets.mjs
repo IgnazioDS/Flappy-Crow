@@ -92,7 +92,7 @@ async function renderAll() {
     const pngBuffer = await page.screenshot({
       type: 'png',
       clip: { x: 0, y: 0, width: layer.w, height: layer.h },
-      omitBackground: false,
+      omitBackground: true,
     })
     await page.close()
 

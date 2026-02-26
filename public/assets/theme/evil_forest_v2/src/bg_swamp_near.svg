@@ -42,11 +42,13 @@
       <stop offset="100%" stop-color="#300880" stop-opacity="0"/>
     </radialGradient>
 
-    <!-- Near-ground fog band -->
+    <!-- Near-ground fog band — full-canvas gradient, fades in over bottom 22%.
+         Stops anchored to full 640-px canvas so there is no hard seam. -->
     <linearGradient id="fog_near" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%"   stop-color="#98c0d8" stop-opacity="0"/>
-      <stop offset="40%"  stop-color="#98c0d8" stop-opacity="0.08"/>
-      <stop offset="100%" stop-color="#b0d4e8" stop-opacity="0.26"/>
+      <stop offset="76%"  stop-color="#98c0d8" stop-opacity="0"/>
+      <stop offset="88%"  stop-color="#98c0d8" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#b0d4e8" stop-opacity="0.22"/>
     </linearGradient>
   </defs>
 
@@ -139,6 +141,6 @@
   <!-- Ground atmospheric overlay -->
   <rect width="1024" height="640" fill="url(#ground_grad)"/>
 
-  <!-- Near-ground fog band at bottom -->
-  <rect x="0" y="548" width="1024" height="92" fill="url(#fog_near)"/>
+  <!-- Near-ground fog band — full-canvas rect so the gradient has no hard seam -->
+  <rect width="1024" height="640" fill="url(#fog_near)"/>
 </svg>
