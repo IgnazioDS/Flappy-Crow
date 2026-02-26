@@ -5,6 +5,26 @@
 All notable changes to this project will be documented in this file.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [6.1.10] - 2026-02-26
+
+### Fixed
+
+- **Biolume rectangular plate (source assets re-exported — definitive asset fix)**
+  — v6.1.9 corrected the runtime thresholds and the SVG source, but the
+  `biolume_glow_splotches.png/.webp` and `light_rays.png/.webp` files on disk had
+  been exported *before* those fixes and still contained non-black RGB in
+  near-transparent pixels.  Re-running `scripts/render-v2-assets.mjs` with the
+  v6.1.9 SVG fix and updated thresholds produces truly clean source assets:
+
+  | Asset | Pixels zeroed | Before | After |
+  |---|---|---|---|
+  | `biolume_glow_splotches.webp` | 60,630 (threshold=32) | 64 KB | 46 KB |
+  | `light_rays.webp` | 485,538 (threshold=20) | 63 KB | 39 KB |
+
+  The size reduction is direct evidence that the old files carried dirty pixel
+  data.  The runtime `sanitizeAdditiveTexture()` (BootScene, threshold=32) remains
+  as defence-in-depth for any future asset exports.
+
 ## [6.1.9] - 2026-02-26
 
 ### Fixed
