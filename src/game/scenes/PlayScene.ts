@@ -548,10 +548,10 @@ export class PlayScene extends Phaser.Scene {
       // keydown-1..8 fire only when Shift is NOT held (different event.key).
       // Shift+Digit is captured via event.code which is layout-independent.
       this.input.keyboard?.on('keydown', (event: KeyboardEvent) => {
-        // Shift + digit 1–8 → solo mode
+        // Shift + digit 1–9 → solo mode (9 covers the V2-exclusive overlay slots)
         if (event.shiftKey && event.code.startsWith('Digit')) {
           const digit = parseInt(event.code.slice(5), 10)
-          if (digit >= 1 && digit <= 8 && this.backgroundSystem) {
+          if (digit >= 1 && digit <= 9 && this.backgroundSystem) {
             this.backgroundSystem.toggleSoloLayer(digit - 1)
             this.updateEnvDebugOverlay()
           }

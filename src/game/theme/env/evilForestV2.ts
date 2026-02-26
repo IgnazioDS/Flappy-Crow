@@ -1,16 +1,28 @@
 import type { EnvironmentConfig } from './types'
 
+/** Original preload keys — used only by the assets[] list for BootScene.preload(). */
 const V2_KEYS = {
-  skyFar: 'v2-bg-sky-far',
-  mountains: 'v2-bg-mountains',
-  treesFar: 'v2-bg-trees-far',
-  treesMid: 'v2-bg-trees-mid',
-  swampNear: 'v2-bg-swamp-near',
+  skyFar:     'v2-bg-sky-far',
+  mountains:  'v2-bg-mountains',
+  treesFar:   'v2-bg-trees-far',
+  treesMid:   'v2-bg-trees-mid',
+  swampNear:  'v2-bg-swamp-near',
   fgBranches: 'v2-fg-branches',
-  fogSoft: 'v2-fog-soft',
-  lightRays: 'v2-light-rays',
-  waterMask: 'v2-water-mask',
-  biolume: 'v2-biolume',
+  fogSoft:    'v2-fog-soft',
+  lightRays:  'v2-light-rays',
+  waterMask:  'v2-water-mask',
+  biolume:    'v2-biolume',
+} as const
+
+/**
+ * Sanitised-copy keys — created by BootScene.create() via sanitizeAdditiveTexture().
+ * BackgroundSystem renders ADD/SCREEN sprites using these keys so the GPU never reads
+ * the original (potentially dirty) source data.  Must match V2_SANITIZE_MANIFEST.dstKey.
+ */
+const V2_SAN_KEYS = {
+  lightRays: 'v2-light-rays-san',
+  waterMask: 'v2-water-mask-san',
+  biolume:   'v2-biolume-san',
 } as const
 
 export const EVIL_FOREST_V2: EnvironmentConfig = {
@@ -127,8 +139,9 @@ export const EVIL_FOREST_V2: EnvironmentConfig = {
 
   // ─── Light rays ────────────────────────────────────────────────────────────
   // Very subtle SCREEN blend; slow alpha pulse. Must not blur the playfield.
+  // Rendered from the sanitised copy (v2-light-rays-san) created at boot.
   lightRays: {
-    key: V2_KEYS.lightRays,
+    key: V2_SAN_KEYS.lightRays,
     depth: 0.52,
     alpha: 0.07,
     pulseSpeed: 0.35,
@@ -139,8 +152,9 @@ export const EVIL_FOREST_V2: EnvironmentConfig = {
   // ─── Water reflection ──────────────────────────────────────────────────────
   // BitmapMask via water_reflection_mask keeps reflection below waterlineY.
   // Speeds match main layer speeds so the reflection tiles in sync.
+  // Mask helper uses sanitised copy (v2-water-mask-san) for belt-and-suspenders.
   reflection: {
-    maskKey: V2_KEYS.waterMask,
+    maskKey: V2_SAN_KEYS.waterMask,
     depth: 0.58,
     waterlineY: 380,
     height: 210,
@@ -157,8 +171,9 @@ export const EVIL_FOREST_V2: EnvironmentConfig = {
   // biolume_glow_splotches is 512×512; at scale 0.38–0.44 → ~195–225 px sprite.
   // sparkleMax/sparkleSpawnRate control the supplementary sparkle particle clusters
   // created by BackgroundSystemV2 at each patch center.
+  // Rendered from the sanitised copy (v2-biolume-san) created at boot.
   biolume: {
-    key: V2_KEYS.biolume,
+    key: V2_SAN_KEYS.biolume,
     depth: 0.72,
     blendMode: 'add',
     patches: [

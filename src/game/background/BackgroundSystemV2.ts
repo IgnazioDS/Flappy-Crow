@@ -69,6 +69,26 @@ const BANK_HAZE_DEPTH = 0.685
 const BANK_HAZE_H = 90
 
 /**
+ * V2-specific solo-layer slot indices (0-based, matching Shift+N keys).
+ * Slots 0–4 are the parallax layers handled by the parent class.
+ * Slots 5–8 are V2-exclusive overlays, added in v6.2.0.
+ *
+ *  Shift+1 = 0  Sky Far          NORMAL
+ *  Shift+2 = 1  Mountains        NORMAL
+ *  Shift+3 = 2  Trees Far        NORMAL
+ *  Shift+4 = 3  Trees Mid        NORMAL
+ *  Shift+5 = 4  Swamp Near       NORMAL
+ *  Shift+6 = 5  Light Rays       SCREEN  ← ADD/SCREEN suspect
+ *  Shift+7 = 6  Biolume          ADD     ← ADD/SCREEN suspect
+ *  Shift+8 = 7  Shimmer          SCREEN  ← ADD/SCREEN suspect
+ *  Shift+9 = 8  Grade / Grain    NORMAL
+ */
+const V2_SOLO_RAYS    = 5
+const V2_SOLO_BIOLUME = 6
+const V2_SOLO_SHIMMER = 7
+const V2_SOLO_GRADE   = 8
+
+/**
  * V2_SANITIZE_MANIFEST is imported from TextureSanitizer so the thresholds
  * used in the QA corner-α overlay always match what BootScene actually applies.
  * (Previously a local SANITIZE_TARGETS copy — removed in v6.1.8 to prevent drift.)
@@ -346,51 +366,57 @@ export class BackgroundSystemV2 extends BackgroundSystem {
       `  bottom_scrim_h=${BOTTOM_SCRIM_H}px  depth=${BOTTOM_SCRIM_DEPTH}`,
     ]
 
-    // ── visible layers (QA isolation: keys 1–8 toggle, Shift+1–8 solo)
-    const layerNames = this.getLayerNames()
-    const layerVis   = this.getLayerVisibility()
+    // ── visible layers (QA isolation: keys 1–9 toggle, Shift+1–9 solo)
+    const layerNames    = this.getLayerNames()
+    const layerVis      = this.getLayerVisibility()
+    const allLayerNames = this.v2GetAllLayerNames()
     const soloStr = this.v2SoloIndex !== null
-      ? `SOLO=[${this.v2SoloIndex + 1}] ${layerNames[this.v2SoloIndex] ?? '?'}`
+      ? `SOLO=[${this.v2SoloIndex + 1}] ${allLayerNames[this.v2SoloIndex] ?? '?'}`
       : 'none'
-    const visLines = layerNames.length > 0
-      ? layerNames.map((name, i) => {
+    const visLines = allLayerNames.length > 0
+      ? allLayerNames.map((name, i) => {
           const soloMark = this.v2SoloIndex === i ? ' ◀SOLO' : ''
-          return `  [${i + 1}] ${layerVis[i] ? '●' : '○'} ${name}${soloMark}`
+          const vis = i < layerNames.length ? layerVis[i] : true
+          return `  [${i + 1}] ${vis ? '●' : '○'} ${name}${soloMark}`
         })
       : ['  (none)']
 
     // ── corner RGBA (proves whether RGB+alpha sanitization has been applied)
-    // v6.1.8: shows full (r,g,b,a) not just alpha — artifact condition is
-    // alpha≈0 BUT RGB>0, not alpha>0 alone. ✗ means plate risk even if α=0.
-    const cornerAlphaLines = V2_SANITIZE_MANIFEST.map(({ key, label }) => {
-      if (!this.v2Scene.textures.exists(key)) return `  ${label}: (not loaded)`
-      const tex = this.v2Scene.textures.get(key)
+    // v6.2.0: samples the rendered sanitised key (dstKey) — not the original source.
+    // Adds CTR sample at texture centre; biolume ambient gradient peaks there,
+    // making 4-corner checks alone give a false "clean" result.
+    const cornerAlphaLines = V2_SANITIZE_MANIFEST.map(({ dstKey, label }) => {
+      if (!this.v2Scene.textures.exists(dstKey)) return `  ${label}: (not loaded)`
+      const tex = this.v2Scene.textures.get(dstKey)
       const src = tex.getSourceImage() as { width?: number; height?: number }
-      const w = (src?.width ?? 2) - 1
-      const h = (src?.height ?? 2) - 1
+      const w  = (src?.width  ?? 2) - 1
+      const h  = (src?.height ?? 2) - 1
+      const mx = Math.floor(w / 2)
+      const my = Math.floor(h / 2)
 
-      // getPixel returns Phaser.Display.Color | null; safe fallback to {r:?,g:?,b:?,a:?}
+      // getPixel returns Phaser.Display.Color | null; safe fallback to '(?)'
       const px = (x: number, y: number): string => {
-        const c = this.v2Scene.textures.getPixel(x, y, key)
+        const c = this.v2Scene.textures.getPixel(x, y, dstKey)
         if (!c) return '(?)'
         return `(${c.red},${c.green},${c.blue},${c.alpha})`
       }
       const isDirty = (x: number, y: number): boolean => {
-        const c = this.v2Scene.textures.getPixel(x, y, key)
+        const c = this.v2Scene.textures.getPixel(x, y, dstKey)
         if (!c) return false
         // Artifact condition: transparent-ish pixel with non-black RGB
         return c.alpha <= 28 && (c.red > 0 || c.green > 0 || c.blue > 0)
       }
 
-      const tlDirty = isDirty(0, 0)
-      const trDirty = isDirty(w, 0)
-      const blDirty = isDirty(0, h)
-      const brDirty = isDirty(w, h)
-      const anyDirty = tlDirty || trDirty || blDirty || brDirty
+      const tlDirty  = isDirty(0,  0)
+      const trDirty  = isDirty(w,  0)
+      const blDirty  = isDirty(0,  h)
+      const brDirty  = isDirty(w,  h)
+      const ctrDirty = isDirty(mx, my)
+      const anyDirty = tlDirty || trDirty || blDirty || brDirty || ctrDirty
       const flag = anyDirty ? '✗' : '✓'
       return (
         `  ${flag} ${label.padEnd(10)} ` +
-        `TL=${px(0,0)} TR=${px(w,0)} BL=${px(0,h)} BR=${px(w,h)}`
+        `TL=${px(0,0)} TR=${px(w,0)} BL=${px(0,h)} BR=${px(w,h)} CTR=${px(mx,my)}`
       )
     })
 
@@ -405,7 +431,7 @@ export class BackgroundSystemV2 extends BackgroundSystem {
     return [
       `env: ${this.v2Env.key} — ${this.v2Env.label} (${W}×${H})`,
       '',
-      'QA FORENSICS (Shift+1–8 solo, B bounds):',
+      'QA FORENSICS (Shift+1–9 solo, B bounds):',
       `  solo: ${soloStr}   bounds: ${this.v2ShowBounds ? 'ON' : 'OFF'}`,
       '',
       'CORNER α (✓=clean, ✗=artifact risk):',
@@ -417,7 +443,7 @@ export class BackgroundSystemV2 extends BackgroundSystem {
       'FOG:',
       ...fogLines,
       '',
-      'VISIBLE_LAYERS (1–8 toggle):',
+      'VISIBLE_LAYERS (1–9 toggle):',
       ...visLines,
       '',
       'BIOLUME:',
@@ -470,20 +496,40 @@ export class BackgroundSystemV2 extends BackgroundSystem {
       for (const e of this.v2SparkleEmitters) e.setVisible(true)
     } else {
       // Enter solo — show only the chosen numbered layer, hide everything else.
+      // Parallax layers (indices 0–4): visible only if their index === solo.
       for (let i = 0; i < layerCount; i++) {
         this.setLayerVisible(i, i === solo)
       }
-      this.setLightRaysVisible(false)
-      this.setReflectionVisible(false)
-      this.setBiolumeVisible(false)
-      this.vignetteSprite?.setVisible(false)
-      this.gradeSprite?.setVisible(false)
-      this.grainSprite?.setVisible(false)
+      // V2-exclusive overlays (indices 5–8): visible only if their slot matches solo.
+      this.setLightRaysVisible(solo === V2_SOLO_RAYS)
+      this.setReflectionVisible(solo === V2_SOLO_SHIMMER)
+      this.setBiolumeVisible(solo === V2_SOLO_BIOLUME)
+      this.shimmerSprite?.setVisible(solo === V2_SOLO_SHIMMER)
+      this.vignetteSprite?.setVisible(solo === V2_SOLO_GRADE)
+      this.gradeSprite?.setVisible(solo === V2_SOLO_GRADE)
+      this.grainSprite?.setVisible(solo === V2_SOLO_GRADE)
+      // Context overlays — always hidden during solo to keep the view clean.
       this.bottomScrimSprite?.setVisible(false)
       this.bankHazeSprite?.setVisible(false)
-      this.shimmerSprite?.setVisible(false)
-      for (const e of this.v2SparkleEmitters) e.setVisible(false)
+      for (const e of this.v2SparkleEmitters) {
+        e.setVisible(solo === V2_SOLO_BIOLUME)
+      }
     }
+  }
+
+  /**
+   * Returns all 9 solo-slot names for the QA overlay:
+   * slots 0–4 from the parent parallax list, slots 5–8 are V2-exclusive overlays.
+   * Matches the Shift+1–9 solo key assignments.
+   */
+  private v2GetAllLayerNames(): string[] {
+    return [
+      ...this.getLayerNames(),     // Sky Far, Mountains, Trees Far, Trees Mid, Swamp Near
+      'Light Rays (SCREEN)',       // index 5 — V2_SOLO_RAYS
+      'Biolume (ADD)',             // index 6 — V2_SOLO_BIOLUME
+      'Shimmer (SCREEN)',          // index 7 — V2_SOLO_SHIMMER
+      'Grade/Grain',               // index 8 — V2_SOLO_GRADE
+    ]
   }
 
   /**
@@ -560,6 +606,18 @@ export class BackgroundSystemV2 extends BackgroundSystem {
       const wl = this.v2Env.reflection?.waterlineY ?? 380
       g.lineStyle(1.5, 0xaaaaff, 0.8)
       g.strokeRect(0, wl - Math.round(BANK_HAZE_H / 2), width, BANK_HAZE_H)
+    }
+
+    // Vignette (full-canvas, white) — draw always so the frame is visible even in solo.
+    if (this.vignetteSprite) {
+      g.lineStyle(1.5, 0xffffff, 0.8)
+      g.strokeRect(5, 5, width - 10, height - 10)
+    }
+
+    // Mask helper — always draw regardless of visibility; red = danger signal if visible.
+    if (this.shimmerMaskSprite) {
+      g.lineStyle(2, 0xff3300, 1.0)
+      g.strokeRect(6, 6, width - 12, height - 12)
     }
   }
 
@@ -750,6 +808,9 @@ export class BackgroundSystemV2 extends BackgroundSystem {
         .image(0, 0, this.v2Env.reflection.maskKey)
         .setOrigin(0, 0)
         .setVisible(false)
+        .setAlpha(0)                             // belt-and-suspenders: never renders
+        .setDepth(-100)                          // below every background layer
+        .setBlendMode(Phaser.BlendModes.NORMAL)  // explicit: must not be ADD/SCREEN
       maskImg.setDisplaySize(width, height)
       const bitmapMask = new Phaser.Display.Masks.BitmapMask(this.v2Scene, maskImg)
       this.shimmerSprite.setMask(bitmapMask)

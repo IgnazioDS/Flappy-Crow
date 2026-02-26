@@ -5,6 +5,59 @@
 All notable changes to this project will be documented in this file.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [6.2.0] - 2026-02-26
+
+### Added
+
+- **QA forensics: sanitised-copy key architecture** — `BootScene.create()` now
+  creates separate sanitised texture copies under `dstKey` names (`v2-biolume-san`,
+  `v2-light-rays-san`, `v2-fog-soft-san`, `v2-water-mask-san`) instead of replacing
+  the originals in-place.  `BackgroundSystemV2` renders using only the `-san` keys
+  so the GPU never reads the original (possibly dirty) texture data, eliminating any
+  risk of silent failure from WebGL texture caching.
+
+- **QA forensics: center-point RGBA sampling (CTR)** — `sampleTextureRGBA()` in
+  `TextureSanitizer.ts` now samples 6 points (TL / TR / BL / BR / ML / **CTR**).
+  The biolume ambient radialGradient peaks at ≈(42%, 48%) — never touched by the
+  4-corner check alone — giving false "clean" QA results.  The center sample catches
+  this.  `BackgroundSystemV2.getDebugLines()` CORNER α section now shows `CTR=`
+  alongside the four corner values.
+
+- **QA forensics: solo layer mode expanded to Shift+1–9** — V2-exclusive overlays
+  can now be isolated individually via Shift+6–9:
+
+  | Shift+ | Index | Layer | Blend |
+  |---|---|---|---|
+  | 6 | 5 | Light Rays | SCREEN |
+  | 7 | 6 | Biolume | ADD |
+  | 8 | 7 | Shimmer | SCREEN |
+  | 9 | 8 | Grade / Grain | NORMAL |
+
+  Previously Shift+6–8 hid all V2 overlays without showing any — making it impossible
+  to isolate a SCREEN/ADD layer to diagnose rectangular artifacts.
+
+- **QA forensics: vignette + mask helper in bounds overlay** — pressing `B` now
+  draws a white outline for the vignette sprite and a red (`#ff3300`) outline for
+  the BitmapMask helper image (`shimmerMaskSprite`).  The mask helper is always
+  drawn regardless of its `visible` state so its full-canvas footprint is always
+  inspectable.
+
+- **Mask helper safety hardening** — `shimmerMaskSprite` (BitmapMask source for the
+  water shimmer) now explicitly receives `.setAlpha(0)`, `.setDepth(-100)`, and
+  `.setBlendMode(NORMAL)` in addition to the existing `.setVisible(false)`.  This
+  prevents the helper from accidentally contributing to the composited image even if
+  `setVisible` is bypassed by a bug.
+
+### Changed
+
+- `V2_SANITIZE_MANIFEST` thresholds lowered (source assets were re-exported clean in
+  v6.1.10; runtime sanitization is now defence-in-depth only):
+  - biolume `32 → 24`, light_rays `20 → 14`, fog_tile new entry at `10`
+- `evilForestV2.ts` `biolume.key`, `lightRays.key`, and `reflection.maskKey` now
+  point to the sanitised `-san` variants instead of the original preload keys.
+- QA overlay header updated to `Shift+1–9 solo, B bounds` and VISIBLE_LAYERS section
+  now shows all 9 slots.
+
 ## [6.1.10] - 2026-02-26
 
 ### Fixed

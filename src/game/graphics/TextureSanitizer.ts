@@ -22,16 +22,23 @@ import type Phaser from 'phaser'
  * alpha >> 50.  The thresholds in V2_SANITIZE_MANIFEST are conservative: they
  * strip the invisible fringe without touching real glow data.
  *
+ * ─── Sanitised-copy architecture (v6.2.0) ─────────────────────────────────────
+ * Instead of in-place replacement (dstKey === srcKey), BootScene now creates a
+ * separate sanitised copy under `dstKey` while leaving the original texture
+ * untouched.  BackgroundSystem renders using the `dstKey` variants so the
+ * rendered sprites are guaranteed to use clean data regardless of whether
+ * in-place canvas manipulation could fail silently (WebGL texture caching, etc.).
+ *
  * ─── Usage ────────────────────────────────────────────────────────────────────
  * Call from BootScene.create() before PlayScene starts:
  *
- *   for (const { key, threshold } of V2_SANITIZE_MANIFEST) {
- *     sanitizeAdditiveTexture(this, key, key, threshold)   // in-place
+ *   for (const { key, dstKey, threshold } of V2_SANITIZE_MANIFEST) {
+ *     sanitizeAdditiveTexture(this, key, dstKey, threshold)  // copy, not in-place
  *   }
  *
- * In-place replacement (dstKey === srcKey) preserves all existing texture key
- * references so no downstream code needs to change.  Pass a different dstKey
- * to create a parallel sanitized copy without touching the original.
+ * BackgroundSystem renders using dstKey variants ('v2-biolume-san', etc.)
+ * so the GPU never touches the original (potentially dirty) texture data.
+ * Pass dstKey === srcKey for legacy in-place behaviour if needed.
  *
  * ─── Performance ──────────────────────────────────────────────────────────────
  * O(W×H) per texture.  Runs once at boot, never per-frame.
@@ -44,32 +51,34 @@ import type Phaser from 'phaser'
  * sanitization.  Shared between BootScene (sanitization) and BackgroundSystemV2
  * (QA corner-α overlay) to prevent threshold drift between the two.
  *
- * Thresholds (v6.1.9 — raised after ambient-gradient root-cause analysis):
+ * Each entry has:
+ *   key       — original texture key loaded from disk in BootScene.preload()
+ *   dstKey    — sanitised-copy key created by BootScene.create(); rendered by
+ *               BackgroundSystem so sprites never read the original dirty data
+ *   label     — short name for QA overlay display
+ *   threshold — pixels with alpha ≤ this value are zeroed (r=g=b=a=0)
  *
- *   • biolume     32  — biolume_glow_splotches.svg contains an "ambient tie-in"
- *                       radialGradient covering the full 512×512 canvas with a
- *                       peak stop-opacity="0.12" → alpha=31.  With threshold=24
- *                       those pixels survived and ADD-blended into a rectangular
- *                       plate the size of the entire sprite bounding box.
- *                       Threshold=32 catches alpha ≤ 31 (the full ambient layer)
- *                       while preserving all intentional glow data (cores and
- *                       mid-stops are alpha ≥ 35).  The SVG ambient is also
- *                       lowered to stop-opacity="0.08" (alpha=20) so future
- *                       re-exports are clean with the standard threshold=24.
- *   • light_rays  20  — source_glow radialGradient 80% stop has
- *                       stop-opacity="0.08" → alpha=20; old threshold=16 missed it.
- *   • fog_tile    12  — unchanged; normal blend, sanitize for hygiene
- *   • water_mask   6  — unchanged; BitmapMask, should be near-binary
+ * Thresholds (v6.2.0 — lower than v6.1.9 because source assets were re-exported
+ * clean in v6.1.10; runtime sanitization is defence-in-depth only):
+ *
+ *   • biolume     24  — SVG ambient re-exported at peak alpha≈20 (v6.1.9 SVG fix +
+ *                       v6.1.10 re-export); threshold 24 comfortably catches fringe
+ *                       while preserving all intentional glow data (alpha ≥ 35).
+ *   • light_rays  14  — source_glow 80% stop (alpha≈20) zeroed in v6.1.10 export;
+ *                       threshold 14 catches any residual fringe below the ray edge.
+ *   • fog_tile    10  — NORMAL blend, hygiene sanitization only.
+ *   • water_mask   6  — BitmapMask, near-binary; threshold 6 is unchanged.
  */
 export const V2_SANITIZE_MANIFEST: ReadonlyArray<{
   key: string
+  dstKey: string
   label: string
   threshold: number
 }> = [
-  { key: 'v2-biolume',    label: 'biolume',    threshold: 32 },  // ADD    — ambient peak = alpha 31
-  { key: 'v2-light-rays', label: 'light_rays', threshold: 20 },  // SCREEN — source_glow 80% = alpha 20
-  { key: 'v2-fog-soft',   label: 'fog_tile',   threshold: 12 },  // NORMAL (hygiene)
-  { key: 'v2-water-mask', label: 'water_mask', threshold:  6 },  // BitmapMask
+  { key: 'v2-biolume',    dstKey: 'v2-biolume-san',    label: 'biolume',    threshold: 24 },
+  { key: 'v2-light-rays', dstKey: 'v2-light-rays-san', label: 'light_rays', threshold: 14 },
+  { key: 'v2-fog-soft',   dstKey: 'v2-fog-soft-san',   label: 'fog_tile',   threshold: 10 },
+  { key: 'v2-water-mask', dstKey: 'v2-water-mask-san', label: 'water_mask', threshold:  6 },
 ]
 
 // ─── Types ──────────────────────────────────────────────────────────────────
@@ -167,15 +176,20 @@ export function sanitizeAdditiveTexture(
 // ─── QA probe ───────────────────────────────────────────────────────────────
 
 /**
- * Sample RGBA values at five strategic points of a loaded Phaser texture:
- * four corners + left-edge mid-point.
+ * Sample RGBA values at six strategic points of a loaded Phaser texture:
+ * four corners + left-edge mid-point + centre.
+ *
+ * The centre sample (CTR) is especially important for the biolume texture:
+ * the ambient radialGradient peaks at ≈(42%, 48%) — near the texture centre —
+ * so the 4-corner check alone gives a false "clean" result while the
+ * plate-causing pixels remain undetected.
  *
  * Creates a temporary off-screen canvas to read pixel data.  Run once at boot
  * for ART_QA logging — never per-frame.
  *
  * @param scene Phaser scene used to access the TextureManager.
  * @param key   Phaser texture key to inspect.
- * @returns     Array of five PixelSamples, or empty array if texture not found.
+ * @returns     Array of six PixelSamples, or empty array if texture not found.
  */
 export function sampleTextureRGBA(scene: Phaser.Scene, key: string): PixelSample[] {
   if (!scene.textures.exists(key)) return []
@@ -194,11 +208,12 @@ export function sampleTextureRGBA(scene: Phaser.Scene, key: string): PixelSample
   ctx.drawImage(src, 0, 0)
 
   const points: Array<{ label: string; x: number; y: number }> = [
-    { label: 'TL', x: 0,               y: 0               },
-    { label: 'TR', x: w - 1,           y: 0               },
-    { label: 'BL', x: 0,               y: h - 1           },
-    { label: 'BR', x: w - 1,           y: h - 1           },
-    { label: 'ML', x: 0,               y: Math.floor(h / 2) },
+    { label: 'TL',  x: 0,                 y: 0                  },
+    { label: 'TR',  x: w - 1,             y: 0                  },
+    { label: 'BL',  x: 0,                 y: h - 1              },
+    { label: 'BR',  x: w - 1,             y: h - 1              },
+    { label: 'ML',  x: 0,                 y: Math.floor(h / 2)  },
+    { label: 'CTR', x: Math.floor(w / 2), y: Math.floor(h / 2)  },
   ]
 
   return points.map(({ label, x, y }) => {
