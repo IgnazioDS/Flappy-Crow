@@ -256,6 +256,13 @@ export class BackgroundSystemV2 extends BackgroundSystem {
       `  shimmer_α=${(shimmerCfg?.alpha ?? 0).toFixed(2)}  outline_α=${(this.v2Env.outline?.alpha ?? 0).toFixed(2)}`,
     ]
 
+    // ── visible layers (QA isolation: keys 1–8 toggle)
+    const layerNames = this.getLayerNames()
+    const layerVis   = this.getLayerVisibility()
+    const visLines = layerNames.length > 0
+      ? layerNames.map((name, i) => `  [${i + 1}] ${layerVis[i] ? '●' : '○'} ${name}`)
+      : ['  (none)']
+
     // ── textures
     const texLines = this.v2Env.assets.map((asset) => {
       const tex = this.v2Scene.textures.get(asset.key)
@@ -272,6 +279,9 @@ export class BackgroundSystemV2 extends BackgroundSystem {
       '',
       'FOG:',
       ...fogLines,
+      '',
+      'VISIBLE_LAYERS (1–8 toggle):',
+      ...visLines,
       '',
       'BIOLUME:',
       ...biolumeLines,

@@ -541,6 +541,19 @@ export class PlayScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-M', () => this.toggleMute())
     this.input.keyboard?.on('keydown-R', () => this.toggleReducedMotion())
     this.input.keyboard?.on('keydown-E', () => this.toggleEnvironment())
+    // QA: keys 1–8 toggle individual background layers for artifact isolation.
+    // Only active when debugToggleAllowed (DEV or VITE_ART_QA=true).
+    if (this.debugToggleAllowed) {
+      for (let i = 1; i <= 8; i++) {
+        const idx = i - 1
+        this.input.keyboard?.on(`keydown-${i}`, () => {
+          if (this.backgroundSystem) {
+            const name = this.backgroundSystem.toggleLayerByIndex(idx)
+            if (name) this.updateEnvDebugOverlay()
+          }
+        })
+      }
+    }
     this.input.keyboard?.on('keydown-ESC', () => {
       if (this.dailyRewardOpen) {
         this.toggleDailyReward()
