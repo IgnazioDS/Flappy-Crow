@@ -541,18 +541,38 @@ export class PlayScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-M', () => this.toggleMute())
     this.input.keyboard?.on('keydown-R', () => this.toggleReducedMotion())
     this.input.keyboard?.on('keydown-E', () => this.toggleEnvironment())
-    // QA: keys 1–8 toggle individual background layers for artifact isolation.
+    // QA: digit keys for layer visibility; Shift+digit for solo; B for bounds.
     // Only active when debugToggleAllowed (DEV or VITE_ART_QA=true).
     if (this.debugToggleAllowed) {
-      for (let i = 1; i <= 8; i++) {
-        const idx = i - 1
-        this.input.keyboard?.on(`keydown-${i}`, () => {
-          if (this.backgroundSystem) {
-            const name = this.backgroundSystem.toggleLayerByIndex(idx)
+      // Use a single generic keydown listener so we can check event.shiftKey.
+      // keydown-1..8 fire only when Shift is NOT held (different event.key).
+      // Shift+Digit is captured via event.code which is layout-independent.
+      this.input.keyboard?.on('keydown', (event: KeyboardEvent) => {
+        // Shift + digit 1–8 → solo mode
+        if (event.shiftKey && event.code.startsWith('Digit')) {
+          const digit = parseInt(event.code.slice(5), 10)
+          if (digit >= 1 && digit <= 8 && this.backgroundSystem) {
+            this.backgroundSystem.toggleSoloLayer(digit - 1)
+            this.updateEnvDebugOverlay()
+          }
+          return
+        }
+        // B (no shift) → toggle sprite-bounds overlay
+        if (!event.shiftKey && (event.key === 'b' || event.key === 'B') &&
+            this.backgroundSystem) {
+          this.backgroundSystem.toggleBounds()
+          this.updateEnvDebugOverlay()
+          return
+        }
+        // Digit 1–8 (no shift) → toggle layer visibility
+        if (!event.shiftKey && event.code.startsWith('Digit')) {
+          const digit = parseInt(event.code.slice(5), 10)
+          if (digit >= 1 && digit <= 8 && this.backgroundSystem) {
+            const name = this.backgroundSystem.toggleLayerByIndex(digit - 1)
             if (name) this.updateEnvDebugOverlay()
           }
-        })
-      }
+        }
+      })
     }
     this.input.keyboard?.on('keydown-ESC', () => {
       if (this.dailyRewardOpen) {
