@@ -889,13 +889,18 @@ export class BackgroundSystemV2 extends BackgroundSystem {
       canvas.height = BOTTOM_SCRIM_H
       const ctx = canvas.getContext('2d')
       if (ctx) {
-        // Top of scrim → fully transparent.
-        // Bottom edge → deep swamp-teal-black that ties into the ground.
+        // Foggy waterline gradient — NOT a flat dark band.
+        // Palette: cool violet-blue fog that deepens toward the ground edge.
+        //   top:    transparent (blends with bg layers above)
+        //   middle: faint violet-blue atmospheric haze
+        //   lower:  deeper cool-purple shadow anchors the scene
+        //   bottom: near-opaque cool shadow at the very bottom edge
         const grad = ctx.createLinearGradient(0, 0, 0, BOTTOM_SCRIM_H)
-        grad.addColorStop(0,    'rgba(2, 7, 5, 0.00)')   // transparent at top
-        grad.addColorStop(0.30, 'rgba(2, 7, 5, 0.10)')   // slight presence
-        grad.addColorStop(0.65, 'rgba(1, 5, 4, 0.42)')   // building ground shadow
-        grad.addColorStop(1,    'rgba(1, 3, 2, 0.78)')   // near-opaque at bottom edge
+        grad.addColorStop(0,    'rgba(8,  12, 30, 0.00)')   // transparent at top
+        grad.addColorStop(0.22, 'rgba(8,  12, 30, 0.08)')   // faint violet-blue haze
+        grad.addColorStop(0.52, 'rgba(6,  9,  24, 0.32)')   // cool-purple mid-shadow
+        grad.addColorStop(0.78, 'rgba(4,  6,  18, 0.58)')   // deeper shadow
+        grad.addColorStop(1,    'rgba(2,  4,  12, 0.80)')   // near-opaque cool edge
         ctx.fillStyle = grad
         ctx.fillRect(0, 0, width, BOTTOM_SCRIM_H)
       }
