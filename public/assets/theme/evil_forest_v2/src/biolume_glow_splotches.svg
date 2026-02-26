@@ -73,9 +73,16 @@
     </radialGradient>
 
     <!-- ── Soft ambient tie-in ───────────────────────────────────── -->
+    <!--
+      Peak opacity 0.08 (alpha≈20): safely below the runtime sanitizer
+      threshold of 24, so the entire ambient layer is zeroed before ADD
+      blend is applied and no rectangular plate can form.
+      Prior value 0.12 (alpha=31) escaped the old threshold=24 and was
+      the root cause of the visible biolume bounding-box artifact.
+    -->
     <radialGradient id="ambient" cx="42%" cy="48%" r="72%">
-      <stop offset="0%"   stop-color="#8030d0" stop-opacity="0.12"/>
-      <stop offset="48%"  stop-color="#4018a0" stop-opacity="0.05"/>
+      <stop offset="0%"   stop-color="#8030d0" stop-opacity="0.08"/>
+      <stop offset="48%"  stop-color="#4018a0" stop-opacity="0.03"/>
       <stop offset="100%" stop-color="#200e70" stop-opacity="0"/>
     </radialGradient>
   </defs>

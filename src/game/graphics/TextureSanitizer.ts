@@ -44,19 +44,30 @@ import type Phaser from 'phaser'
  * sanitization.  Shared between BootScene (sanitization) and BackgroundSystemV2
  * (QA corner-α overlay) to prevent threshold drift between the two.
  *
- * Thresholds are raised vs. the v6.1.7 alpha-only pass:
- *   • biolume     24  (was 16)  — SVG radial gradients can reach alpha 20–28 at edges
- *   • light_rays  16  (was 10)  — diagonal SCREEN streaks leave alpha up to 14
- *   • fog_tile    12  (was 12)  — unchanged; normal blend but sanitize for hygiene
- *   • water_mask   6  (was  6)  — BitmapMask, should already be near-binary
+ * Thresholds (v6.1.9 — raised after ambient-gradient root-cause analysis):
+ *
+ *   • biolume     32  — biolume_glow_splotches.svg contains an "ambient tie-in"
+ *                       radialGradient covering the full 512×512 canvas with a
+ *                       peak stop-opacity="0.12" → alpha=31.  With threshold=24
+ *                       those pixels survived and ADD-blended into a rectangular
+ *                       plate the size of the entire sprite bounding box.
+ *                       Threshold=32 catches alpha ≤ 31 (the full ambient layer)
+ *                       while preserving all intentional glow data (cores and
+ *                       mid-stops are alpha ≥ 35).  The SVG ambient is also
+ *                       lowered to stop-opacity="0.08" (alpha=20) so future
+ *                       re-exports are clean with the standard threshold=24.
+ *   • light_rays  20  — source_glow radialGradient 80% stop has
+ *                       stop-opacity="0.08" → alpha=20; old threshold=16 missed it.
+ *   • fog_tile    12  — unchanged; normal blend, sanitize for hygiene
+ *   • water_mask   6  — unchanged; BitmapMask, should be near-binary
  */
 export const V2_SANITIZE_MANIFEST: ReadonlyArray<{
   key: string
   label: string
   threshold: number
 }> = [
-  { key: 'v2-biolume',    label: 'biolume',    threshold: 24 },  // ADD blend
-  { key: 'v2-light-rays', label: 'light_rays', threshold: 16 },  // SCREEN blend
+  { key: 'v2-biolume',    label: 'biolume',    threshold: 32 },  // ADD    — ambient peak = alpha 31
+  { key: 'v2-light-rays', label: 'light_rays', threshold: 20 },  // SCREEN — source_glow 80% = alpha 20
   { key: 'v2-fog-soft',   label: 'fog_tile',   threshold: 12 },  // NORMAL (hygiene)
   { key: 'v2-water-mask', label: 'water_mask', threshold:  6 },  // BitmapMask
 ]
