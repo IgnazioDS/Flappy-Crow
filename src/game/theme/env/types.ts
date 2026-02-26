@@ -70,6 +70,16 @@ export type BiolumeConfig = {
   depth: number
   patches: BiolumePatch[]
   blendMode?: 'add' | 'screen'
+  /**
+   * Total maximum sparkle particles across all biolume patches (default: 14).
+   * Hard cap shared across all patch emitters. Must be ≤ 18 per spec.
+   */
+  sparkleMax?: number
+  /**
+   * Milliseconds between sparkle particle spawns per patch emitter (default: 800).
+   * Higher = sparser, lower = denser. Keep ≥ 500 to stay budget-friendly.
+   */
+  sparkleSpawnRate?: number
 }
 
 export type ParticleConfig = {
@@ -124,6 +134,32 @@ export type GrainConfig = {
 }
 
 /**
+ * Cheap water shimmer/specular overlay using a tileable TileSprite.
+ * Renders specular streak highlights over the swamp/water region,
+ * masked by the existing water_reflection_mask to stay within channels.
+ */
+export type WaterShimmerConfig = {
+  /** Whether the shimmer is active (allows runtime toggling without removing config). */
+  enabled: boolean
+  /** Render depth — above swamp_near (0.66), below foreground branches (0.84). */
+  depth: number
+  /** Base sprite alpha (0–1). Shimmer is barely noticeable at 0.05–0.12. */
+  alpha: number
+  /** Horizontal tile scroll speed in px/s. Creates moving specular feel. */
+  scrollX: number
+  /** Vertical tile scroll speed in px/s. Adds gentle perpendicular drift. */
+  scrollY: number
+  /**
+   * Pulse amplitude as fraction of alpha (0–1).
+   * 0 = constant alpha, 1 = pulse from 0 to alpha.
+   * Keep ≤ 0.40 to avoid distracting flicker.
+   */
+  pulseAmp: number
+  /** Alpha pulse frequency in cycles/second. Keep ≤ 0.40 for languid shimmer. */
+  pulseHz: number
+}
+
+/**
  * Foreground separation: a slightly-larger, tinted, semi-transparent sprite
  * rendered *behind* the crow and gate sprites to create a soft rim/outline.
  * Only applied for themes that define this config (evil-forest V2).
@@ -155,4 +191,6 @@ export type EnvironmentConfig = {
   grain?: GrainConfig
   /** Foreground separation config for crow + gate rim sprites. */
   outline?: OutlineConfig
+  /** Cheap water shimmer specular overlay for the swamp/water region. */
+  waterShimmer?: WaterShimmerConfig
 }

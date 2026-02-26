@@ -155,6 +155,8 @@ export const EVIL_FOREST_V2: EnvironmentConfig = {
   // ─── Biolume glow patches ──────────────────────────────────────────────────
   // ADD blend, slow breathing pulse. Positioned within game width (360px).
   // biolume_glow_splotches is 512×512; at scale 0.38–0.44 → ~195–225 px sprite.
+  // sparkleMax/sparkleSpawnRate control the supplementary sparkle particle clusters
+  // created by BackgroundSystemV2 at each patch center.
   biolume: {
     key: V2_KEYS.biolume,
     depth: 0.72,
@@ -165,6 +167,24 @@ export const EVIL_FOREST_V2: EnvironmentConfig = {
       { x: 255, y: 480, scale: 0.40, alpha: 0.38, pulseSpeed: 0.80 },
       { x: 332, y: 505, scale: 0.36, alpha: 0.36, pulseSpeed: 0.75 },
     ],
+    // Sparkle clusters: localized micro-particles near each glow patch.
+    // Hard cap: sparkleMax ≤ 18 (shared across all 4 emitters → ≤ 4 per emitter).
+    sparkleMax: 14,       // max alive particles across all patches combined
+    sparkleSpawnRate: 850, // ms between spawns per patch emitter
+  },
+
+  // ─── Water shimmer ─────────────────────────────────────────────────────────
+  // Tileable specular-streak TileSprite over the swamp channels, masked by the
+  // existing water_reflection_mask.  SCREEN blend at very low alpha — adds
+  // subtle wetness/reflectivity without competing with obstacles.
+  waterShimmer: {
+    enabled: true,
+    depth: 0.70,     // above swamp_near (0.66), below foreground branches (0.84)
+    alpha: 0.08,     // keep ≤ 0.12 — shimmer should be felt, not seen
+    scrollX: 18,     // px/s horizontal; creates moving specular feel
+    scrollY: 6,      // px/s vertical drift
+    pulseAmp: 0.30,  // alpha ±30 % — languid shimmer; too high = distracting
+    pulseHz: 0.22,   // ~one full cycle every 4.5 s
   },
 
   // ─── Grade overlay ─────────────────────────────────────────────────────────
