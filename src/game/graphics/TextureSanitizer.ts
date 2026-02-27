@@ -58,7 +58,10 @@ import type Phaser from 'phaser'
  *                       re-exports are clean with the standard threshold=24.
  *   • light_rays  20  — source_glow radialGradient 80% stop has
  *                       stop-opacity="0.08" → alpha=20; old threshold=16 missed it.
- *   • fog_tile    12  — unchanged; normal blend, sanitize for hygiene
+ *   • fog_tile    32  — raised: fog_tile_soft edges carry alpha 18–28 with RGB
+ *                       > 0, producing visible tile seams/plates in the swamp
+ *                       region. Threshold 32 zeros those low-alpha edges while
+ *                       preserving the body of the fog tile.
  *   • water_mask   6  — unchanged; BitmapMask, should be near-binary
  */
 export const V2_SANITIZE_MANIFEST: ReadonlyArray<{
@@ -68,7 +71,7 @@ export const V2_SANITIZE_MANIFEST: ReadonlyArray<{
 }> = [
   { key: 'v2-biolume',    label: 'biolume',    threshold: 32 },  // ADD    — ambient peak = alpha 31
   { key: 'v2-light-rays', label: 'light_rays', threshold: 20 },  // SCREEN — source_glow 80% = alpha 20
-  { key: 'v2-fog-soft',   label: 'fog_tile',   threshold: 12 },  // NORMAL (hygiene)
+  { key: 'v2-fog-soft',   label: 'fog_tile',   threshold: 32 },  // NORMAL (tile seam cleanup)
   { key: 'v2-water-mask', label: 'water_mask', threshold:  6 },  // BitmapMask
 ]
 
