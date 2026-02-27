@@ -167,8 +167,8 @@ export function sanitizeAdditiveTexture(
 // ─── QA probe ───────────────────────────────────────────────────────────────
 
 /**
- * Sample RGBA values at five strategic points of a loaded Phaser texture:
- * four corners + left-edge mid-point.
+ * Sample RGBA values at eight strategic points of a loaded Phaser texture:
+ * four corners + mid-edge points.
  *
  * Creates a temporary off-screen canvas to read pixel data.  Run once at boot
  * for ART_QA logging — never per-frame.
@@ -193,12 +193,17 @@ export function sampleTextureRGBA(scene: Phaser.Scene, key: string): PixelSample
   if (!ctx) return []
   ctx.drawImage(src, 0, 0)
 
+  const midX = Math.floor((w - 1) / 2)
+  const midY = Math.floor((h - 1) / 2)
   const points: Array<{ label: string; x: number; y: number }> = [
-    { label: 'TL', x: 0,               y: 0               },
-    { label: 'TR', x: w - 1,           y: 0               },
-    { label: 'BL', x: 0,               y: h - 1           },
-    { label: 'BR', x: w - 1,           y: h - 1           },
-    { label: 'ML', x: 0,               y: Math.floor(h / 2) },
+    { label: 'TL', x: 0,    y: 0    },
+    { label: 'TM', x: midX, y: 0    },
+    { label: 'TR', x: w - 1, y: 0   },
+    { label: 'ML', x: 0,    y: midY },
+    { label: 'MR', x: w - 1, y: midY },
+    { label: 'BL', x: 0,    y: h - 1 },
+    { label: 'BM', x: midX, y: h - 1 },
+    { label: 'BR', x: w - 1, y: h - 1 },
   ]
 
   return points.map(({ label, x, y }) => {

@@ -60,16 +60,31 @@ export class BootScene extends Phaser.Scene {
 
       // STEP 1 — ART_QA: Log corner RGBA *before* sanitization so the PR can
       // confirm RGB > 0 in near-transparent pixels (the artifact root cause).
-      if (import.meta.env.VITE_ART_QA === 'true') {
-        console.group('[ArtQA v6.1.8] Pre-sanitize corner RGBA')
-        for (const { key, label } of V2_SANITIZE_MANIFEST) {
-          const samples = sampleTextureRGBA(this, key)
+      if (import.meta.env.DEV || import.meta.env.VITE_ART_QA === 'true') {
+        const preSanitize = V2_SANITIZE_MANIFEST.map(({ key, label, threshold }) => ({
+          key,
+          label,
+          threshold,
+          samples: sampleTextureRGBA(this, key),
+        }))
+        const win = window as Window & {
+          __artQaPreSanitize?: Array<{
+            key: string
+            label: string
+            threshold: number
+            samples: ReturnType<typeof sampleTextureRGBA>
+          }>
+        }
+        win.__artQaPreSanitize = preSanitize
+
+        console.group('[ArtQA v6.1.8] Pre-sanitize RGBA samples (corners+edges)')
+        for (const { label, threshold, samples } of preSanitize) {
           if (samples.length === 0) {
             console.log(`  ${label}: texture not loaded`)
             continue
           }
           const hasArtifact = samples.some(
-            (s) => s.a <= 28 && (s.r > 0 || s.g > 0 || s.b > 0),
+            (s) => s.a <= threshold && (s.r > 0 || s.g > 0 || s.b > 0),
           )
           const flag = hasArtifact ? '⚠ RGB>0 in transparent — artifact risk' : '✓ clean'
           console.log(
@@ -88,10 +103,25 @@ export class BootScene extends Phaser.Scene {
       }
 
       // STEP 1 (post-sanitize confirmation in ART_QA mode).
-      if (import.meta.env.VITE_ART_QA === 'true') {
-        console.group('[ArtQA v6.1.8] Post-sanitize corner RGBA (expect all 0,0,0,0)')
-        for (const { key, label } of V2_SANITIZE_MANIFEST) {
-          const samples = sampleTextureRGBA(this, key)
+      if (import.meta.env.DEV || import.meta.env.VITE_ART_QA === 'true') {
+        const postSanitize = V2_SANITIZE_MANIFEST.map(({ key, label, threshold }) => ({
+          key,
+          label,
+          threshold,
+          samples: sampleTextureRGBA(this, key),
+        }))
+        const win = window as Window & {
+          __artQaPostSanitize?: Array<{
+            key: string
+            label: string
+            threshold: number
+            samples: ReturnType<typeof sampleTextureRGBA>
+          }>
+        }
+        win.__artQaPostSanitize = postSanitize
+
+        console.group('[ArtQA v6.1.8] Post-sanitize RGBA samples (expect all 0,0,0,0)')
+        for (const { label, samples } of postSanitize) {
           if (samples.length === 0) continue
           const dirty = samples.some((s) => s.r > 0 || s.g > 0 || s.b > 0 || s.a > 0)
           const flag = dirty ? '✗ STILL DIRTY' : '✓ clean'

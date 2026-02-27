@@ -288,8 +288,10 @@ export class PlayScene extends Phaser.Scene {
   private iapSystem = new IapSystem(createIapProvider())
   private difficultyTuning: DifficultyTuning = { speedScale: 1, gap: PIPE_CONFIG.gap }
   private soundSystem: SoundSystem | null = null
-  private readonly debugToggleAllowed =
-    import.meta.env.DEV || import.meta.env.VITE_ART_QA === 'true'
+  private readonly artQaEnabled =
+    import.meta.env.DEV ||
+    String(import.meta.env.VITE_ART_QA).toLowerCase() === 'true'
+  private readonly debugToggleAllowed = import.meta.env.DEV || this.artQaEnabled
   private readonly e2eEnabled =
     import.meta.env.DEV && String(import.meta.env.VITE_E2E).toLowerCase() === 'true'
   private e2eAutoplay = this.e2eEnabled
@@ -455,6 +457,7 @@ export class PlayScene extends Phaser.Scene {
     this.enterReady()
     this.setupInput()
     this.setupVisibilityHandlers()
+    this.bindQaHooks()
     this.scale.on('resize', this.handleResize)
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.scale.off('resize', this.handleResize)
@@ -541,17 +544,17 @@ export class PlayScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-M', () => this.toggleMute())
     this.input.keyboard?.on('keydown-R', () => this.toggleReducedMotion())
     this.input.keyboard?.on('keydown-E', () => this.toggleEnvironment())
-    // QA: digit keys for layer visibility; Shift+digit for solo; B for bounds.
-    // Only active when debugToggleAllowed (DEV or VITE_ART_QA=true).
-    if (this.debugToggleAllowed) {
+    // QA: digit keys for slot visibility; Shift+digit for solo; B for bounds.
+    // Only active when VITE_ART_QA=true.
+    if (this.artQaEnabled) {
       // Use a single generic keydown listener so we can check event.shiftKey.
       // keydown-1..8 fire only when Shift is NOT held (different event.key).
       // Shift+Digit is captured via event.code which is layout-independent.
       this.input.keyboard?.on('keydown', (event: KeyboardEvent) => {
-        // Shift + digit 1–8 → solo mode
+        // Shift + digit 1–9 → solo mode
         if (event.shiftKey && event.code.startsWith('Digit')) {
           const digit = parseInt(event.code.slice(5), 10)
-          if (digit >= 1 && digit <= 8 && this.backgroundSystem) {
+          if (digit >= 1 && digit <= 9 && this.backgroundSystem) {
             this.backgroundSystem.toggleSoloLayer(digit - 1)
             this.updateEnvDebugOverlay()
           }
@@ -564,10 +567,10 @@ export class PlayScene extends Phaser.Scene {
           this.updateEnvDebugOverlay()
           return
         }
-        // Digit 1–8 (no shift) → toggle layer visibility
+        // Digit 1–9 (no shift) → toggle slot visibility
         if (!event.shiftKey && event.code.startsWith('Digit')) {
           const digit = parseInt(event.code.slice(5), 10)
-          if (digit >= 1 && digit <= 8 && this.backgroundSystem) {
+          if (digit >= 1 && digit <= 9 && this.backgroundSystem) {
             const name = this.backgroundSystem.toggleLayerByIndex(digit - 1)
             if (name) this.updateEnvDebugOverlay()
           }
@@ -604,6 +607,98 @@ export class PlayScene extends Phaser.Scene {
     })
   }
 
+  private bindQaHooks(): void {
+    if (typeof window === 'undefined') {
+      return
+    }
+    if (!this.artQaEnabled && !this.e2eEnabled && !import.meta.env.DEV) {
+      return
+    }
+    const win = window as Window & {
+      render_game_to_text?: () => string
+      advanceTime?: (ms: number) => Promise<void>
+      __captureSnapshot?: () => Promise<string | null>
+      __artQaPreSanitize?: Array<{
+        key: string
+        label: string
+        threshold: number
+        samples: Array<{ label: string; r: number; g: number; b: number; a: number }>
+      }>
+      __artQaPostSanitize?: Array<{
+        key: string
+        label: string
+        threshold: number
+        samples: Array<{ label: string; r: number; g: number; b: number; a: number }>
+      }>
+    }
+
+    win.render_game_to_text = () => {
+      const pipes = this.pipes.map((pipe) => ({
+        x: pipe.x,
+        gapY: pipe.gapY,
+        gap: pipe.gap,
+        topHeight: pipe.topHeight,
+        bottomY: pipe.bottomY,
+        bottomHeight: pipe.bottomHeight,
+        scored: pipe.scored,
+      }))
+      const qa = {
+        debugLines: this.backgroundSystem?.getDebugLines() ?? [],
+        preSanitize: win.__artQaPreSanitize ?? [],
+        postSanitize: win.__artQaPostSanitize ?? [],
+        artQaEnabled: this.artQaEnabled,
+        perfLowPower: this.perfLowPower,
+      }
+      const payload = {
+        mode: this.stateMachine.state,
+        coords: 'origin top-left, x right, y down',
+        bird: this.bird
+          ? {
+              x: this.bird.x,
+              y: this.bird.y,
+              vy: this.bird.velocity,
+              r: BIRD_CONFIG.radius,
+            }
+          : null,
+        pipes,
+        score: this.scoreSystem.score,
+        bestScore: this.bestScore,
+        gameMode: this.gameModeId,
+        qa,
+      }
+      return JSON.stringify(payload)
+    }
+
+    if (!win.advanceTime) {
+      win.advanceTime = (ms: number) =>
+        new Promise((resolve) => {
+          const start = performance.now()
+          const step = (now: number) => {
+            if (now - start >= ms) {
+              resolve()
+              return
+            }
+            requestAnimationFrame(step)
+          }
+          requestAnimationFrame(step)
+        })
+    }
+
+    if (!win.__captureSnapshot) {
+      win.__captureSnapshot = () =>
+        new Promise((resolve) => {
+          const renderer = this.game.renderer as unknown as {
+            snapshot?: (callback: (image: HTMLImageElement) => void) => void
+          }
+          if (!renderer?.snapshot) {
+            resolve(null)
+            return
+          }
+          renderer.snapshot((image) => resolve(image?.src ?? null))
+        })
+    }
+  }
+
   private applyDocumentTheme(): void {
     if (typeof document !== 'undefined') {
       document.documentElement.style.backgroundColor = this.theme.palette.background
@@ -614,6 +709,12 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private updatePerformanceMode(dtMs: number): void {
+    if (this.artQaEnabled) {
+      if (this.perfLowPower) {
+        this.setLowPowerMode(false)
+      }
+      return
+    }
     if (this.reducedMotion) {
       this.perfLowFpsMs = 0
       this.perfHighFpsMs = 0

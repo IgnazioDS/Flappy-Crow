@@ -239,6 +239,25 @@ export class BackgroundSystemV2 extends BackgroundSystem {
   // ─── QA forensics overrides ─────────────────────────────────────────────────
 
   /**
+   * QA: Toggle visibility of a numbered V2 slot (1–9 in the overlay).
+   * Slots map to grouped overlays rather than individual parallax layers.
+   */
+  override toggleLayerByIndex(index: number): string {
+    const names = this.getV2SlotNames()
+    if (index < 0 || index >= names.length) return ''
+
+    if (this.v2SoloIndex !== null) {
+      this.v2SoloIndex = null
+      this.applyV2SoloVisibility()
+    }
+
+    const visibility = this.getV2SlotVisibility()
+    const nextVisible = !(visibility[index] ?? false)
+    this.setV2SlotVisible(index, nextVisible)
+    return names[index]
+  }
+
+  /**
    * QA: Solo the layer at `index`. If already soloed at that index, exit solo
    * and restore all layers to full visibility.
    *
@@ -246,6 +265,7 @@ export class BackgroundSystemV2 extends BackgroundSystem {
    * trivial to identify which layer carries a rectangular artifact.
    */
   override toggleSoloLayer(index: number): void {
+    if (index < 0 || index >= this.getV2SlotNames().length) return
     this.v2SoloIndex = this.v2SoloIndex === index ? null : index
     this.applyV2SoloVisibility()
   }
@@ -346,53 +366,67 @@ export class BackgroundSystemV2 extends BackgroundSystem {
       `  bottom_scrim_h=${BOTTOM_SCRIM_H}px  depth=${BOTTOM_SCRIM_DEPTH}`,
     ]
 
-    // ── visible layers (QA isolation: keys 1–8 toggle, Shift+1–8 solo)
-    const layerNames = this.getLayerNames()
-    const layerVis   = this.getLayerVisibility()
+    // ── visible slots (QA isolation: keys 1–9 toggle, Shift+1–9 solo)
+    const slotNames = this.getV2SlotNames()
+    const slotVis = this.getV2SlotVisibility()
     const soloStr = this.v2SoloIndex !== null
-      ? `SOLO=[${this.v2SoloIndex + 1}] ${layerNames[this.v2SoloIndex] ?? '?'}`
+      ? `SOLO=[${this.v2SoloIndex + 1}] ${slotNames[this.v2SoloIndex] ?? '?'}`
       : 'none'
-    const visLines = layerNames.length > 0
-      ? layerNames.map((name, i) => {
+    const visLines = slotNames.length > 0
+      ? slotNames.map((name, i) => {
           const soloMark = this.v2SoloIndex === i ? ' ◀SOLO' : ''
-          return `  [${i + 1}] ${layerVis[i] ? '●' : '○'} ${name}${soloMark}`
+          return `  [${i + 1}] ${slotVis[i] ? '●' : '○'} ${name}${soloMark}`
         })
       : ['  (none)']
 
-    // ── corner RGBA (proves whether RGB+alpha sanitization has been applied)
+    // ── RGBA samples (proves whether RGB+alpha sanitization has been applied)
     // v6.1.8: shows full (r,g,b,a) not just alpha — artifact condition is
     // alpha≈0 BUT RGB>0, not alpha>0 alone. ✗ means plate risk even if α=0.
-    const cornerAlphaLines = V2_SANITIZE_MANIFEST.map(({ key, label }) => {
+    const buildSampleLine = (key: string, label: string, threshold: number): string => {
       if (!this.v2Scene.textures.exists(key)) return `  ${label}: (not loaded)`
       const tex = this.v2Scene.textures.get(key)
       const src = tex.getSourceImage() as { width?: number; height?: number }
-      const w = (src?.width ?? 2) - 1
-      const h = (src?.height ?? 2) - 1
+      const maxX = Math.max(0, (src?.width ?? 1) - 1)
+      const maxY = Math.max(0, (src?.height ?? 1) - 1)
+      const midX = Math.floor(maxX / 2)
+      const midY = Math.floor(maxY / 2)
+      const points: Array<{ label: string; x: number; y: number }> = [
+        { label: 'TL', x: 0,    y: 0 },
+        { label: 'TM', x: midX, y: 0 },
+        { label: 'TR', x: maxX, y: 0 },
+        { label: 'ML', x: 0,    y: midY },
+        { label: 'MR', x: maxX, y: midY },
+        { label: 'BL', x: 0,    y: maxY },
+        { label: 'BM', x: midX, y: maxY },
+        { label: 'BR', x: maxX, y: maxY },
+      ]
 
-      // getPixel returns Phaser.Display.Color | null; safe fallback to {r:?,g:?,b:?,a:?}
-      const px = (x: number, y: number): string => {
+      const samples = points.map(({ label: pointLabel, x, y }) => {
         const c = this.v2Scene.textures.getPixel(x, y, key)
-        if (!c) return '(?)'
-        return `(${c.red},${c.green},${c.blue},${c.alpha})`
-      }
-      const isDirty = (x: number, y: number): boolean => {
-        const c = this.v2Scene.textures.getPixel(x, y, key)
-        if (!c) return false
-        // Artifact condition: transparent-ish pixel with non-black RGB
-        return c.alpha <= 28 && (c.red > 0 || c.green > 0 || c.blue > 0)
-      }
+        if (!c) {
+          return { label: pointLabel, value: '(?)', dirty: false }
+        }
+        const dirty = c.alpha <= threshold && (c.red > 0 || c.green > 0 || c.blue > 0)
+        return {
+          label: pointLabel,
+          value: `(${c.red},${c.green},${c.blue},${c.alpha})`,
+          dirty,
+        }
+      })
 
-      const tlDirty = isDirty(0, 0)
-      const trDirty = isDirty(w, 0)
-      const blDirty = isDirty(0, h)
-      const brDirty = isDirty(w, h)
-      const anyDirty = tlDirty || trDirty || blDirty || brDirty
+      const anyDirty = samples.some((s) => s.dirty)
       const flag = anyDirty ? '✗' : '✓'
-      return (
-        `  ${flag} ${label.padEnd(10)} ` +
-        `TL=${px(0,0)} TR=${px(w,0)} BL=${px(0,h)} BR=${px(w,h)}`
-      )
-    })
+      return `  ${flag} ${label.padEnd(12)} ${samples.map((s) => `${s.label}=${s.value}`).join(' ')}`
+    }
+
+    const rgbaSampleLines = [
+      ...V2_SANITIZE_MANIFEST.map(({ key, label, threshold }) =>
+        buildSampleLine(key, label, threshold),
+      ),
+    ]
+    if (this.v2Scene.textures.exists(SHIMMER_TEX_KEY)) {
+      rgbaSampleLines.push(buildSampleLine(SHIMMER_TEX_KEY, 'water_shimmer', 8))
+    }
 
     // ── textures
     const texLines = this.v2Env.assets.map((asset) => {
@@ -405,11 +439,11 @@ export class BackgroundSystemV2 extends BackgroundSystem {
     return [
       `env: ${this.v2Env.key} — ${this.v2Env.label} (${W}×${H})`,
       '',
-      'QA FORENSICS (Shift+1–8 solo, B bounds):',
+      'QA FORENSICS (Shift+1–9 solo, B bounds):',
       `  solo: ${soloStr}   bounds: ${this.v2ShowBounds ? 'ON' : 'OFF'}`,
       '',
-      'CORNER α (✓=clean, ✗=artifact risk):',
-      ...cornerAlphaLines,
+      'RGBA SAMPLES (✓=clean, ✗=artifact risk):',
+      ...rgbaSampleLines,
       '',
       'PARALLAX:',
       ...layerLines,
@@ -417,7 +451,7 @@ export class BackgroundSystemV2 extends BackgroundSystem {
       'FOG:',
       ...fogLines,
       '',
-      'VISIBLE_LAYERS (1–8 toggle):',
+      'QA SLOTS (1–9 toggle):',
       ...visLines,
       '',
       'BIOLUME:',
@@ -446,6 +480,124 @@ export class BackgroundSystemV2 extends BackgroundSystem {
 
   // ─── QA forensics private helpers ───────────────────────────────────────────
 
+  private getV2SlotNames(): string[] {
+    return [
+      'Parallax (BG+FG)',
+      'Fog A',
+      'Fog B',
+      'Light Rays (SCREEN)',
+      'Biolume (ADD)',
+      'Reflection',
+      'Shimmer (SCREEN)',
+      'Grade',
+      'Grain',
+    ]
+  }
+
+  private getV2LayerCounts(): { bg: number; fog: number; fg: number } {
+    return {
+      bg: this.v2Env.layers.length,
+      fog: this.v2Env.fogLayers.length,
+      fg: this.v2Env.foregroundLayers?.length ?? 0,
+    }
+  }
+
+  private getV2SlotVisibility(): boolean[] {
+    const { bg, fog, fg } = this.getV2LayerCounts()
+    const layerVis = this.getLayerVisibility()
+
+    let parallaxVisible = false
+    for (let i = 0; i < bg; i++) {
+      if (layerVis[i]) {
+        parallaxVisible = true
+        break
+      }
+    }
+    if (!parallaxVisible) {
+      for (let i = 0; i < fg; i++) {
+        if (layerVis[bg + fog + i]) {
+          parallaxVisible = true
+          break
+        }
+      }
+    }
+
+    const fogAVisible = fog >= 1 ? layerVis[bg] : false
+    const fogBVisible = fog >= 2 ? layerVis[bg + 1] : false
+
+    const lightRaysVisible = this.getLightRaysSprite()?.visible ?? false
+    const biolumeVisible =
+      this.getBiolumeSprites().some((s) => s.visible) ||
+      this.v2SparkleEmitters.some((e) => e.visible)
+    const reflectionVisible = this.getReflectionDebugInfo()?.container.visible ?? false
+    const shimmerVisible = this.shimmerSprite?.visible ?? false
+    const gradeVisible = this.gradeSprite?.visible ?? false
+    const grainVisible = this.grainSprite?.visible ?? false
+
+    return [
+      parallaxVisible,
+      fogAVisible,
+      fogBVisible,
+      lightRaysVisible,
+      biolumeVisible,
+      reflectionVisible,
+      shimmerVisible,
+      gradeVisible,
+      grainVisible,
+    ]
+  }
+
+  private setV2SlotVisible(index: number, visible: boolean): void {
+    switch (index) {
+      case 0:
+        this.setParallaxVisible(visible)
+        break
+      case 1:
+        this.setFogLayerVisible(0, visible)
+        break
+      case 2:
+        this.setFogLayerVisible(1, visible)
+        break
+      case 3:
+        this.setLightRaysVisible(visible)
+        break
+      case 4:
+        this.setBiolumeVisible(visible)
+        for (const e of this.v2SparkleEmitters) e.setVisible(visible)
+        break
+      case 5:
+        this.setReflectionVisible(visible)
+        break
+      case 6:
+        this.shimmerSprite?.setVisible(visible)
+        break
+      case 7:
+        this.gradeSprite?.setVisible(visible)
+        break
+      case 8:
+        this.grainSprite?.setVisible(visible)
+        break
+      default:
+        break
+    }
+  }
+
+  private setParallaxVisible(visible: boolean): void {
+    const { bg, fog, fg } = this.getV2LayerCounts()
+    for (let i = 0; i < bg; i++) {
+      this.setLayerVisible(i, visible)
+    }
+    for (let i = 0; i < fg; i++) {
+      this.setLayerVisible(bg + fog + i, visible)
+    }
+  }
+
+  private setFogLayerVisible(fogIndex: number, visible: boolean): void {
+    const { bg, fog } = this.getV2LayerCounts()
+    if (fogIndex < 0 || fogIndex >= fog) return
+    this.setLayerVisible(bg + fogIndex, visible)
+  }
+
   /**
    * Apply solo/restore visibility across all V2 and parent sprites.
    * In solo mode every sprite except the chosen layer is hidden so the viewer
@@ -453,37 +605,24 @@ export class BackgroundSystemV2 extends BackgroundSystem {
    */
   private applyV2SoloVisibility(): void {
     const solo = this.v2SoloIndex
-    const layerCount = this.getLayerNames().length
+    const slotCount = this.getV2SlotNames().length
 
     if (solo === null) {
-      // Exit solo — restore all layers and V2 sprites to full visibility.
-      this.setAllLayersVisible(true)
-      this.setLightRaysVisible(true)
-      this.setReflectionVisible(true)
-      this.setBiolumeVisible(true)
+      for (let i = 0; i < slotCount; i++) {
+        this.setV2SlotVisible(i, true)
+      }
       this.vignetteSprite?.setVisible(true)
-      this.gradeSprite?.setVisible(true)
-      this.grainSprite?.setVisible(true)
       this.bottomScrimSprite?.setVisible(true)
       this.bankHazeSprite?.setVisible(true)
-      this.shimmerSprite?.setVisible(true)
-      for (const e of this.v2SparkleEmitters) e.setVisible(true)
-    } else {
-      // Enter solo — show only the chosen numbered layer, hide everything else.
-      for (let i = 0; i < layerCount; i++) {
-        this.setLayerVisible(i, i === solo)
-      }
-      this.setLightRaysVisible(false)
-      this.setReflectionVisible(false)
-      this.setBiolumeVisible(false)
-      this.vignetteSprite?.setVisible(false)
-      this.gradeSprite?.setVisible(false)
-      this.grainSprite?.setVisible(false)
-      this.bottomScrimSprite?.setVisible(false)
-      this.bankHazeSprite?.setVisible(false)
-      this.shimmerSprite?.setVisible(false)
-      for (const e of this.v2SparkleEmitters) e.setVisible(false)
+      return
     }
+
+    for (let i = 0; i < slotCount; i++) {
+      this.setV2SlotVisible(i, i === solo)
+    }
+    this.vignetteSprite?.setVisible(false)
+    this.bottomScrimSprite?.setVisible(false)
+    this.bankHazeSprite?.setVisible(false)
   }
 
   /**
@@ -491,76 +630,87 @@ export class BackgroundSystemV2 extends BackgroundSystem {
    * Each overlay sprite category gets a distinct colour so any rectangle that
    * aligns with a visible artifact immediately identifies the culprit.
    *
-   *  Red      — full-canvas parallax / fog / fg TileSprites
-   *  Orange   — light-rays Image
-   *  Yellow   — biolume patch Images
-   *  Cyan     — water shimmer TileSprite
-   *  Green    — grade Image
-   *  Magenta  — grain TileSprite
-   *  White    — bottom scrim + bank haze
+   *  Red       — parallax (bg + fg) TileSprites
+   *  Blue      — fog TileSprites (A/B)
+   *  Orange    — light-rays Image
+   *  Yellow    — biolume patch Images
+   *  Teal      — reflection container/layers
+   *  White     — reflection mask helper image
+   *  Cyan      — water shimmer TileSprite
+   *  Green     — grade Image
+   *  Magenta   — grain TileSprite
+   *  Gray      — bottom scrim + bank haze
    */
   private v2UpdateBoundsGraphics(): void {
     if (!this.v2BoundsGraphics) return
     const g = this.v2BoundsGraphics
     g.clear()
 
-    const { width, height } = GAME_DIMENSIONS
-
-    // Full-canvas layer TileSprites (bg, fog, foreground)
-    const layerNames = this.getLayerNames()
-    const layerVis   = this.getLayerVisibility()
-    for (let i = 0; i < layerNames.length; i++) {
-      if (layerVis[i]) {
-        g.lineStyle(1, 0xff4444, 0.9)
-        g.strokeRect(i * 2, i * 2, width - i * 4, height - i * 4)
+    const drawBounds = (
+      obj: Phaser.GameObjects.GameObject | null,
+      color: number,
+      alpha = 0.9,
+    ): void => {
+      if (!obj) return
+      const bounded = obj as Phaser.GameObjects.GameObject & {
+        getBounds: () => Phaser.Geom.Rectangle
       }
+      if (!bounded.getBounds) return
+      const bounds = bounded.getBounds()
+      g.lineStyle(1.5, color, alpha)
+      g.strokeRect(bounds.x, bounds.y, bounds.width, bounds.height)
     }
+
+    // Parallax layers (bg + fg)
+    for (const sprite of this.getBackgroundLayerSprites()) {
+      if (sprite.visible) drawBounds(sprite, 0xff4444, 0.9)
+    }
+    for (const sprite of this.getForegroundLayerSprites()) {
+      if (sprite.visible) drawBounds(sprite, 0xff6666, 0.9)
+    }
+
+    // Fog layers (A/B)
+    const fogSprites = this.getFogLayerSprites()
+    fogSprites.forEach((sprite, i) => {
+      if (!sprite.visible) return
+      const color = i === 0 ? 0x66bfff : 0x4a8cff
+      drawBounds(sprite, color, 0.9)
+    })
 
     // Light-rays Image
-    if (this.v2Env.lightRays) {
-      g.lineStyle(1.5, 0xff8800, 0.9)
-      g.strokeRect(1, 1, width - 2, height - 2)
-    }
+    const lightRays = this.getLightRaysSprite()
+    if (lightRays?.visible) drawBounds(lightRays, 0xff8800, 0.9)
 
     // Biolume patch Images
-    if (this.v2Env.biolume) {
-      g.lineStyle(1.5, 0xffff00, 0.9)
-      for (const patch of this.v2Env.biolume.patches) {
-        const half = Math.round((512 * patch.scale) / 2)
-        g.strokeRect(patch.x - half, patch.y - half, half * 2, half * 2)
+    for (const sprite of this.getBiolumeSprites()) {
+      if (sprite.visible) drawBounds(sprite, 0xffff00, 0.9)
+    }
+
+    // Water reflection container/layers + mask helper
+    const reflection = this.getReflectionDebugInfo()
+    if (reflection) {
+      if (reflection.container.visible) {
+        drawBounds(reflection.container, 0x22c0ff, 0.9)
+        reflection.layers.forEach((layer) => {
+          if (layer.visible) drawBounds(layer, 0x22c0ff, 0.9)
+        })
       }
+      // Mask helper is invisible by design; still draw its bounds for QA.
+      drawBounds(reflection.maskSprite, 0xffffff, 0.7)
     }
 
     // Water shimmer TileSprite
-    if (this.shimmerSprite?.visible) {
-      const wl = this.v2Env.reflection?.waterlineY ?? 380
-      const sy = Math.max(0, wl - 20)
-      g.lineStyle(1.5, 0x00ffff, 0.9)
-      g.strokeRect(0, sy, width, height - sy)
-    }
+    if (this.shimmerSprite?.visible) drawBounds(this.shimmerSprite, 0x00ffff, 0.9)
 
     // Grade Image (full-canvas)
-    if (this.gradeSprite?.visible) {
-      g.lineStyle(1.5, 0x00ff00, 0.9)
-      g.strokeRect(3, 3, width - 6, height - 6)
-    }
+    if (this.gradeSprite?.visible) drawBounds(this.gradeSprite, 0x00ff00, 0.9)
 
     // Grain TileSprite (full-canvas)
-    if (this.grainSprite?.visible) {
-      g.lineStyle(1.5, 0xff00ff, 0.9)
-      g.strokeRect(4, 4, width - 8, height - 8)
-    }
+    if (this.grainSprite?.visible) drawBounds(this.grainSprite, 0xff00ff, 0.9)
 
     // Bottom scrim + bank haze
-    if (this.bottomScrimSprite?.visible) {
-      g.lineStyle(1.5, 0xffffff, 0.8)
-      g.strokeRect(0, height - BOTTOM_SCRIM_H, width, BOTTOM_SCRIM_H)
-    }
-    if (this.bankHazeSprite?.visible) {
-      const wl = this.v2Env.reflection?.waterlineY ?? 380
-      g.lineStyle(1.5, 0xaaaaff, 0.8)
-      g.strokeRect(0, wl - Math.round(BANK_HAZE_H / 2), width, BANK_HAZE_H)
-    }
+    if (this.bottomScrimSprite?.visible) drawBounds(this.bottomScrimSprite, 0xaaaaaa, 0.8)
+    if (this.bankHazeSprite?.visible) drawBounds(this.bankHazeSprite, 0xaaaaaa, 0.8)
   }
 
   /** Apply low-power visibility to V2-exclusive objects (shimmer, sparkles). */

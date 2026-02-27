@@ -198,6 +198,47 @@ export class BackgroundSystem {
     this.reflection?.container.setVisible(visible)
   }
 
+  /** QA: Access layer sprites for bounds overlay (bg). */
+  protected getBackgroundLayerSprites(): Phaser.GameObjects.TileSprite[] {
+    return this.layers.map((layer) => layer.sprite)
+  }
+
+  /** QA: Access layer sprites for bounds overlay (fog). */
+  protected getFogLayerSprites(): Phaser.GameObjects.TileSprite[] {
+    return this.fogLayers.map((layer) => layer.sprite)
+  }
+
+  /** QA: Access layer sprites for bounds overlay (foreground). */
+  protected getForegroundLayerSprites(): Phaser.GameObjects.TileSprite[] {
+    return this.foregroundLayers.map((layer) => layer.sprite)
+  }
+
+  /** QA: Access light-rays sprite for bounds overlay. */
+  protected getLightRaysSprite(): Phaser.GameObjects.Image | null {
+    return this.lightRays?.sprite ?? null
+  }
+
+  /** QA: Access biolume sprites for bounds overlay. */
+  protected getBiolumeSprites(): Phaser.GameObjects.Image[] {
+    return this.biolume.map((patch) => patch.sprite)
+  }
+
+  /** QA: Access reflection container/mask/layers for bounds overlay. */
+  protected getReflectionDebugInfo(): {
+    container: Phaser.GameObjects.Container
+    maskSprite: Phaser.GameObjects.Image
+    layers: Phaser.GameObjects.TileSprite[]
+    config: ReflectionConfig
+  } | null {
+    if (!this.reflection) return null
+    return {
+      container: this.reflection.container,
+      maskSprite: this.reflection.maskSprite,
+      layers: this.reflection.layers.map((l) => l.sprite),
+      config: this.reflection.config,
+    }
+  }
+
   /**
    * QA: Solo the layer at `index`. Override in subclasses for full solo support.
    * Base implementation is a no-op (subclass controls V2-specific sprites).
