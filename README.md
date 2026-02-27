@@ -58,16 +58,16 @@ These controls are only available when running with `npm run dev` or when the
 
 | Key | Action |
 |---|---|
-| `D` | Toggle environment debug overlay (parallax speeds, fog/biolume knobs, FX budget, corner-α) |
-| `1`–`8` | Toggle visibility of individual background layer (Sky Far → Branches) |
-| `Shift`+`1`–`8` | **Solo** a single layer — hides all other sprites for artifact isolation |
+| `D` | Toggle environment debug overlay (parallax speeds, fog/biolume knobs, FX budget, RGBA samples) |
+| `1`–`9` | Toggle visibility of QA slots (parallax, fog A/B, rays, biolume, reflection, shimmer, grade, grain) |
+| `Shift`+`1`–`9` | **Solo** a single slot — hides all other sprites for artifact isolation |
 | `Shift`+same digit | Exit solo mode, restore all layers |
 | `B` | Toggle sprite-bounds overlay — draws a coloured rectangle around every overlay sprite |
 
 The debug overlay sections:
 - **QA FORENSICS**: current solo status + bounds on/off
-- **CORNER α**: TL/TR/BL/BR alpha values for ADD/SCREEN-blend textures — `✓` means clean (0), `✗` means artifact risk
-- **VISIBLE_LAYERS**: ●/○ per layer with `◀SOLO` marker on the active solo
+- **RGBA SAMPLES**: corners + mid-edge samples for ADD/SCREEN/overlay textures — `✓` means clean, `✗` means artifact risk
+- **QA SLOTS**: ●/○ per slot with `◀SOLO` marker on the active solo
 - **FX BUDGET**: live sparkle count + all visible-layer alphas snapshot
 
 ## Query params

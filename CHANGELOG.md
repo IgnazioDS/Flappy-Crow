@@ -5,6 +5,20 @@
 All notable changes to this project will be documented in this file.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [6.1.11] - 2026-02-27
+
+### Added
+
+- ART_QA forensics: slot-based solo/toggle (1–9), bounds overlay for all V2 overlays,
+  RGBA sampling at corners + mid-edges, and pre/post-sanitize sampling stored for QA.
+- QA snapshot hook (`window.__captureSnapshot`) to capture renderer output in headless QA runs.
+
+### Fixed
+
+- **Fog tile seam plates** — raised `v2-fog-soft` sanitization threshold to 32 to
+  zero low-alpha edge RGB (alpha 18–28) that was showing as rectangular plates
+  when fog layered with other overlays.
+
 ## [6.1.10] - 2026-02-26
 
 ### Fixed
