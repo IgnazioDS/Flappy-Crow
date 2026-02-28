@@ -161,15 +161,11 @@ export const EVIL_FOREST_V2: EnvironmentConfig = {
     key: V2_KEYS.biolume,
     depth: 0.72,
     blendMode: 'add',
-    patches: [
-      { x:  58, y: 490, scale: 0.38, alpha: 0.40, pulseSpeed: 0.90 },
-      { x: 155, y: 510, scale: 0.42, alpha: 0.44, pulseSpeed: 0.70 },
-      { x: 255, y: 480, scale: 0.40, alpha: 0.38, pulseSpeed: 0.80 },
-      { x: 332, y: 505, scale: 0.36, alpha: 0.36, pulseSpeed: 0.75 },
-    ],
+    patches: [],
+    // Orb source removed; keep biolume layer non-rendering.
     // Sparkle clusters: localized micro-particles near each glow patch.
     // Hard cap: sparkleMax ≤ 18 (shared across all 4 emitters → ≤ 4 per emitter).
-    sparkleMax: 14,       // max alive particles across all patches combined
+    sparkleMax: 0,        // disabled (removes random bottom sparkles)
     sparkleSpawnRate: 850, // ms between spawns per patch emitter
   },
 
@@ -229,7 +225,7 @@ export const EVIL_FOREST_V2: EnvironmentConfig = {
   // Firefly areas kept within game width (360px).
   particles: {
     embers: {
-      enabled: true,
+      enabled: false, // removed: random bottom ember specks in play scene
       frequency: 2400,
       maxParticles: 6,
       speedMin: 6,
@@ -278,7 +274,7 @@ export const EVIL_FOREST_V2: EnvironmentConfig = {
       blendMode: 'normal',
     },
     fireflies: {
-      enabled: true,
+      enabled: false, // removed: random bottom purple specks in play scene
       frequency: 900,
       maxParticles: 14,
       speedMin: 4,
