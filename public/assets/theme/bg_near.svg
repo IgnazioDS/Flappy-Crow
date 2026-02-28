@@ -1,17 +1,69 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="360" height="640" viewBox="0 0 360 640" fill="none">
-  <rect width="360" height="640" fill="#11101c" />
-  <path d="M0 260 L26 260 L34 360 L22 520 L36 640 L0 640 Z" fill="#141322" opacity="0.9" />
-  <path d="M58 240 L86 240 L94 360 L82 520 L94 640 L52 640 Z" fill="#141322" opacity="0.92" />
-  <path d="M140 230 L170 230 L178 360 L166 520 L178 640 L130 640 Z" fill="#151424" opacity="0.92" />
-  <path d="M214 250 L244 250 L252 360 L240 520 L252 640 L204 640 Z" fill="#151424" opacity="0.92" />
-  <path d="M288 220 L318 220 L326 360 L314 520 L326 640 L274 640 Z" fill="#151424" opacity="0.92" />
-  <path d="M36 300 L8 276" stroke="#3c2a52" stroke-width="8" stroke-linecap="round" opacity="0.78" />
-  <path d="M150 310 L186 280" stroke="#3c2a52" stroke-width="8" stroke-linecap="round" opacity="0.78" />
-  <path d="M230 330 L198 304" stroke="#3c2a52" stroke-width="8" stroke-linecap="round" opacity="0.78" />
-  <path d="M302 300 L330 270" stroke="#3c2a52" stroke-width="8" stroke-linecap="round" opacity="0.78" />
-  <circle cx="70" cy="520" r="6" fill="#ff4fa3" opacity="0.75" />
-  <circle cx="94" cy="540" r="3" fill="#ff4fa3" opacity="0.6" />
-  <circle cx="220" cy="500" r="5" fill="#ff4fa3" opacity="0.75" />
-  <circle cx="248" cy="522" r="3" fill="#ff4fa3" opacity="0.6" />
-  <circle cx="300" cy="510" r="4" fill="#ff4fa3" opacity="0.6" />
+  <!--
+    Evil Forest — near background. 360×640.
+    Close foreground twisted trees, thick trunks, glowing pink-magenta
+    bioluminescent details (flowers/spores), heavy branches.
+  -->
+  <defs>
+    <linearGradient id="base" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#110f1c"/>
+      <stop offset="100%" stop-color="#0a0912"/>
+    </linearGradient>
+    <radialGradient id="spore-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#ff4fa3" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#ff4fa3" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="360" height="640" fill="url(#base)"/>
+
+  <!-- Thick foreground trunks -->
+  <path d="M0 250 L28 250 L36 370 L24 540 L38 640 L0 640 Z"
+        fill="#131220" opacity="0.95"/>
+  <path d="M58 232 L88 232 L96 368 L84 538 L96 640 L52 640 Z"
+        fill="#131220" opacity="0.95"/>
+  <path d="M140 222 L172 222 L180 368 L168 538 L180 640 L130 640 Z"
+        fill="#141222" opacity="0.95"/>
+  <path d="M214 244 L246 244 L254 368 L242 538 L254 640 L204 640 Z"
+        fill="#141222" opacity="0.95"/>
+  <path d="M288 214 L320 214 L328 368 L316 538 L328 640 L276 640 Z"
+        fill="#141220" opacity="0.95"/>
+
+  <!-- Heavy branches -->
+  <path d="M36 308 L8  282"  stroke="#3c2854" stroke-width="8" stroke-linecap="round" opacity="0.80"/>
+  <path d="M36 308 L62 280"  stroke="#3c2854" stroke-width="7" stroke-linecap="round" opacity="0.75"/>
+  <path d="M150 318 L188 286" stroke="#3c2854" stroke-width="8" stroke-linecap="round" opacity="0.80"/>
+  <path d="M150 318 L116 290" stroke="#3c2854" stroke-width="7" stroke-linecap="round" opacity="0.75"/>
+  <path d="M230 338 L198 308" stroke="#3c2854" stroke-width="8" stroke-linecap="round" opacity="0.80"/>
+  <path d="M230 338 L260 306" stroke="#3c2854" stroke-width="7" stroke-linecap="round" opacity="0.75"/>
+  <path d="M302 308 L332 276" stroke="#3c2854" stroke-width="8" stroke-linecap="round" opacity="0.80"/>
+  <path d="M302 308 L276 278" stroke="#3c2854" stroke-width="7" stroke-linecap="round" opacity="0.75"/>
+
+  <!-- Sub-branches -->
+  <path d="M8 282  L0  268"  stroke="#2e1e40" stroke-width="4" stroke-linecap="round" opacity="0.60"/>
+  <path d="M62 280 L74 264"  stroke="#2e1e40" stroke-width="4" stroke-linecap="round" opacity="0.58"/>
+  <path d="M188 286 L198 268" stroke="#2e1e40" stroke-width="4" stroke-linecap="round" opacity="0.60"/>
+  <path d="M116 290 L106 272" stroke="#2e1e40" stroke-width="4" stroke-linecap="round" opacity="0.58"/>
+  <path d="M332 276 L342 258" stroke="#2e1e40" stroke-width="4" stroke-linecap="round" opacity="0.60"/>
+
+  <!-- Bioluminescent glow halos + dots -->
+  <ellipse cx="70"  cy="520" rx="18" ry="10" fill="#ff4fa3" opacity="0.20"/>
+  <circle  cx="70"  cy="520" r="5.5" fill="#ff4fa3" opacity="0.80"/>
+  <circle  cx="94"  cy="540" r="3"   fill="#ff4fa3" opacity="0.65"/>
+  <circle  cx="58"  cy="536" r="2.5" fill="#ff60b0" opacity="0.55"/>
+
+  <ellipse cx="220" cy="500" rx="16" ry="9" fill="#ff4fa3" opacity="0.18"/>
+  <circle  cx="220" cy="500" r="5"   fill="#ff4fa3" opacity="0.80"/>
+  <circle  cx="244" cy="522" r="3"   fill="#ff4fa3" opacity="0.65"/>
+  <circle  cx="210" cy="518" r="2"   fill="#ff60b0" opacity="0.50"/>
+
+  <ellipse cx="300" cy="508" rx="14" ry="8" fill="#ff4fa3" opacity="0.18"/>
+  <circle  cx="300" cy="508" r="4"   fill="#ff4fa3" opacity="0.75"/>
+  <circle  cx="316" cy="524" r="2.5" fill="#ff60b0" opacity="0.55"/>
+  <circle  cx="288" cy="525" r="2"   fill="#ff4fa3" opacity="0.50"/>
+
+  <!-- Small upper spores -->
+  <circle cx="40"  cy="400" r="2"   fill="#ff4fa3" opacity="0.45"/>
+  <circle cx="186" cy="388" r="1.8" fill="#ff60b0" opacity="0.40"/>
+  <circle cx="320" cy="392" r="2"   fill="#ff4fa3" opacity="0.42"/>
 </svg>
