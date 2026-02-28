@@ -1,7 +1,47 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="60" height="400" viewBox="0 0 60 400">
-  <rect x="0" y="0" width="60" height="400" rx="6" fill="#2fb46b" stroke="#1e7e47" stroke-width="3" />
-  <rect x="6" y="2" width="10" height="396" rx="4" fill="#7ae5aa" opacity="0.62" />
-  <rect x="46" y="2" width="8" height="396" rx="4" fill="#1f8b4f" opacity="0.7" />
-  <rect x="-4" y="18" width="68" height="20" rx="6" fill="#41d27b" stroke="#1e7e47" stroke-width="3" />
-  <rect x="4" y="22" width="12" height="12" rx="4" fill="#9af2c2" opacity="0.7" />
+  <!--
+    Classic theme — pipe/obstacle. 60×400.
+    Rich forest-green with rim cap, highlight stripe, and shadow edge.
+    Cap at top (y=0 to y=28); shaft fills the rest.
+  -->
+  <defs>
+    <linearGradient id="shaft-grad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="#1a8848"/>
+      <stop offset="18%"  stop-color="#28c060"/>
+      <stop offset="50%"  stop-color="#22aa54"/>
+      <stop offset="82%"  stop-color="#196038"/>
+      <stop offset="100%" stop-color="#114028"/>
+    </linearGradient>
+    <linearGradient id="cap-grad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="#156030"/>
+      <stop offset="20%"  stop-color="#28aa56"/>
+      <stop offset="50%"  stop-color="#30c464"/>
+      <stop offset="80%"  stop-color="#1e8844"/>
+      <stop offset="100%" stop-color="#0f4824"/>
+    </linearGradient>
+    <linearGradient id="highlight" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#90f0b8" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#90f0b8" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="shadow-r" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="#063018" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#063018" stop-opacity="0.55"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Shaft -->
+  <rect x="3" y="28" width="54" height="372" fill="url(#shaft-grad)"/>
+  <!-- Shaft highlight stripe (left edge) -->
+  <rect x="7" y="28" width="11" height="372" fill="url(#highlight)" rx="3"/>
+  <!-- Shaft right shadow -->
+  <rect x="38" y="28" width="19" height="372" fill="url(#shadow-r)"/>
+
+  <!-- Cap body (wider, overhangs 4px each side) -->
+  <rect x="0" y="0" width="60" height="28" rx="5" fill="url(#cap-grad)"/>
+  <!-- Cap highlight -->
+  <rect x="4" y="2" width="16" height="14" rx="4" fill="#a0f4c8" opacity="0.55"/>
+  <!-- Cap right shadow -->
+  <rect x="44" y="0" width="16" height="28" rx="5" fill="#063018" opacity="0.3"/>
+  <!-- Cap bottom edge line -->
+  <line x1="0" y1="27.5" x2="60" y2="27.5" stroke="#0d4820" stroke-width="1.5" opacity="0.6"/>
 </svg>

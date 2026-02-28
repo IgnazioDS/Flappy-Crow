@@ -1,15 +1,58 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="360" height="640" viewBox="0 0 360 640" fill="none">
+  <!--
+    Classic theme — far background. 360×640.
+    Warm morning sky: soft azure-to-periwinkle gradient, layered haze bands,
+    atmospheric sun bloom, drifting high-altitude cloud wisps.
+  -->
   <defs>
-    <linearGradient id="classicSkyFar" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#e8f8ff" />
-      <stop offset="0.55" stop-color="#d0ecff" />
-      <stop offset="1" stop-color="#bcdcfb" />
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#d6eeff"/>
+      <stop offset="25%"  stop-color="#c8e8ff"/>
+      <stop offset="55%"  stop-color="#d8eeff"/>
+      <stop offset="80%"  stop-color="#e8f6ff"/>
+      <stop offset="100%" stop-color="#f0f8ff"/>
+    </linearGradient>
+    <radialGradient id="sun-bloom" cx="75%" cy="18%" r="42%">
+      <stop offset="0%"   stop-color="#fff9e8" stop-opacity="0.7"/>
+      <stop offset="40%"  stop-color="#ffe4a0" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#ffcc66" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="haze" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#b8d8f8" stop-opacity="0"/>
+      <stop offset="50%"  stop-color="#cce4ff" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#ddeeff" stop-opacity="0"/>
     </linearGradient>
   </defs>
-  <rect width="360" height="640" fill="url(#classicSkyFar)" />
-  <ellipse cx="90" cy="150" rx="72" ry="26" fill="#ffffff" opacity="0.34" />
-  <ellipse cx="250" cy="195" rx="95" ry="30" fill="#ffffff" opacity="0.3" />
-  <ellipse cx="155" cy="265" rx="120" ry="34" fill="#ffffff" opacity="0.25" />
-  <ellipse cx="290" cy="330" rx="82" ry="26" fill="#ffffff" opacity="0.22" />
-  <ellipse cx="78" cy="370" rx="98" ry="28" fill="#ffffff" opacity="0.2" />
+
+  <!-- Sky gradient -->
+  <rect width="360" height="640" fill="url(#sky)"/>
+
+  <!-- Sun bloom (upper right) -->
+  <ellipse cx="272" cy="115" rx="130" ry="130" fill="url(#sun-bloom)"/>
+
+  <!-- Haze band at mid-sky -->
+  <rect y="300" width="360" height="140" fill="url(#haze)"/>
+
+  <!-- High-altitude cloud wisps -->
+  <ellipse cx="52"  cy="82"  rx="70" ry="14" fill="#ffffff" opacity="0.28"/>
+  <ellipse cx="140" cy="68"  rx="90" ry="12" fill="#ffffff" opacity="0.22"/>
+  <ellipse cx="248" cy="58"  rx="55" ry="10" fill="#ffffff" opacity="0.20"/>
+  <ellipse cx="310" cy="92"  rx="62" ry="13" fill="#ffffff" opacity="0.22"/>
+
+  <!-- Mid-altitude cloud forms -->
+  <ellipse cx="80"  cy="162" rx="80" ry="22" fill="#ffffff" opacity="0.30"/>
+  <ellipse cx="68"  cy="154" rx="48" ry="16" fill="#ffffff" opacity="0.20"/>
+  <ellipse cx="100" cy="172" rx="54" ry="18" fill="#ffffff" opacity="0.14"/>
+
+  <ellipse cx="246" cy="210" rx="100" ry="26" fill="#ffffff" opacity="0.28"/>
+  <ellipse cx="230" cy="200" rx="60"  ry="18" fill="#ffffff" opacity="0.18"/>
+  <ellipse cx="270" cy="218" rx="70"  ry="20" fill="#ffffff" opacity="0.14"/>
+
+  <!-- Lower cloud layer -->
+  <ellipse cx="152" cy="298" rx="120" ry="30" fill="#ffffff" opacity="0.22"/>
+  <ellipse cx="290" cy="330" rx="90"  ry="22" fill="#ffffff" opacity="0.18"/>
+  <ellipse cx="42"  cy="360" rx="76"  ry="20" fill="#ffffff" opacity="0.16"/>
+
+  <!-- Faint horizon glow -->
+  <rect x="0" y="580" width="360" height="60" fill="#e0f0ff" opacity="0.3"/>
 </svg>
