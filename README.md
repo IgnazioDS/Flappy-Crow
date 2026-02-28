@@ -39,9 +39,28 @@ Environment V1/V2 is used in Evil Forest:
 
 Environment selection is persisted in local storage (`flappy-env`).
 
+## UI Design System (v2)
+
+All UI tokens live in `src/game/ui/designSystem.ts`:
+
+| Token group | Key values |
+|-------------|-----------|
+| Color | `obsidian` `#07090f`, `tealRim` `#48c8d8`, `tealBright` `#9ef1ff` |
+| Spacing | 4 / 8 / 12 / 16 / 24 / 32 px (8-pt grid) |
+| Corner radii | capsule 10 px · panel 12 px · overlay 16 px |
+| Typography | Cinzel Decorative (headline/title), Cinzel (body), Space Mono (numbers) |
+| Motion | `overlayIn` 220 ms · `scorePop` 120 ms · `tapPulse` 1400 ms cycle |
+
+UI assets (original SVG) are in `public/assets/ui/v2/`:
+
+- `panel_9slice.svg`, `capsule_9slice.svg` — 9-slice panel and capsule frames
+- Icon set: settings, mute on/off, motion on/off, restart, close
+- Medal set: bronze, silver, gold, platinum
+- `divider.svg` — decorative teal gradient separator
+
 ## Art QA Mode
 
-Enable QA overlay in either of these ways:
+Enable QA overlays in either of these ways:
 
 ```bash
 VITE_ART_QA=true npm run dev
@@ -51,11 +70,20 @@ Or append `?qa=1` to the URL.
 
 Keybinds in QA mode:
 
-- `D` toggle environment debug overlay
-- `1` to `9` toggle V2 visual slots
-- `Shift+1` to `Shift+9` solo one slot
-- `B` toggle slot bounds overlay
-- `H` toggle gameplay hitboxes
+| Key | Action |
+|-----|--------|
+| `D` | Toggle environment debug overlay |
+| `U` | Toggle UI QA guides (safe area, touch targets, baseline, 8-pt grid) |
+| `H` | Toggle gameplay hitboxes |
+| `1`–`9` | Toggle V2 visual layer slots |
+| `Shift+1`–`9` | Solo one V2 layer slot |
+| `B` | Toggle sprite-bounds overlay |
+
+UI QA guides show:
+- Cyan safe-area boundary (with inset fills for notch areas)
+- Amber touch-target boxes (44×44 min) for interactive HUD elements
+- Magenta baseline guide at HUD content row
+- Faint 8-pt grid for spacing verification
 
 ## Evil Forest V2 Asset Pipeline
 

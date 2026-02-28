@@ -5,6 +5,62 @@
 All notable changes to this project will be documented in this file.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [6.2.0] - 2026-02-28
+
+### Added
+
+- **Design system** (`src/game/ui/designSystem.ts`) — single source-of-truth
+  for all UI tokens: color palette (obsidian glass + teal rim), 8-pt spacing
+  scale, corner radii (capsule / panel / overlay), stroke widths, glow/shadow
+  recipes, typography scale, motion timings, and layout constants.
+- **Motion system** (`src/game/ui/uiMotion.ts`) — reduced-motion-aware tween
+  helpers: `overlayIn`, `overlayOut`, `scorePop`, `tapPulse`, `badgeBounceIn`.
+  All skip animation when `reducedMotion=true`.
+- **UI Asset Kit v2** (`public/assets/ui/v2/`) — original SVG artwork:
+  - `panel_9slice.svg` — 128×128 obsidian-glass panel frame (9-slice ready).
+  - `capsule_9slice.svg` — 96×40 HUD capsule frame (9-slice ready).
+  - Icon set (24×24 each): `icon_settings`, `icon_mute_on/off`,
+    `icon_motion_on/off`, `icon_restart`, `icon_close`.
+  - Medal set (48×56 each): `medal_bronze`, `medal_silver`, `medal_gold`,
+    `medal_platinum`.
+  - `divider.svg` — teal gradient decorative divider with centre diamond.
+- **READY overlay** redesign:
+  - Improved title hierarchy with title anchored to panel top.
+  - Decorative teal divider line under title.
+  - Context-aware subtitle (Practice Mode / Daily Challenge / default).
+  - Tap-prompt at panel bottom with pulsing alpha tween (1.4 s cycle, reduced-
+    motion safe); starts on overlay show, stops on hide.
+- **GAME OVER overlay** redesign:
+  - Taller panel (264 px) for breathing room.
+  - Score centred at 32 px — prominent number hierarchy.
+  - Dual decorative dividers (under title, above best row).
+  - "★ NEW BEST" gold badge appears/disappears per-run (replaces text label).
+  - Coins split: earned (left) / total (right) for faster scan.
+  - PLAY AGAIN uses `createPrimaryButtonBackdrop` — brighter teal rim for CTA
+    emphasis.
+- **UI QA overlay** (`VITE_ART_QA=true` or DEV, press `U` to toggle):
+  - Safe-area boundary rect (cyan) with translucent inset fills.
+  - Touch-target boxes (44×44 min) for score capsule, MENU button, icon cluster.
+  - HUD baseline guide (magenta horizontal line).
+  - 8-pt grid (6 % opacity) for spacing verification.
+- `createPrimaryButtonBackdrop` and `createDivider` added to `uiFactory.ts`.
+
+### Changed
+
+- **`src/game/theme/ui.ts`** — all values sourced from design tokens; score
+  capsule height raised to 48 px, scrim height to 80 px, panel sizes updated.
+- **Settings button label** changed from `'SET'` to `'MENU'` with teal colour.
+- `applyButtonFeedback` in `uiFactory.ts` now accepts `Graphics` in addition
+  to `Image | Rectangle | Container`.
+- `createPanelBackdrop` gains a subtle inner highlight (white top-edge strip,
+  3 % opacity) for improved depth perception.
+
+### Fixed
+
+- No gameplay, physics, hitbox, spawn, or scoring changes.
+
+---
+
 ## [6.1.13] - 2026-02-28
 
 ### Added
