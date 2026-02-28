@@ -1,15 +1,43 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="360" height="640" viewBox="0 0 360 640" fill="none">
-  <rect width="360" height="640" fill="none" />
-  <path
-    d="M0 425 C70 395 155 395 215 425 C275 455 320 455 360 435 L360 640 L0 640 Z"
-    fill="#1d5c4f"
-  />
-  <path
-    d="M0 485 C70 455 160 455 230 485 C290 510 330 510 360 495 L360 640 L0 640 Z"
-    fill="#1a5045"
-  />
-  <path
-    d="M0 545 C82 525 172 525 242 545 C302 565 330 565 360 553 L360 640 L0 640 Z"
-    fill="#16463d"
-  />
+  <!--
+    Emerald theme — near background. 360×640.
+    Close jungle foliage silhouettes, rich dark greens, root suggestions.
+  -->
+  <defs>
+    <linearGradient id="hill-a" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#1d5c4f"/>
+      <stop offset="100%" stop-color="#0d3028"/>
+    </linearGradient>
+    <linearGradient id="hill-b" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#1a5045"/>
+      <stop offset="100%" stop-color="#0a2820"/>
+    </linearGradient>
+    <linearGradient id="hill-c" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#164038"/>
+      <stop offset="100%" stop-color="#082018"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="360" height="640" fill="none"/>
+
+  <path d="M-20 428 C18 395 55 385 85 400 C110 388 140 376 165 392 C192 378 222 370 248 386 C272 372 308 380 380 395 L380 640 L-20 640 Z"
+        fill="url(#hill-a)" opacity="0.80"/>
+
+  <ellipse cx="55"  cy="396" rx="28" ry="16" fill="#1d6050" opacity="0.6"/>
+  <ellipse cx="110" cy="382" rx="24" ry="14" fill="#1d6050" opacity="0.55"/>
+  <ellipse cx="165" cy="375" rx="26" ry="15" fill="#1d6050" opacity="0.55"/>
+  <ellipse cx="222" cy="370" rx="24" ry="14" fill="#1d6050" opacity="0.50"/>
+  <ellipse cx="280" cy="378" rx="26" ry="14" fill="#1d6050" opacity="0.50"/>
+  <ellipse cx="340" cy="386" rx="22" ry="12" fill="#1d6050" opacity="0.45"/>
+
+  <path d="M-20 488 C50 458 138 445 218 468 C292 490 340 480 380 468 L380 640 L-20 640 Z"
+        fill="url(#hill-b)" opacity="0.85"/>
+
+  <path d="M-20 548 C72 524 168 516 250 538 C322 556 350 550 380 540 L380 640 L-20 640 Z"
+        fill="url(#hill-c)" opacity="0.90"/>
+
+  <line x1="60"  y1="548" x2="54"  y2="580" stroke="#0a281e" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  <line x1="140" y1="542" x2="132" y2="576" stroke="#0a281e" stroke-width="2" stroke-linecap="round" opacity="0.45"/>
+  <line x1="220" y1="546" x2="212" y2="580" stroke="#0a281e" stroke-width="2" stroke-linecap="round" opacity="0.45"/>
+  <line x1="300" y1="540" x2="293" y2="572" stroke="#0a281e" stroke-width="2" stroke-linecap="round" opacity="0.4"/>
 </svg>
