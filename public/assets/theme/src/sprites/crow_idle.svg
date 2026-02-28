@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 64" width="96" height="64">
+  <!--
+    Crow — idle frame. Obsidian feathers, teal eye, gothic crow silhouette.
+    Body faces right. Wing folded against body.
+    96×64 px — matches atlas frame dimensions.
+  -->
+  <defs>
+    <!-- Body: deep black with blue-violet sheen -->
+    <linearGradient id="body-grad" x1="0.3" y1="0" x2="0.7" y2="1">
+      <stop offset="0%"   stop-color="#2a1f3d" stop-opacity="0.6"/>
+      <stop offset="40%"  stop-color="#120e1c" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#0a0810" stop-opacity="1"/>
+    </linearGradient>
+    <!-- Feather sheen: subtle top highlight on wing/body -->
+    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#3d2e58" stop-opacity="0.5"/>
+      <stop offset="60%" stop-color="#120e1c" stop-opacity="0"/>
+    </linearGradient>
+    <!-- Eye glow -->
+    <radialGradient id="eye-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"  stop-color="#c8f4ff" stop-opacity="1"/>
+      <stop offset="60%" stop-color="#9ef1ff" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#48c8d8" stop-opacity="0.4"/>
+    </radialGradient>
+    <!-- Wing shadow on body -->
+    <linearGradient id="belly" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#1e1830"/>
+      <stop offset="100%" stop-color="#120e1c"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ── Tail feathers (behind body) ────────────────────────────────── -->
+  <!-- Three fan feathers spreading left from tail base -->
+  <path d="M 20,38 Q 4,28 2,18" stroke="#1a1528" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0.9"/>
+  <path d="M 20,40 Q 3,36 2,30" stroke="#1a1528" stroke-width="4"   stroke-linecap="round" fill="none" opacity="0.9"/>
+  <path d="M 20,42 Q 4,46 3,52" stroke="#1a1528" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0.9"/>
+  <!-- Tail base shape -->
+  <ellipse cx="18" cy="40" rx="7" ry="5" fill="#120e1c" transform="rotate(-5,18,40)"/>
+
+  <!-- ── Main body ───────────────────────────────────────────────────── -->
+  <!-- Chest/belly — slightly lighter (bird facing right, belly below) -->
+  <ellipse cx="44" cy="41" rx="22" ry="11" fill="url(#belly)" opacity="0.7"/>
+  <!-- Main body mass -->
+  <ellipse cx="44" cy="38" rx="26" ry="15" fill="url(#body-grad)"/>
+  <!-- Body top sheen (glossy feather surface) -->
+  <ellipse cx="44" cy="33" rx="20" ry="8" fill="url(#sheen)"/>
+
+  <!-- ── Folded wing ─────────────────────────────────────────────────── -->
+  <!-- Wing panel — darker inner, with teal feather tips -->
+  <path d="M 26,32 Q 40,22 56,28 Q 52,38 42,42 Q 28,44 26,32 Z"
+        fill="#1e1830" opacity="0.95"/>
+  <!-- Wing primary feather tips — row of 4 quill stubs with teal accent -->
+  <path d="M 42,42 Q 46,46 50,44 Q 54,48 58,46 Q 60,50 56,52 Q 46,52 40,46 Z"
+        fill="#160e26"/>
+  <!-- Teal feather tip accents (thin lines over tips) -->
+  <path d="M 50,44 L 54,48" stroke="#48c8d8" stroke-width="0.8" opacity="0.5"/>
+  <path d="M 46,46 L 50,50" stroke="#48c8d8" stroke-width="0.8" opacity="0.4"/>
+  <!-- Wing sheen line -->
+  <path d="M 28,32 Q 43,24 56,29" stroke="#3d2e58" stroke-width="1.2" fill="none" opacity="0.5"/>
+
+  <!-- ── Neck connection ─────────────────────────────────────────────── -->
+  <path d="M 62,32 Q 66,26 72,24 Q 66,34 62,38 Z" fill="url(#body-grad)"/>
+
+  <!-- ── Head ───────────────────────────────────────────────────────── -->
+  <circle cx="72" cy="22" r="13" fill="url(#body-grad)"/>
+  <!-- Head top sheen -->
+  <ellipse cx="70" cy="17" rx="7" ry="4" fill="#3d2e58" opacity="0.35"/>
+
+  <!-- ── Beak ────────────────────────────────────────────────────────── -->
+  <!-- Hooked crow beak — two-part for slight hook -->
+  <path d="M 82,19 L 93,21.5 L 83,25 Z" fill="#2e2438"/>
+  <!-- Lower mandible -->
+  <path d="M 82,23 L 90,24.5 L 82,26.5 Z" fill="#241c30"/>
+  <!-- Beak highlight line -->
+  <line x1="82" y1="19" x2="93" y2="21.5" stroke="#3d2e58" stroke-width="0.7" opacity="0.6"/>
+
+  <!-- ── Eye ────────────────────────────────────────────────────────── -->
+  <!-- Outer glow ring (very faint) -->
+  <circle cx="75" cy="19" r="5.5" fill="#48c8d8" opacity="0.15"/>
+  <!-- Eye socket (dark) -->
+  <circle cx="75" cy="19" r="4.5" fill="#08050f"/>
+  <!-- Iris — teal gradient -->
+  <circle cx="75" cy="19" r="4" fill="url(#eye-glow)"/>
+  <!-- Pupil -->
+  <circle cx="75.5" cy="19" r="2.2" fill="#04020a"/>
+  <!-- Eye highlight (glossy) -->
+  <circle cx="73.5" cy="17.5" r="1.1" fill="#ffffff" opacity="0.85"/>
+  <!-- Tiny secondary highlight -->
+  <circle cx="76.5" cy="20.5" r="0.6" fill="#ffffff" opacity="0.4"/>
+
+  <!-- ── Feet (barely visible at bottom, folded up in flight) ──────── -->
+  <!-- Small talon hints at body base -->
+  <path d="M 38,50 Q 36,56 34,58" stroke="#1a1528" stroke-width="1.8" stroke-linecap="round" fill="none" opacity="0.5"/>
+  <path d="M 42,51 Q 41,57 39,59" stroke="#1a1528" stroke-width="1.8" stroke-linecap="round" fill="none" opacity="0.4"/>
+</svg>

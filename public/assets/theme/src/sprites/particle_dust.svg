@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+  <!--
+    Particle — dust. 16×16.
+    Soft, diffuse mote — muted purple-grey tint.
+    Used for ambient background scatter.
+  -->
+  <defs>
+    <radialGradient id="dust-grad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#b0a8c8" stop-opacity="0.7"/>
+      <stop offset="50%"  stop-color="#7060a0" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#3d2e58" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="8" cy="8" rx="7" ry="6.5" fill="url(#dust-grad)"/>
+</svg>

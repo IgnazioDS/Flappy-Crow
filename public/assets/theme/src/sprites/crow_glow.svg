@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <!--
+    Crow — glow frame (32×32). Radial teal aura used as a screen-blend
+    overlay behind the crow to add a supernatural shimmer.
+    Transparent background; pure radial gradient.
+  -->
+  <defs>
+    <radialGradient id="aura" cx="50%" cy="55%" r="50%">
+      <stop offset="0%"   stop-color="#9ef1ff" stop-opacity="0.7"/>
+      <stop offset="35%"  stop-color="#48c8d8" stop-opacity="0.45"/>
+      <stop offset="70%"  stop-color="#2a7a8c" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#48c8d8" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="core" cx="50%" cy="55%" r="28%">
+      <stop offset="0%"   stop-color="#c8f4ff" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#9ef1ff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Soft outer aura -->
+  <ellipse cx="16" cy="17" rx="15" ry="14" fill="url(#aura)"/>
+  <!-- Bright inner core -->
+  <ellipse cx="16" cy="17" rx="6"  ry="5.5" fill="url(#core)"/>
+</svg>

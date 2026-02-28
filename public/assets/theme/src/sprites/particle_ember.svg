@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" width="16" height="16">
+  <!--
+    Particle — ember. 16×16.
+    Bright teal-white hot core, soft radial teal corona.
+    Used for score-pop and trail effects.
+  -->
+  <defs>
+    <radialGradient id="ember-grad" cx="50%" cy="45%" r="50%">
+      <stop offset="0%"   stop-color="#e8fcff" stop-opacity="1"/>
+      <stop offset="25%"  stop-color="#9ef1ff" stop-opacity="0.95"/>
+      <stop offset="60%"  stop-color="#48c8d8" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#2a7a8c" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <ellipse cx="8" cy="7.5" rx="7" ry="7" fill="url(#ember-grad)"/>
+  <!-- Bright hot-spot centre -->
+  <circle cx="8" cy="7" r="2.5" fill="#ffffff" opacity="0.85"/>
+</svg>
