@@ -1,0 +1,69 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 64" width="96" height="64">
+  <!--
+    Crow — flap frame 2. Wing sweeping down through horizontal (~20° above).
+    Mid-downstroke: arm pushing air downward, feathers flexing.
+  -->
+  <defs>
+    <linearGradient id="body-grad" x1="0.3" y1="0" x2="0.7" y2="1">
+      <stop offset="0%"   stop-color="#2a1f3d" stop-opacity="0.6"/>
+      <stop offset="40%"  stop-color="#120e1c" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#0a0810" stop-opacity="1"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"  stop-color="#3d2e58" stop-opacity="0.5"/>
+      <stop offset="60%" stop-color="#120e1c" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="eye-glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"  stop-color="#c8f4ff"/>
+      <stop offset="60%" stop-color="#9ef1ff"/>
+      <stop offset="100%" stop-color="#48c8d8" stop-opacity="0.4"/>
+    </radialGradient>
+    <linearGradient id="wing-grad" x1="0.2" y1="0" x2="0.8" y2="1">
+      <stop offset="0%" stop-color="#281c3c"/>
+      <stop offset="100%" stop-color="#130d20"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Tail feathers -->
+  <path d="M 20,38 Q 4,30 2,20" stroke="#1a1528" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0.9"/>
+  <path d="M 20,40 Q 3,37 2,31" stroke="#1a1528" stroke-width="4"   stroke-linecap="round" fill="none" opacity="0.9"/>
+  <path d="M 20,42 Q 4,48 3,54" stroke="#1a1528" stroke-width="3.5" stroke-linecap="round" fill="none" opacity="0.9"/>
+  <ellipse cx="18" cy="40" rx="7" ry="5" fill="#120e1c" transform="rotate(-5,18,40)"/>
+
+  <!-- Body -->
+  <ellipse cx="44" cy="38" rx="26" ry="15" fill="url(#body-grad)" transform="rotate(-10,44,38)"/>
+  <ellipse cx="44" cy="32" rx="20" ry="8" fill="url(#sheen)"/>
+
+  <!-- ── Wing mid-downstroke (sweeping toward horizontal) ─────────────── -->
+  <!-- Wing extends forward-laterally, still above body centre -->
+  <path d="M 30,32 Q 34,22 44,16 Q 54,12 64,16 Q 70,20 70,28 Q 60,26 50,30 Q 40,34 30,32 Z"
+        fill="url(#wing-grad)"/>
+  <!-- Leading-edge primary feathers — slight teal accent -->
+  <path d="M 44,16 Q 46,10 50,13" stroke="#9ef1ff" stroke-width="1.2" fill="none" opacity="0.45"/>
+  <path d="M 52,13 Q 56,8  61,13"  stroke="#9ef1ff" stroke-width="1.2" fill="none" opacity="0.45"/>
+  <path d="M 60,15 Q 65,12 68,18"  stroke="#48c8d8" stroke-width="1"   fill="none" opacity="0.4"/>
+  <!-- Internal quill lines — wing surface depth -->
+  <path d="M 32,31 Q 38,22 46,17"  stroke="#2a1f40" stroke-width="0.9" fill="none" opacity="0.55"/>
+  <path d="M 36,30 Q 44,20 52,15"  stroke="#2a1f40" stroke-width="0.9" fill="none" opacity="0.5"/>
+  <path d="M 42,28 Q 52,18 60,16"  stroke="#2a1f40" stroke-width="0.9" fill="none" opacity="0.45"/>
+  <!-- Wing-body junction sheen -->
+  <path d="M 32,31 Q 50,18 68,18" stroke="#3d2e58" stroke-width="1.5" fill="none" opacity="0.3"/>
+
+  <!-- Neck + Head -->
+  <path d="M 62,32 Q 66,26 72,24 Q 66,34 62,38 Z" fill="url(#body-grad)"/>
+  <circle cx="72" cy="22" r="13" fill="url(#body-grad)"/>
+  <ellipse cx="70" cy="17" rx="7" ry="4" fill="#3d2e58" opacity="0.35"/>
+
+  <!-- Beak -->
+  <path d="M 82,19 L 93,21.5 L 83,25 Z" fill="#2e2438"/>
+  <path d="M 82,23 L 90,24.5 L 82,26.5 Z" fill="#241c30"/>
+  <line x1="82" y1="19" x2="93" y2="21.5" stroke="#3d2e58" stroke-width="0.7" opacity="0.6"/>
+
+  <!-- Eye -->
+  <circle cx="75" cy="19" r="5.5" fill="#48c8d8" opacity="0.15"/>
+  <circle cx="75" cy="19" r="4.5" fill="#08050f"/>
+  <circle cx="75" cy="19" r="4" fill="url(#eye-glow)"/>
+  <circle cx="75.5" cy="19" r="2.2" fill="#04020a"/>
+  <circle cx="73.5" cy="17.5" r="1.1" fill="#ffffff" opacity="0.85"/>
+  <circle cx="76.5" cy="20.5" r="0.6" fill="#ffffff" opacity="0.4"/>
+</svg>

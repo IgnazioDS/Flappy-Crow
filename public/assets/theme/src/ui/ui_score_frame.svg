@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 150 54" width="150" height="54">
+  <!--
+    UI Score Frame — 150×54. Obsidian capsule with teal rim.
+    Houses the score display in the HUD.
+  -->
+  <defs>
+    <linearGradient id="cap-fill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#121824" stop-opacity="0.96"/>
+      <stop offset="100%" stop-color="#07090f" stop-opacity="0.96"/>
+    </linearGradient>
+    <linearGradient id="top-sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.08"/>
+      <stop offset="50%"  stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Drop shadow -->
+  <rect x="3" y="4" width="144" height="48" rx="12" fill="#000000" opacity="0.5"/>
+
+  <!-- Capsule body -->
+  <rect x="1" y="1" width="148" height="52" rx="11" fill="url(#cap-fill)"/>
+
+  <!-- Sheen -->
+  <rect x="1" y="1" width="148" height="26" rx="11" fill="url(#top-sheen)"/>
+
+  <!-- Teal rim -->
+  <rect x="1" y="1" width="148" height="52" rx="11"
+        fill="none" stroke="#48c8d8" stroke-width="1.5" opacity="0.75"/>
+
+  <!-- Inner accent -->
+  <rect x="3" y="3" width="144" height="48" rx="9"
+        fill="none" stroke="#9ef1ff" stroke-width="0.75" opacity="0.18"/>
+</svg>

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 52" width="180" height="52">
+  <!--
+    UI Button — 180×52. Obsidian glass action button with solid teal rim.
+    Used for primary CTAs (PLAY AGAIN, etc.).
+  -->
+  <defs>
+    <linearGradient id="btn-fill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#1a2235" stop-opacity="0.98"/>
+      <stop offset="100%" stop-color="#0c1020" stop-opacity="0.98"/>
+    </linearGradient>
+    <linearGradient id="top-sheen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.10"/>
+      <stop offset="55%"  stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Drop shadow -->
+  <rect x="3" y="4" width="174" height="46" rx="12" fill="#000000" opacity="0.5"/>
+
+  <!-- Button body -->
+  <rect x="1" y="1" width="178" height="50" rx="11" fill="url(#btn-fill)"/>
+
+  <!-- Sheen -->
+  <rect x="1" y="1" width="178" height="26" rx="11" fill="url(#top-sheen)"/>
+
+  <!-- Teal rim — stronger on button for emphasis -->
+  <rect x="1" y="1" width="178" height="50" rx="11"
+        fill="none" stroke="#48c8d8" stroke-width="2" opacity="0.85"/>
+
+  <!-- Inner bright accent -->
+  <rect x="3" y="3" width="174" height="46" rx="9"
+        fill="none" stroke="#9ef1ff" stroke-width="1" opacity="0.22"/>
+</svg>

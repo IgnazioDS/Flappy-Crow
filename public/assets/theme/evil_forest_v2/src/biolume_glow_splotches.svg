@@ -1,4 +1,78 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
-  <!-- Intentionally empty: biolume orb/sticker layer removed for Evil Forest V2. -->
-  <rect width="512" height="512" fill="none"/>
+  <!--
+    Bioluminescent glow splotches — 512×512, ADD/SCREEN blend.
+    Scattered teal-cyan-magenta orbs simulating swamp bioluminescence.
+    Colours: #48c8d8 (teal), #9ef1ff (bright teal), #ff4fa3 (magenta).
+    Used at low alpha (0.08–0.18) as a slow-breathing ADD overlay.
+  -->
+  <defs>
+    <radialGradient id="orb-teal-a" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#c8ffff" stop-opacity="0.9"/>
+      <stop offset="25%"  stop-color="#9ef1ff" stop-opacity="0.7"/>
+      <stop offset="60%"  stop-color="#48c8d8" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#48c8d8" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="orb-teal-b" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#e0ffff" stop-opacity="0.85"/>
+      <stop offset="30%"  stop-color="#9ef1ff" stop-opacity="0.55"/>
+      <stop offset="70%"  stop-color="#48c8d8" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#48c8d8" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="orb-magenta" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#ffb8d8" stop-opacity="0.85"/>
+      <stop offset="30%"  stop-color="#ff4fa3" stop-opacity="0.60"/>
+      <stop offset="65%"  stop-color="#c82878" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#c82878" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="orb-small-t" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#9ef1ff" stop-opacity="0.80"/>
+      <stop offset="50%"  stop-color="#48c8d8" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#48c8d8" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="orb-small-m" cx="50%" cy="50%" r="50%">
+      <stop offset="0%"   stop-color="#ff4fa3" stop-opacity="0.75"/>
+      <stop offset="50%"  stop-color="#ff4fa3" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#ff4fa3" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Large teal orbs -->
+  <ellipse cx="98"  cy="380" rx="72" ry="64" fill="url(#orb-teal-a)"/>
+  <ellipse cx="320" cy="440" rx="88" ry="74" fill="url(#orb-teal-b)"/>
+  <ellipse cx="460" cy="310" rx="64" ry="56" fill="url(#orb-teal-a)"/>
+  <ellipse cx="200" cy="160" rx="60" ry="52" fill="url(#orb-teal-b)"/>
+
+  <!-- Large magenta orbs -->
+  <ellipse cx="390" cy="120" rx="70" ry="60" fill="url(#orb-magenta)"/>
+  <ellipse cx="120" cy="200" rx="52" ry="46" fill="url(#orb-magenta)"/>
+  <ellipse cx="430" cy="460" rx="60" ry="52" fill="url(#orb-magenta)"/>
+
+  <!-- Medium teal orbs -->
+  <ellipse cx="256" cy="280" rx="44" ry="38" fill="url(#orb-teal-a)"/>
+  <ellipse cx="56"  cy="100" rx="36" ry="32" fill="url(#orb-teal-b)"/>
+  <ellipse cx="480" cy="80"  rx="40" ry="34" fill="url(#orb-teal-a)"/>
+  <ellipse cx="340" cy="340" rx="38" ry="34" fill="url(#orb-teal-b)"/>
+
+  <!-- Medium magenta -->
+  <ellipse cx="170" cy="470" rx="40" ry="36" fill="url(#orb-magenta)"/>
+  <ellipse cx="480" cy="200" rx="36" ry="30" fill="url(#orb-magenta)"/>
+
+  <!-- Small teal dots -->
+  <ellipse cx="40"  cy="300" rx="20" ry="18" fill="url(#orb-small-t)"/>
+  <ellipse cx="280" cy="60"  rx="18" ry="16" fill="url(#orb-small-t)"/>
+  <ellipse cx="500" cy="400" rx="22" ry="20" fill="url(#orb-small-t)"/>
+  <ellipse cx="145" cy="340" rx="18" ry="16" fill="url(#orb-small-t)"/>
+  <ellipse cx="380" cy="220" rx="20" ry="18" fill="url(#orb-small-t)"/>
+
+  <!-- Small magenta dots -->
+  <ellipse cx="210" cy="380" rx="18" ry="16" fill="url(#orb-small-m)"/>
+  <ellipse cx="60"  cy="460" rx="16" ry="14" fill="url(#orb-small-m)"/>
+  <ellipse cx="370" cy="500" rx="20" ry="18" fill="url(#orb-small-m)"/>
+  <ellipse cx="290" cy="180" rx="16" ry="14" fill="url(#orb-small-m)"/>
+
+  <!-- Tiny spark cluster — bottom centre -->
+  <circle cx="250" cy="490" r="6" fill="#9ef1ff" opacity="0.75"/>
+  <circle cx="260" cy="500" r="4" fill="#c8ffff" opacity="0.65"/>
+  <circle cx="240" cy="498" r="3" fill="#9ef1ff" opacity="0.60"/>
+  <circle cx="268" cy="488" r="3" fill="#9ef1ff" opacity="0.55"/>
 </svg>
