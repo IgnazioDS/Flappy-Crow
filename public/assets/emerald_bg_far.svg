@@ -1,15 +1,56 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="360" height="640" viewBox="0 0 360 640" fill="none">
+  <!--
+    Emerald theme — far background. 360×640.
+    Deep twilight emerald sky: near-black teal at zenith, rich dark-jade to
+    deep-forest at horizon. Moonrise glow, faint star field, mist wisps.
+  -->
   <defs>
-    <linearGradient id="emeraldSkyFar" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#144137" />
-      <stop offset="0.55" stop-color="#0f312a" />
-      <stop offset="1" stop-color="#0b241f" />
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#081a14"/>
+      <stop offset="30%"  stop-color="#0f2e24"/>
+      <stop offset="65%"  stop-color="#153828"/>
+      <stop offset="100%" stop-color="#1a4832"/>
+    </linearGradient>
+    <radialGradient id="moon-glow" cx="68%" cy="14%" r="32%">
+      <stop offset="0%"   stop-color="#c8fff0" stop-opacity="0.55"/>
+      <stop offset="35%"  stop-color="#48c8a0" stop-opacity="0.20"/>
+      <stop offset="100%" stop-color="#48c8a0" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="horizon-glow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#2a7058" stop-opacity="0"/>
+      <stop offset="60%"  stop-color="#2a7058" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#1a5040" stop-opacity="0.40"/>
     </linearGradient>
   </defs>
-  <rect width="360" height="640" fill="url(#emeraldSkyFar)" />
-  <ellipse cx="90" cy="160" rx="86" ry="28" fill="#2f6b5c" opacity="0.14" />
-  <ellipse cx="248" cy="205" rx="110" ry="32" fill="#2f6b5c" opacity="0.12" />
-  <ellipse cx="150" cy="275" rx="130" ry="36" fill="#2f6b5c" opacity="0.1" />
-  <ellipse cx="285" cy="340" rx="95" ry="28" fill="#2f6b5c" opacity="0.1" />
-  <ellipse cx="78" cy="390" rx="120" ry="30" fill="#2f6b5c" opacity="0.08" />
+
+  <!-- Sky gradient -->
+  <rect width="360" height="640" fill="url(#sky)"/>
+
+  <!-- Moon bloom -->
+  <ellipse cx="245" cy="90" rx="100" ry="100" fill="url(#moon-glow)"/>
+  <!-- Moon disc -->
+  <circle cx="248" cy="88" r="18" fill="#e8fff8" opacity="0.85"/>
+  <circle cx="252" cy="84" r="14" fill="#d0fff0" opacity="0.70"/>
+
+  <!-- Horizon atmospheric glow -->
+  <rect y="400" width="360" height="240" fill="url(#horizon-glow)"/>
+
+  <!-- Star field — faint dots -->
+  <circle cx="28"  cy="40"  r="0.9" fill="#9ef1d8" opacity="0.7"/>
+  <circle cx="68"  cy="22"  r="0.7" fill="#c8fff0" opacity="0.6"/>
+  <circle cx="110" cy="55"  r="0.8" fill="#9ef1d8" opacity="0.5"/>
+  <circle cx="152" cy="30"  r="0.6" fill="#c8fff0" opacity="0.6"/>
+  <circle cx="195" cy="18"  r="0.9" fill="#9ef1d8" opacity="0.65"/>
+  <circle cx="310" cy="35"  r="0.7" fill="#c8fff0" opacity="0.55"/>
+  <circle cx="336" cy="60"  r="0.8" fill="#9ef1d8" opacity="0.5"/>
+  <circle cx="50"  cy="100" r="0.6" fill="#9ef1d8" opacity="0.4"/>
+  <circle cx="130" cy="92"  r="0.7" fill="#c8fff0" opacity="0.45"/>
+  <circle cx="296" cy="78"  r="0.6" fill="#9ef1d8" opacity="0.4"/>
+
+  <!-- Mist wisps — atmospheric scattering -->
+  <ellipse cx="52"  cy="192" rx="76"  ry="18" fill="#2a6a54" opacity="0.14"/>
+  <ellipse cx="240" cy="225" rx="108" ry="22" fill="#2a6a54" opacity="0.12"/>
+  <ellipse cx="148" cy="312" rx="125" ry="28" fill="#2a6a54" opacity="0.10"/>
+  <ellipse cx="288" cy="362" rx="90"  ry="24" fill="#1f5040" opacity="0.10"/>
+  <ellipse cx="75"  cy="405" rx="110" ry="26" fill="#1f5040" opacity="0.08"/>
 </svg>

@@ -1,22 +1,53 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="360" height="80" viewBox="0 0 360 80" fill="none">
-  <rect width="360" height="80" fill="#0b241f" />
-  <path
-    d="M0 18 L24 26 L48 22 L72 28 L96 24 L120 30 L144 26 L168 32 L192 28 L216 34 L240 30 L264 36 L288 32 L312 38 L336 34 L360 40 L360 80 L0 80 Z"
-    fill="#124034"
-  />
-  <path
-    d="M0 38 C60 30 120 30 180 38 C240 46 300 46 360 38 L360 80 L0 80 Z"
-    fill="#10362f"
-    opacity="0.95"
-  />
-  <path d="M32 30 L24 58" stroke="#1b5a4b" stroke-width="2" stroke-linecap="round" />
-  <path d="M78 32 L68 64" stroke="#1b5a4b" stroke-width="2" stroke-linecap="round" />
-  <path d="M124 34 L112 66" stroke="#1b5a4b" stroke-width="2" stroke-linecap="round" />
-  <path d="M170 36 L156 68" stroke="#1b5a4b" stroke-width="2" stroke-linecap="round" />
-  <path d="M216 38 L202 70" stroke="#1b5a4b" stroke-width="2" stroke-linecap="round" />
-  <path d="M262 40 L248 70" stroke="#1b5a4b" stroke-width="2" stroke-linecap="round" />
-  <path d="M308 42 L296 68" stroke="#1b5a4b" stroke-width="2" stroke-linecap="round" />
-  <circle cx="86" cy="54" r="3" fill="#5eead4" opacity="0.45" />
-  <circle cx="210" cy="58" r="2" fill="#5eead4" opacity="0.4" />
-  <circle cx="296" cy="60" r="2" fill="#5eead4" opacity="0.4" />
+  <!--
+    Emerald theme — ground strip. 360×80.
+    Deep obsidian-teal earth with wavy top surface, teal-jade groove marks,
+    glowing bioluminescent detail dots.
+  -->
+  <defs>
+    <linearGradient id="ground-fill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#1a4838"/>
+      <stop offset="30%"  stop-color="#102e24"/>
+      <stop offset="100%" stop-color="#081a12"/>
+    </linearGradient>
+    <linearGradient id="top-band" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#2a7a5c"/>
+      <stop offset="100%" stop-color="#2a7a5c" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="shadow" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#000000" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="360" height="80" fill="url(#ground-fill)"/>
+
+  <!-- Wavy top surface — teal-jade rim -->
+  <path d="M0 14 L24 22 L48 18 L72 24 L96 20 L120 26 L144 22 L168 28 L192 24 L216 30 L240 26 L264 32 L288 28 L312 34 L336 30 L360 36 L360 80 L0 80 Z"
+        fill="#1a4838" opacity="0.9"/>
+
+  <!-- Second wave depth -->
+  <path d="M0 36 C60 28 120 28 180 36 C240 44 300 44 360 36 L360 80 L0 80 Z"
+        fill="#122e22" opacity="0.80"/>
+
+  <!-- Top shadow -->
+  <rect width="360" height="18" fill="url(#shadow)"/>
+
+  <!-- Groove lines -->
+  <path d="M32 28 L24 58"  stroke="#1b5a44" stroke-width="2" stroke-linecap="round" opacity="0.6"/>
+  <path d="M78 30 L68 64"  stroke="#1b5a44" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+  <path d="M124 32 L112 66" stroke="#1b5a44" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+  <path d="M170 34 L156 68" stroke="#1b5a44" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  <path d="M216 36 L202 70" stroke="#1b5a44" stroke-width="2" stroke-linecap="round" opacity="0.5"/>
+  <path d="M262 38 L248 70" stroke="#1b5a44" stroke-width="2" stroke-linecap="round" opacity="0.45"/>
+  <path d="M308 40 L296 68" stroke="#1b5a44" stroke-width="2" stroke-linecap="round" opacity="0.45"/>
+
+  <!-- Bioluminescent glow dots -->
+  <circle cx="86"  cy="52" r="3"   fill="#5eead4" opacity="0.55"/>
+  <circle cx="48"  cy="62" r="2"   fill="#9ef1ff" opacity="0.45"/>
+  <circle cx="155" cy="58" r="2.5" fill="#5eead4" opacity="0.50"/>
+  <circle cx="210" cy="56" r="2"   fill="#9ef1ff" opacity="0.45"/>
+  <circle cx="262" cy="60" r="3"   fill="#5eead4" opacity="0.50"/>
+  <circle cx="298" cy="62" r="2"   fill="#9ef1ff" opacity="0.40"/>
+  <circle cx="330" cy="54" r="2"   fill="#5eead4" opacity="0.40"/>
 </svg>

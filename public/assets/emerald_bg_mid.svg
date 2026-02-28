@@ -1,14 +1,44 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="360" height="640" viewBox="0 0 360 640" fill="none">
-  <rect width="360" height="640" fill="none" />
-  <path
-    d="M0 285 C70 255 135 255 200 285 C260 315 310 315 360 285 L360 640 L0 640 Z"
-    fill="#1b4f43"
-  />
-  <path
-    d="M0 345 C60 320 125 320 190 345 C250 370 310 370 360 345 L360 640 L0 640 Z"
-    fill="#174439"
-    opacity="0.9"
-  />
-  <ellipse cx="112" cy="225" rx="90" ry="22" fill="#2f6b5c" opacity="0.16" />
-  <ellipse cx="250" cy="246" rx="105" ry="24" fill="#2f6b5c" opacity="0.14" />
+  <!--
+    Emerald theme — mid background. 360×640.
+    Silhouetted distant jungle canopy, mist bands, deep emerald tones.
+  -->
+  <defs>
+    <linearGradient id="hill-far" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#1f5040"/>
+      <stop offset="100%" stop-color="#143828"/>
+    </linearGradient>
+    <linearGradient id="hill-mid" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#1b4838"/>
+      <stop offset="100%" stop-color="#0f2a1e"/>
+    </linearGradient>
+    <linearGradient id="mist" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#2a7a5c" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#2a7a5c" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="360" height="640" fill="none"/>
+
+  <!-- Far canopy silhouette -->
+  <path d="M-20 295 C20 270 50 260 75 272 C95 260 115 250 140 264 C162 252 188 244 210 260 C232 248 258 240 280 258 C302 244 328 252 380 268 L380 640 L-20 640 Z"
+        fill="url(#hill-far)" opacity="0.65"/>
+
+  <ellipse cx="75"  cy="268" rx="26" ry="14" fill="#185038" opacity="0.5"/>
+  <ellipse cx="140" cy="258" rx="22" ry="12" fill="#185038" opacity="0.5"/>
+  <ellipse cx="210" cy="254" rx="24" ry="13" fill="#185038" opacity="0.45"/>
+  <ellipse cx="280" cy="252" rx="22" ry="12" fill="#185038" opacity="0.45"/>
+
+  <!-- Mid jungle ridge -->
+  <path d="M-20 355 C40 325 120 315 195 340 C265 362 320 352 380 342 L380 640 L-20 640 Z"
+        fill="url(#hill-mid)" opacity="0.70"/>
+
+  <!-- Mist in valley -->
+  <rect y="300" width="360" height="80" fill="url(#mist)"/>
+
+  <!-- Dark mist wisps -->
+  <ellipse cx="108" cy="232" rx="88"  ry="24" fill="#2a7a5c" opacity="0.14"/>
+  <ellipse cx="92"  cy="220" rx="56"  ry="16" fill="#2a7a5c" opacity="0.10"/>
+  <ellipse cx="256" cy="250" rx="100" ry="26" fill="#2a7a5c" opacity="0.12"/>
+  <ellipse cx="240" cy="238" rx="62"  ry="18" fill="#2a7a5c" opacity="0.08"/>
 </svg>
