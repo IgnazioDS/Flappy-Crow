@@ -1,22 +1,53 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="360" height="80" viewBox="0 0 360 80" fill="none">
-  <rect width="360" height="80" fill="#5b8fb5" />
-  <path
-    d="M0 18 L24 26 L48 22 L72 28 L96 24 L120 30 L144 26 L168 32 L192 28 L216 34 L240 30 L264 36 L288 32 L312 38 L336 34 L360 40 L360 80 L0 80 Z"
-    fill="#4d81a9"
-  />
-  <path
-    d="M0 36 C60 28 120 28 180 36 C240 44 300 44 360 36 L360 80 L0 80 Z"
-    fill="#3f749f"
-    opacity="0.92"
-  />
-  <path d="M32 30 L24 58" stroke="#335f83" stroke-width="2" stroke-linecap="round" />
-  <path d="M78 32 L68 64" stroke="#335f83" stroke-width="2" stroke-linecap="round" />
-  <path d="M124 34 L112 66" stroke="#335f83" stroke-width="2" stroke-linecap="round" />
-  <path d="M170 36 L156 68" stroke="#335f83" stroke-width="2" stroke-linecap="round" />
-  <path d="M216 38 L202 70" stroke="#335f83" stroke-width="2" stroke-linecap="round" />
-  <path d="M262 40 L248 70" stroke="#335f83" stroke-width="2" stroke-linecap="round" />
-  <path d="M308 42 L296 68" stroke="#335f83" stroke-width="2" stroke-linecap="round" />
-  <circle cx="86" cy="54" r="3" fill="#cfe9ff" opacity="0.55" />
-  <circle cx="210" cy="58" r="2" fill="#cfe9ff" opacity="0.5" />
-  <circle cx="296" cy="60" r="2" fill="#cfe9ff" opacity="0.5" />
+  <!--
+    Classic theme — ground strip. 360×80.
+    Sandy earth tones with a top-edge cobblestone-inspired wave,
+    subtle vertical groove marks and pebble details.
+  -->
+  <defs>
+    <linearGradient id="ground-fill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#7ab0d0"/>
+      <stop offset="20%"  stop-color="#5898c0"/>
+      <stop offset="100%" stop-color="#4080a8"/>
+    </linearGradient>
+    <linearGradient id="top-band" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#88c0d8"/>
+      <stop offset="100%" stop-color="#6098b8" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="shadow-top" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#000000" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Main ground fill -->
+  <rect width="360" height="80" fill="url(#ground-fill)"/>
+
+  <!-- Wavy top surface -->
+  <path d="M0 14 L24 22 L48 18 L72 24 L96 20 L120 26 L144 22 L168 28 L192 24 L216 30 L240 26 L264 32 L288 28 L312 34 L336 30 L360 36 L360 80 L0 80 Z"
+        fill="#5898c0" opacity="0.85"/>
+
+  <!-- Mid layer for depth -->
+  <path d="M0 36 C60 28 120 28 180 36 C240 44 300 44 360 36 L360 80 L0 80 Z"
+        fill="#4888b4" opacity="0.75"/>
+
+  <!-- Shadow under top edge -->
+  <rect width="360" height="16" fill="url(#shadow-top)"/>
+
+  <!-- Vertical groove lines (ground texture) -->
+  <line x1="30"  y1="22" x2="22" y2="60" stroke="#336888" stroke-width="1.5" stroke-linecap="round" opacity="0.5"/>
+  <line x1="75"  y1="24" x2="65" y2="64" stroke="#336888" stroke-width="1.5" stroke-linecap="round" opacity="0.45"/>
+  <line x1="120" y1="26" x2="108" y2="66" stroke="#336888" stroke-width="1.5" stroke-linecap="round" opacity="0.45"/>
+  <line x1="165" y1="28" x2="152" y2="68" stroke="#336888" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+  <line x1="210" y1="30" x2="196" y2="70" stroke="#336888" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+  <line x1="255" y1="32" x2="240" y2="70" stroke="#336888" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+  <line x1="300" y1="34" x2="288" y2="68" stroke="#336888" stroke-width="1.5" stroke-linecap="round" opacity="0.35"/>
+  <line x1="345" y1="36" x2="334" y2="66" stroke="#336888" stroke-width="1.5" stroke-linecap="round" opacity="0.35"/>
+
+  <!-- Pebble / bubble details -->
+  <circle cx="85"  cy="54" r="3.5" fill="#c8e8ff" opacity="0.45"/>
+  <circle cx="210" cy="58" r="2.5" fill="#c8e8ff" opacity="0.40"/>
+  <circle cx="298" cy="60" r="2.5" fill="#c8e8ff" opacity="0.40"/>
+  <circle cx="148" cy="66" r="2"   fill="#c8e8ff" opacity="0.35"/>
+  <circle cx="52"  cy="62" r="2"   fill="#c8e8ff" opacity="0.35"/>
 </svg>

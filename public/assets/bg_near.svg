@@ -1,15 +1,48 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="360" height="640" viewBox="0 0 360 640" fill="none">
-  <rect width="360" height="640" fill="none" />
-  <path
-    d="M0 395 C60 365 145 365 210 395 C270 425 320 425 360 405 L360 640 L0 640 Z"
-    fill="#8ab6d4"
-  />
-  <path
-    d="M0 455 C70 425 155 425 225 455 C285 480 330 485 360 470 L360 640 L0 640 Z"
-    fill="#7aa8c8"
-  />
-  <path
-    d="M0 515 C80 495 170 495 245 515 C305 535 332 538 360 528 L360 640 L0 640 Z"
-    fill="#6b9abf"
-  />
+  <!--
+    Classic theme — near background. 360×640.
+    Close-range hill silhouettes in richer green-blues, subtle grass tuft
+    details along ridge lines. Parallax layer 3 (fastest scroll).
+  -->
+  <defs>
+    <linearGradient id="hill-a" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#88b8d8"/>
+      <stop offset="100%" stop-color="#6898c0"/>
+    </linearGradient>
+    <linearGradient id="hill-b" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#74a8cc"/>
+      <stop offset="100%" stop-color="#5888b8"/>
+    </linearGradient>
+    <linearGradient id="hill-c" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#5e98c0"/>
+      <stop offset="100%" stop-color="#4878a8"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="360" height="640" fill="none"/>
+
+  <!-- Near hill 1 — broad undulating -->
+  <path d="M-20 418 C40 378 115 362 190 382 C260 402 315 392 380 380 L380 640 L-20 640 Z"
+        fill="url(#hill-a)" opacity="0.72"/>
+
+  <!-- Near hill 2 — overlapping, slightly more blue -->
+  <path d="M-20 480 C55 448 140 438 220 462 C295 485 340 475 380 460 L380 640 L-20 640 Z"
+        fill="url(#hill-b)" opacity="0.78"/>
+
+  <!-- Near hill 3 — most prominent -->
+  <path d="M-20 542 C70 515 168 508 254 528 C322 544 348 540 380 530 L380 640 L-20 640 Z"
+        fill="url(#hill-c)" opacity="0.82"/>
+
+  <!-- Grass tuft suggestions along hill 1 ridge -->
+  <ellipse cx="50"  cy="418" rx="10" ry="4" fill="#88c0dc" opacity="0.4"/>
+  <ellipse cx="110" cy="402" rx="8"  ry="3" fill="#88c0dc" opacity="0.35"/>
+  <ellipse cx="180" cy="388" rx="12" ry="4" fill="#88c0dc" opacity="0.35"/>
+  <ellipse cx="250" cy="396" rx="8"  ry="3" fill="#88c0dc" opacity="0.3"/>
+  <ellipse cx="316" cy="388" rx="10" ry="4" fill="#88c0dc" opacity="0.3"/>
+
+  <!-- Grass tuft suggestions along hill 2 ridge -->
+  <ellipse cx="80"  cy="478" rx="9"  ry="3" fill="#6898c0" opacity="0.4"/>
+  <ellipse cx="170" cy="462" rx="11" ry="4" fill="#6898c0" opacity="0.35"/>
+  <ellipse cx="260" cy="472" rx="9"  ry="3" fill="#6898c0" opacity="0.35"/>
+  <ellipse cx="340" cy="464" rx="8"  ry="3" fill="#6898c0" opacity="0.3"/>
 </svg>
