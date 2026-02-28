@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 56" width="48" height="56">
+  <!-- Gold medal -->
+
+  <!-- Ribbon top -->
+  <path d="M16 0 L24 8 L32 0 L32 16 L16 16 Z" fill="#b8860b" opacity="0.9"/>
+  <line x1="24" y1="0" x2="24" y2="16" stroke="#d4a020" stroke-width="1.5" opacity="0.6"/>
+
+  <!-- Medal disc shadow -->
+  <circle cx="25" cy="38" r="18" fill="#000000" opacity="0.40"/>
+
+  <!-- Medal disc -->
+  <circle cx="24" cy="36" r="18" fill="#f5c842"/>
+
+  <!-- Rim highlight -->
+  <circle cx="24" cy="36" r="18" fill="none" stroke="#ffe07a" stroke-width="2.5" opacity="0.8"/>
+
+  <!-- Inner circle -->
+  <circle cx="24" cy="36" r="13" fill="#e0a820" opacity="0.85"/>
+
+  <!-- Star glyph -->
+  <polygon points="24,24 26.4,30.8 33.6,30.8 27.6,35.2 30,42 24,37.6 18,42 20.4,35.2 14.4,30.8 21.6,30.8"
+           fill="#fff8d0" opacity="0.9"/>
+</svg>

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 40" width="96" height="40">
+  <!--
+    9-slice capsule — obsidian glass + teal rim.
+    Corner radius: 10px (half of height = full pill).
+    Slice guides: left=20, right=76, top=0, bottom=40.
+    Export at 2x (192×80) for HiDPI.
+  -->
+
+  <!-- Drop shadow -->
+  <rect x="2" y="3" width="94" height="38" rx="10" ry="10" fill="#000000" opacity="0.50"/>
+
+  <!-- Obsidian fill -->
+  <rect x="0" y="0" width="96" height="40" rx="10" ry="10" fill="#07090f" opacity="0.93"/>
+
+  <!-- Teal rim -->
+  <rect x="0.5" y="0.5" width="95" height="39" rx="10" ry="10"
+        fill="none" stroke="#48c8d8" stroke-width="1.5" opacity="0.70"/>
+
+  <!--
+    9-slice guides (invisible; for reference):
+    Left: 20   Right: 76   Top: 0   Bottom: 40
+  -->
+</svg>

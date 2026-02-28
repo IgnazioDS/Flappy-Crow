@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 280 8" width="280" height="8">
+  <!--
+    Decorative divider — subtle teal gradient line with centre diamond.
+    Fade from transparent → teal → transparent.
+  -->
+  <defs>
+    <linearGradient id="div-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#48c8d8" stop-opacity="0"/>
+      <stop offset="30%"  stop-color="#48c8d8" stop-opacity="0.5"/>
+      <stop offset="50%"  stop-color="#9ef1ff" stop-opacity="0.7"/>
+      <stop offset="70%"  stop-color="#48c8d8" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#48c8d8" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Main line -->
+  <line x1="0" y1="4" x2="280" y2="4" stroke="url(#div-grad)" stroke-width="1"/>
+
+  <!-- Centre diamond accent -->
+  <polygon points="140,1 143,4 140,7 137,4" fill="#48c8d8" opacity="0.7"/>
+</svg>

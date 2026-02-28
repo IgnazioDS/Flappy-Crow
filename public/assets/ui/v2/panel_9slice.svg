@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!--
+    9-slice panel — obsidian glass + teal rim.
+    Slice guides: 16px corners on each side.
+    Safe interior: 16..112 x 16..112.
+    Export at 2x (256×256) for HiDPI, then enable 9-slice in Phaser.
+  -->
+
+  <!-- Drop shadow layer -->
+  <rect x="4" y="5" width="124" height="124" rx="12" ry="12" fill="#000000" opacity="0.45"/>
+
+  <!-- Subtle top-edge light (inner highlight) -->
+  <rect x="1" y="1" width="126" height="4" rx="2" ry="2" fill="#ffffff" opacity="0.04"/>
+
+  <!-- Main obsidian body -->
+  <rect x="1" y="1" width="126" height="126" rx="12" ry="12" fill="#07090f" opacity="0.93"/>
+
+  <!-- Inner inset shadow (top-left dark edge for depth) -->
+  <rect x="1" y="1" width="126" height="126" rx="12" ry="12"
+        fill="none" stroke="#000000" stroke-width="3" opacity="0.18"/>
+
+  <!-- Teal rim border -->
+  <rect x="1" y="1" width="126" height="126" rx="12" ry="12"
+        fill="none" stroke="#48c8d8" stroke-width="2" opacity="0.80"/>
+
+  <!--
+    9-slice guides (invisible; for reference only):
+    Left: 16   Right: 112   Top: 16   Bottom: 112
+  -->
+</svg>
