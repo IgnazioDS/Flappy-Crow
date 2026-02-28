@@ -2,7 +2,7 @@
 
 Date: 2026-02-28
 Branch audited: `main`
-Head commit at audit time: `bf58b6aa55f2731795227951d68477ca0fa5cba6`
+Head commit at audit time: `d35eeb33ea87582fc7bd077f9ac398b1e622ed5a`
 
 ## Executive Summary
 
