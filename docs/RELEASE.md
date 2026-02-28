@@ -1,13 +1,25 @@
 # Release Process
 
-This project follows semantic versioning (MAJOR.MINOR.PATCH).
+This repository uses `main` as canonical baseline.
 
-## Checklist
+## Branch Strategy
 
-1) Create a release branch or work on `main` with a clean working tree.
-2) Update `package.json` and `package-lock.json` to the new version.
-3) Update `CHANGELOG.md` with the new release notes and date.
-4) Run the full verification suite:
+- `main`: release baseline branch
+- `branch/*`: feature/fix branches
+
+## Tag Strategy
+
+For each release `X.Y.Z`:
+
+- `vX.Y.Z`
+- `vX.Y.Z-mainline`
+
+Both tags must point to the same commit at the tip of `main`.
+
+## Release Checklist
+
+1. Ensure branch is up to date and clean.
+2. Run verification:
 
 ```bash
 npm ci
@@ -17,50 +29,40 @@ npm run build
 npm run preview
 ```
 
-4b) iOS shell smoke test (if preparing App Store build):
+3. Update version + changelog:
 
 ```bash
-npm run build:ios
-npm run cap:sync:ios
-npm run cap:open:ios
+npm version X.Y.Z --no-git-tag-version
 ```
 
-Run on a simulator: verify touch input, pause/resume, and Privacy Policy link.
+Edit `CHANGELOG.md` with dated notes.
 
-5) Run the App Store readiness pass (V6):
-
-- Review `docs/V6_APP_STORE_READINESS.md`.
-- Ensure release builds do not set `VITE_ART_QA`, `VITE_E2E`, or `VITE_TELEMETRY_CONSOLE`.
-
-1) Commit the release:
+4. Commit release metadata:
 
 ```bash
 git add package.json package-lock.json CHANGELOG.md
-
-git commit -m "I release vX.Y.Z"
+git commit -m "docs: changelog + version bump"
 ```
 
-1) Tag the release and push commits + tags:
+5. Merge branch to `main`.
+6. Create/update release tags at `main` tip:
 
 ```bash
-git tag -a vX.Y.Z -m "vX.Y.Z"
-git push origin main --tags
+git tag -f vX.Y.Z
+git tag -f vX.Y.Z-mainline
 ```
 
-1) Create a GitHub Release using the `vX.Y.Z` tag and paste the notes from `CHANGELOG.md`.
-2) Verify the GitHub Pages deploy and run a quick smoke test in the live build.
+7. Push branch and tags:
 
-## Release Notes Template
-
-```markdown
-## vX.Y.Z
-
-### Added
-- ...
-
-### Changed
-- ...
-
-### Fixed
-- ...
+```bash
+git push origin main
+git push origin vX.Y.Z vX.Y.Z-mainline
 ```
+
+Use `--force-with-lease` for tags only if correcting an already-pushed wrong tag target.
+
+## Post-Release Verification
+
+- Confirm GitHub Actions CI on `main` is green.
+- Confirm Pages deploy succeeded.
+- Confirm version and changelog match release tag.

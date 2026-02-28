@@ -1,7 +1,7 @@
 {
   "name": "flappy-bird-ex",
   "private": true,
-  "version": "6.1.12",
+  "version": "6.1.13",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -19,8 +19,8 @@
     "postinstall": "node scripts/patch-capacitor-tar.js && node scripts/patch-cordova-purchase-header.js"
   },
   "devDependencies": {
-    "@capacitor/cli": "^8.0.1",
-    "@capacitor/ios": "^8.0.1",
+    "@capacitor/cli": "8.0.1",
+    "@capacitor/ios": "8.0.1",
     "@playwright/test": "^1.55.0",
     "@types/node": "^25.0.9",
     "@typescript-eslint/eslint-plugin": "^8.52.0",

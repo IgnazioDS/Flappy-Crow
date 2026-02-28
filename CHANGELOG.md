@@ -5,6 +5,25 @@
 All notable changes to this project will be documented in this file.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [6.1.13] - 2026-02-28
+
+### Added
+
+- `docs/AUDIT_v6.1.13.md` with post-baseline repository audit, evidence table,
+  and prioritized findings.
+
+### Changed
+
+- Promoted a canonical `main` baseline branch from the current V2 fix state and
+  aligned release tags to mainline flow.
+- Documentation refresh across README and core operational docs:
+  deployment, release, performance, telemetry, iOS, and PlayScene decomposition.
+
+### Fixed
+
+- Repository hygiene for local generated artifacts by ignoring `output/` and
+  `progress.md` in `.gitignore`.
+
 ## [6.1.12] - 2026-02-28
 
 ### Fixed

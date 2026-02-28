@@ -1,37 +1,35 @@
 # Telemetry
 
-Telemetry is privacy-first and optional. It tracks only gameplay events and avoids
-PII. Players can opt out from the Settings panel (stored in localStorage).
+Telemetry is consent-gated and optional.
 
-## App Store / ATT note
+## Consent Model
 
-Telemetry must remain opt-in. If any provider qualifies as tracking under Apple's
-definitions, App Tracking Transparency (ATT) permission is required before enabling
-that provider in the iOS shell.
+- Consent values: `granted`, `denied`, or `null` (unset)
+- Telemetry providers are active only when consent is `granted`
+- If no providers are configured, network telemetry is effectively disabled
 
-## Events
+Storage keys:
+- `flappy-analytics-consent` (current)
+- `flappy-analytics-optout` (legacy compatibility)
 
+## Provider Configuration
+
+- Console: `VITE_TELEMETRY_CONSOLE=true`
+- Plausible: `VITE_PLAUSIBLE_DOMAIN`, optional `VITE_PLAUSIBLE_API_HOST`
+- PostHog: `VITE_POSTHOG_KEY`, optional `VITE_POSTHOG_HOST`
+
+## Event Coverage (Gameplay)
+
+Examples:
 - `game_ready_shown`
 - `game_start`
-- `flap`
-- `score_increment` (score)
-- `game_over` (score, bestScore, sessionDurationMs)
+- `score_increment`
+- `game_over`
 - `restart`
-- `mute_toggle` (muted)
+- `mute_toggle`
 
-Events are batched and flushed every 4 seconds or after 12 events, and are flushed
-when the page is hidden.
+## Privacy Requirements
 
-## Providers
-
-Configure providers via environment variables:
-
-- Console (dev or opt-in): `VITE_TELEMETRY_CONSOLE=true`
-- Plausible: `VITE_PLAUSIBLE_DOMAIN=yourdomain.com`, `VITE_PLAUSIBLE_API_HOST=https://plausible.yourhost.com`
-- PostHog: `VITE_POSTHOG_KEY=phc_...`, `VITE_POSTHOG_HOST=https://app.posthog.com`
-
-If no providers are configured, telemetry is disabled.
-
-## Opt-out
-
-The opt-out flag is stored in localStorage under `flappy-analytics-optout`.
+- No provider should emit before consent is granted.
+- iOS App Store builds must keep consent-gated behavior.
+- If any configured provider qualifies as tracking, ATT handling is required in the native shell.

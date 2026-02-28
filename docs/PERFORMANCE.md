@@ -1,22 +1,38 @@
-# Performance Checklist
+# Performance
 
-This checklist covers a quick "no memory growth" sanity check after gameplay sessions.
+Target runtime: 60 FPS on typical desktop/mobile browsers.
 
-## Manual memory-growth sanity check
+## Rules
 
-1. Run the game locally: `npm run dev`.
-2. Open the game in Chrome and open DevTools.
-3. Go to the **Performance** panel and enable **Memory** (or open the **Memory** panel).
-4. Play 10 short runs:
-   - Start a run, pass a few pipes, die, restart.
-   - Repeat 10 times.
-5. Observe:
-   - Heap size returns near baseline after each restart.
-   - No steady upward slope after multiple runs.
-6. Optional: take 3 heap snapshots (start, mid, end).
+- No gameplay logic allocations in hot update paths.
+- Background V2 overlays are created once and reused.
+- Particle counts are capped and deterministic.
 
-## Expected outcomes
+## Current Budgets
 
-- Pipe count on screen stays bounded (despawn removes off-screen pairs).
-- Heap size may spike during gameplay but should stabilize after restarts.
-- No continuous memory climb across repeated runs.
+- Gameplay dimensions: `360x640`
+- V2 texture sizes:
+  - layered backgrounds: `1024x640`
+  - fog/biolume tiles: `512x512`
+- V2 particles:
+  - embers: disabled
+  - fireflies: disabled
+  - dust: max `10`
+  - biolume sparkles: disabled (`sparkleMax=0`)
+
+## Manual Check
+
+1. Run `npm run dev`.
+2. Play multiple restart cycles.
+3. Confirm FPS is stable and no progressive memory growth.
+4. Toggle QA overlay (`D`) and ensure no layer causes repeated allocation spikes.
+
+## CI Gate
+
+Always pass before release:
+
+```bash
+npm run test
+npm run lint
+npm run build
+```

@@ -1,125 +1,40 @@
-# iOS App Shell (Capacitor) Plan
+# iOS (Capacitor)
 
-This project remains static-first. The iOS shell wraps the existing `dist/` build
-without changing web deployment.
+The repository includes an `ios/` project for Capacitor packaging.
+Web remains the source of truth; iOS wraps the built web app.
 
-## Packaging workflow (Capacitor)
+## Prerequisites
 
-1) Build the web bundle:
+- Xcode installed
+- CocoaPods installed
+- Node version aligned with project (`.nvmrc`)
+
+## Workflow
 
 ```bash
 npm run build:ios
-```
-
-2) Initialize Capacitor (one-time):
-
-```bash
-npx cap init flappy-crow com.yourorg.flappycrow --web-dir=dist
-```
-
-3) Add the iOS platform (one-time):
-
-```bash
-npx cap add ios
-```
-
-4) Sync web assets into the native project:
-
-```bash
 npm run cap:sync:ios
-```
-
-5) Open in Xcode and run:
-
-```bash
 npm run cap:open:ios
 ```
 
-## Capacitor config template
+Or run combined smoke prep:
 
-Create `capacitor.config.ts` at the repo root (or copy `capacitor.config.example.ts`):
-
-```ts
-import { CapacitorConfig } from '@capacitor/cli'
-
-const config: CapacitorConfig = {
-  appId: 'com.yourorg.flappycrow',
-  appName: 'Flappy Crow',
-  webDir: 'dist',
-  bundledWebRuntime: false,
-}
-
-export default config
+```bash
+npm run ios:smoke
 ```
 
+## Build Behavior
 
-## Convenience scripts
+- `build:ios` sets Vite base to `./` for Capacitor file URLs.
+- `cap:sync:ios` copies web assets and plugin metadata into `ios/`.
 
-- `npm run build:ios`: build with `base=./` for Capacitor file URLs.
-- `npm run cap:sync:ios`: sync the iOS project with the latest web build.
-- `npm run cap:open:ios`: open the iOS project in Xcode.
-- `npm run ios:smoke`: build + sync for a quick simulator pass.
+## Release Notes
 
-## iOS UX checklist
+- Keep telemetry consent behavior intact for App Store submissions.
+- Ensure privacy policy URL is configured (`VITE_PRIVACY_POLICY_URL`).
+- Validate safe areas and touch targets on small and large iPhones.
 
-- Safe areas: ensure score, settings, and overlays respect notches.
-- Touch targets: settings rows and buttons remain easy to tap on small screens.
-- Aspect ratios: validate from iPhone SE through Pro Max.
-- Haptics: optional only; respect reduced-motion and user toggles.
-- Background/foreground: pause/resume behavior is correct.
+## Not In Scope Here
 
-## App Store compliance checklist
-
-- Telemetry must be opt-in and disabled without consent.
-- If any telemetry qualifies as tracking, require ATT before enabling.
-- Privacy policy must be accessible in-app.
-- Add a privacy manifest if any third-party SDKs are included in the iOS build.
-
-## Privacy manifest template
-
-Create `ios/App/PrivacyInfo.xcprivacy` (or include SDK manifests) and fill in
-only the APIs and data types you actually use. Template:
-
-```xml
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0">
-  <dict>
-    <key>NSPrivacyTracking</key>
-    <false/>
-    <key>NSPrivacyTrackingDomains</key>
-    <array/>
-    <key>NSPrivacyCollectedDataTypes</key>
-    <array>
-      <!-- Add data types per SDK; omit if none are collected. -->
-    </array>
-    <key>NSPrivacyAccessedAPITypes</key>
-    <array>
-      <!-- Add required reason APIs if used by any SDK. -->
-    </array>
-  </dict>
-</plist>
-```
-
-## In-app privacy policy access plan
-
-Goal: Make the privacy policy reachable in 2 taps without leaving the app shell.
-
-Plan:
-- Add a "Privacy Policy" row to the Settings panel that opens an in-app web view.
-- Provide a fallback: open the policy in the system browser if web view fails.
-- Keep the URL in a single config constant to avoid drift between web/iOS builds.
-
-Placement:
-- Settings panel, below Analytics and above Theme.
-- Use existing button styling and tap targets.
-
-Requirements:
-- Policy URL must be HTTPS and hosted on a stable domain.
-- Policy is readable on mobile (no tiny fonts or hidden sections).
-- No tracking occurs before consent, regardless of policy view.
-
-## No-backend best practices
-
-- Offline-first: local storage only; no required network calls.
-- Replay storage should be bounded to prevent large local data growth.
+- This document does not replace Apple legal/compliance requirements.
+- ATT/privacy-manifest details must be validated against active SDK usage at submission time.
