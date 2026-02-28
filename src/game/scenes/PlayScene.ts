@@ -216,6 +216,9 @@ export class PlayScene extends Phaser.Scene {
   private debugGraphics!: Phaser.GameObjects.Graphics
   private envDebugText: Phaser.GameObjects.Text | null = null
   private envDebugEnabled = false
+  /** UI QA overlay: safe-area, touch-target, and baseline guides. */
+  private uiQaGraphics: Phaser.GameObjects.Graphics | null = null
+  private uiQaEnabled = false
 
   private particleManagers: Phaser.GameObjects.Particles.ParticleEmitter[] = []
 
@@ -457,6 +460,7 @@ export class PlayScene extends Phaser.Scene {
     this.createImpactFx()
     this.createDebugOverlay()
     this.createEnvDebugOverlay()
+    this.createUiQaOverlay()
     this.startSceneFade()
 
     this.stateMachine.transition('BOOT_COMPLETE')
@@ -551,8 +555,10 @@ export class PlayScene extends Phaser.Scene {
     this.input.keyboard?.on('keydown-R', () => this.toggleReducedMotion())
     this.input.keyboard?.on('keydown-E', () => this.toggleEnvironment())
     // QA: digit keys for slot visibility; Shift+digit for solo; B for bounds.
+    // U = toggle UI QA guides (safe area, touch targets, baseline).
     // Only active when VITE_ART_QA=true.
     if (this.artQaEnabled) {
+      this.input.keyboard?.on('keydown-U', () => this.toggleUiQa())
       // Use a single generic keydown listener so we can check event.shiftKey.
       // keydown-1..8 fire only when Shift is NOT held (different event.key).
       // Shift+Digit is captured via event.code which is layout-independent.
@@ -2928,6 +2934,120 @@ export class PlayScene extends Phaser.Scene {
     this.envDebugText.setPadding(6, 4, 6, 4)
     this.envDebugText.setVisible(this.envDebugEnabled)
     this.updateEnvDebugOverlay()
+  }
+
+  // ─── UI QA guides ────────────────────────────────────────────────────────────
+  // Visualize safe areas, touch targets, and baseline alignment.
+  // Only active when VITE_ART_QA=true or in DEV mode.
+  // Toggle with keyboard shortcut 'U'.
+
+  private createUiQaOverlay(): void {
+    if (!this.artQaEnabled) {
+      return
+    }
+    this.uiQaGraphics = this.add.graphics().setDepth(20)
+    this.uiQaGraphics.setVisible(false)
+  }
+
+  private toggleUiQa(): void {
+    if (!this.artQaEnabled) {
+      return
+    }
+    this.uiQaEnabled = !this.uiQaEnabled
+    if (!this.uiQaGraphics) {
+      return
+    }
+    this.uiQaGraphics.setVisible(this.uiQaEnabled)
+    if (this.uiQaEnabled) {
+      this.drawUiQaGuides()
+    } else {
+      this.uiQaGraphics.clear()
+    }
+  }
+
+  private drawUiQaGuides(): void {
+    const g = this.uiQaGraphics
+    if (!g) {
+      return
+    }
+    g.clear()
+
+    const W = GAME_DIMENSIONS.width
+    const H = GAME_DIMENSIONS.height
+    const sa = this.safeArea
+
+    // ── Safe area boundary ────────────────────────────────────────────────
+    // Cyan dashed-style rectangle (drawn as four lines)
+    g.lineStyle(1, 0x00ffff, 0.6)
+    g.strokeRect(sa.left, sa.top, W - sa.left - sa.right, H - sa.top - sa.bottom)
+
+    // Safe area edge labels
+    if (sa.top > 0) {
+      g.fillStyle(0x00ffff, 0.4)
+      g.fillRect(0, 0, W, sa.top)
+    }
+    if (sa.bottom > 0) {
+      g.fillStyle(0x00ffff, 0.4)
+      g.fillRect(0, H - sa.bottom, W, sa.bottom)
+    }
+
+    // ── Touch target boxes (44×44 min hit areas) ─────────────────────────
+    const topY = this.ui.hud?.safeTop ?? 8
+    const hudY  = topY + sa.top
+
+    // Score capsule
+    g.lineStyle(1, 0x00ff88, 0.8)
+    const scoreW = this.ui.scoreFrameSize.width
+    const scoreH = Math.max(this.ui.scoreFrameSize.height, 44)
+    const scoreX = this.ui.score.x + sa.left
+    g.strokeRect(scoreX - scoreW / 2, hudY - scoreH / 2, scoreW, scoreH)
+    this.addQaLabel(g, scoreX, hudY - scoreH / 2 - 6)
+
+    // Settings button (width based on capsule)
+    if (this.settingsButton) {
+      const sbx = this.settingsButton.x
+      const sby = this.settingsButton.y
+      g.lineStyle(1, 0xffaa00, 0.8)
+      g.strokeRect(sbx - 26, sby - 22, 52, 44)
+      this.addQaLabel(g, sbx, sby - 24)
+    }
+
+    // Icon cluster
+    if (this.iconClusterBackdrop) {
+      const cx = this.iconClusterBackdrop.x
+      const cy = this.iconClusterBackdrop.y
+      const iconSize = this.ui.icon.size
+      const spacing  = iconSize + 10
+      const clusterW = spacing + iconSize + 16
+      const clusterH = iconSize + 14
+      g.lineStyle(1, 0xffaa00, 0.8)
+      g.strokeRect(cx - clusterW / 2, cy - clusterH / 2, clusterW, clusterH)
+      this.addQaLabel(g, cx, cy - clusterH / 2 - 6)
+    }
+
+    // ── Baseline guide (HUD content row) ─────────────────────────────────
+    g.lineStyle(1, 0xff00ff, 0.4)
+    g.lineBetween(0, hudY, W, hudY)
+    this.addQaLabel(g, 4, hudY - 8)
+
+    // ── Grid (8-pt) — very faint ─────────────────────────────────────────
+    g.lineStyle(1, 0xffffff, 0.06)
+    for (let x = 0; x <= W; x += 8) {
+      g.lineBetween(x, 0, x, H)
+    }
+    for (let y = 0; y <= H; y += 8) {
+      g.lineBetween(0, y, W, y)
+    }
+  }
+
+  /** Draws a tiny tick mark at (x, y) on the QA graphics layer. */
+  private addQaLabel(
+    g: Phaser.GameObjects.Graphics,
+    x: number,
+    y: number,
+  ): void {
+    g.fillStyle(0xffffff, 0.5)
+    g.fillRect(x - 1, y, 2, 6)
   }
 
   private toggleHitboxes(): void {
