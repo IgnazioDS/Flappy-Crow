@@ -1,64 +1,80 @@
-import { PALETTE, PALETTE_NUM } from './palette'
+/**
+ * theme/ui.ts — Default UI config built on the v2 design system tokens.
+ * All values come from designSystem.ts; no bare magic numbers.
+ */
+import {
+  COLOR,
+  COLOR_NUM,
+  FONT,
+  LAYOUT,
+  SPACE,
+} from '../ui/designSystem'
 
 export const UI = {
   fonts: {
-    title: '"Cinzel Decorative", "Cinzel", serif',
-    body: '"Cinzel", serif',
-    numbers: '"Space Mono", monospace',
+    title:   FONT.title,
+    body:    FONT.body,
+    numbers: FONT.numbers,
   },
+
+  // ─── HUD score position (centred) ──────────────────────────────────────────
   score: {
     x: 180,
-    y: 44,
+    y: 28,
   },
+
+  // ─── Text styles ───────────────────────────────────────────────────────────
   scoreTextStyle: {
-    fontFamily: '"Space Mono", monospace',
-    fontSize: '34px',
-    color: PALETTE.textPrimary,
-    stroke: PALETTE.night,
-    strokeThickness: 6,
+    fontFamily: FONT.numbers,
+    fontSize:   '36px',
+    color:      COLOR.textPrimary,
+    stroke:     COLOR.night,
+    strokeThickness: 5,
   },
   overlayTitleStyle: {
-    fontFamily: '"Cinzel Decorative", "Cinzel", serif',
-    fontSize: '26px',
-    color: PALETTE.textPrimary,
-    stroke: PALETTE.night,
-    strokeThickness: 5,
-    align: 'center',
-  },
-  // v6.1.2: textPrimary for contrast over painterly backgrounds.
-  // v6.1.3: +1 px (19px) for more presence; stroke 5→4 (crisp, not cartoon).
-  overlayBodyStyle: {
-    fontFamily: '"Cinzel", serif',
-    fontSize: '19px',
-    color: PALETTE.textPrimary,
-    stroke: PALETTE.night,
+    fontFamily: FONT.title,
+    fontSize:   '26px',
+    color:      COLOR.textPrimary,
+    stroke:     COLOR.night,
     strokeThickness: 4,
-    align: 'center',
+    align:      'center',
+  },
+  overlayBodyStyle: {
+    fontFamily: FONT.body,
+    fontSize:   '17px',
+    color:      COLOR.textPrimary,
+    stroke:     COLOR.night,
+    strokeThickness: 3,
+    align:      'center',
   },
   statLabelStyle: {
-    fontFamily: '"Cinzel", serif',
-    fontSize: '16px',
-    color: PALETTE.textMuted,
-    stroke: PALETTE.night,
-    strokeThickness: 3,
+    fontFamily: FONT.body,
+    fontSize:   '13px',
+    color:      COLOR.textMuted,
+    stroke:     COLOR.night,
+    strokeThickness: 2,
   },
   statValueStyle: {
-    fontFamily: '"Space Mono", monospace',
-    fontSize: '20px',
-    color: PALETTE.textPrimary,
-    stroke: PALETTE.night,
+    fontFamily: FONT.numbers,
+    fontSize:   '22px',
+    color:      COLOR.textPrimary,
+    stroke:     COLOR.night,
     strokeThickness: 4,
   },
+
+  // ─── Panel ─────────────────────────────────────────────────────────────────
   panel: {
-    fill: PALETTE_NUM.panel,
-    stroke: PALETTE_NUM.panelStroke,
+    fill:            COLOR_NUM.obsidian,
+    stroke:          COLOR_NUM.tealRim,
     strokeThickness: 2,
-    alpha: 0.9,
+    alpha:           0.93,
   },
   panelSize: {
-    small: { width: 280, height: 120 },
-    large: { width: 320, height: 180 },
+    small: { width: 300, height: 128 },
+    large: { width: 320, height: 260 },
   },
+
+  // ─── Overlay anchor positions ───────────────────────────────────────────────
   layout: {
     ready: {
       x: 180,
@@ -66,44 +82,47 @@ export const UI = {
     },
     gameOver: {
       x: 180,
-      y: 300,
+      y: 310,
     },
   },
+
+  // ─── Primary action button ──────────────────────────────────────────────────
   button: {
-    width: 180,
-    height: 52,
+    width:  200,
+    height:  52,
     textStyle: {
-      fontFamily: '"Cinzel Decorative", "Cinzel", serif',
-      fontSize: '18px',
-      color: PALETTE.textPrimary,
-      stroke: PALETTE.night,
-      strokeThickness: 4,
+      fontFamily: FONT.title,
+      fontSize:   '17px',
+      color:      COLOR.textPrimary,
+      stroke:     COLOR.night,
+      strokeThickness: 3,
     },
   },
+
+  // ─── Score capsule / frame ─────────────────────────────────────────────────
   scoreFrameSize: {
-    width: 150,
-    height: 54,
+    width:  LAYOUT.scoreCapsuleW,
+    height: LAYOUT.scoreCapsuleH,
   },
+
+  // ─── Icon HUD ──────────────────────────────────────────────────────────────
   icon: {
-    size: 26,
-    padding: 10,
+    size:    LAYOUT.iconSize,
+    padding: LAYOUT.sidePad,
   },
-  // ─── HUD scrim ──────────────────────────────────────────────────────────────
-  // Dark gradient behind score + top icons so they read over bright/painterly
-  // skies (e.g. V2 evil forest).
+
+  // ─── HUD scrim ─────────────────────────────────────────────────────────────
   hud: {
-    /** Height in px of the gradient band at the top of the screen. */
-    topScrimHeight: 72,
-    /** Peak opacity of the scrim at y=0. */
-    topScrimAlpha: 0.62,
-    /** Minimum vertical gap between the top safe edge and HUD content (px). */
-    safeTop: 8,
+    topScrimHeight: 80,
+    topScrimAlpha:  0.65,
+    safeTop:        SPACE.sm,
   },
-  // ─── 8-pt spacing scale ─────────────────────────────────────────────────────
+
+  // ─── 8-pt spacing scale ────────────────────────────────────────────────────
   spacing: {
-    xs: 8,
-    sm: 12,
-    md: 16,
-    lg: 24,
+    xs: SPACE.xs,
+    sm: SPACE.sm,
+    md: SPACE.md,
+    lg: SPACE.lg,
   },
 } as const
