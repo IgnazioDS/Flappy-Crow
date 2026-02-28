@@ -15,40 +15,38 @@
       <stop offset="100%" stop-color="#060d18" stop-opacity="0.98"/>
     </linearGradient>
 
-    <!-- Water specular highlight (thin bright reflection) -->
+    <!-- Water specular highlight (thin, subdued reflection) -->
     <linearGradient id="water_sheen" x1="0" y1="0" x2="1" y2="0">
       <stop offset="0%"   stop-color="#8ec8e8" stop-opacity="0"/>
-      <stop offset="12%"  stop-color="#8ec8e8" stop-opacity="0.22"/>
-      <stop offset="35%"  stop-color="#aaddf8" stop-opacity="0.38"/>
-      <stop offset="58%"  stop-color="#8ec8e8" stop-opacity="0.22"/>
-      <stop offset="78%"  stop-color="#6ab0d4" stop-opacity="0.28"/>
+      <stop offset="12%"  stop-color="#8ec8e8" stop-opacity="0.14"/>
+      <stop offset="35%"  stop-color="#aaddf8" stop-opacity="0.22"/>
+      <stop offset="58%"  stop-color="#8ec8e8" stop-opacity="0.14"/>
+      <stop offset="78%"  stop-color="#6ab0d4" stop-opacity="0.18"/>
       <stop offset="100%" stop-color="#8ec8e8" stop-opacity="0"/>
     </linearGradient>
-
-    <!-- Violet biolume at bank edges -->
-    <radialGradient id="bio_v1" cx="16%" cy="88%" r="18%">
-      <stop offset="0%"   stop-color="#a050f0" stop-opacity="0.42"/>
-      <stop offset="55%"  stop-color="#6020c0" stop-opacity="0.15"/>
-      <stop offset="100%" stop-color="#4010a0" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="bio_v2" cx="50%" cy="92%" r="20%">
-      <stop offset="0%"   stop-color="#50f8e0" stop-opacity="0.30"/>
-      <stop offset="55%"  stop-color="#20c090" stop-opacity="0.10"/>
-      <stop offset="100%" stop-color="#108060" stop-opacity="0"/>
-    </radialGradient>
-    <radialGradient id="bio_v3" cx="82%" cy="86%" r="18%">
-      <stop offset="0%"   stop-color="#9840f0" stop-opacity="0.38"/>
-      <stop offset="55%"  stop-color="#5018b0" stop-opacity="0.13"/>
-      <stop offset="100%" stop-color="#300880" stop-opacity="0"/>
-    </radialGradient>
 
     <!-- Near-ground fog band — full-canvas gradient, fades in over bottom 22%.
          Stops anchored to full 640-px canvas so there is no hard seam. -->
     <linearGradient id="fog_near" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0%"   stop-color="#98c0d8" stop-opacity="0"/>
-      <stop offset="76%"  stop-color="#98c0d8" stop-opacity="0"/>
-      <stop offset="88%"  stop-color="#98c0d8" stop-opacity="0.06"/>
-      <stop offset="100%" stop-color="#b0d4e8" stop-opacity="0.22"/>
+      <stop offset="72%"  stop-color="#98c0d8" stop-opacity="0"/>
+      <stop offset="84%"  stop-color="#98c0d8" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#b0d4e8" stop-opacity="0.16"/>
+    </linearGradient>
+
+    <!-- Painterly transition into the ground strip: no hard horizontal seam. -->
+    <linearGradient id="bank_transition" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#1a2542" stop-opacity="0"/>
+      <stop offset="62%"  stop-color="#1a2542" stop-opacity="0"/>
+      <stop offset="80%"  stop-color="#25375a" stop-opacity="0.10"/>
+      <stop offset="92%"  stop-color="#1a2746" stop-opacity="0.24"/>
+      <stop offset="100%" stop-color="#0f172f" stop-opacity="0.38"/>
+    </linearGradient>
+    <linearGradient id="bank_transition_tint" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"   stop-color="#3f5f7a" stop-opacity="0.06"/>
+      <stop offset="30%"  stop-color="#4a6b84" stop-opacity="0.03"/>
+      <stop offset="62%"  stop-color="#5c7394" stop-opacity="0.05"/>
+      <stop offset="100%" stop-color="#3a566f" stop-opacity="0.04"/>
     </linearGradient>
   </defs>
 
@@ -133,10 +131,16 @@
   <polygon points="960,640 962,558 976,542 992,528 1010,518 1024,510 1024,640"
            fill="#050c09" opacity="0.94"/>
 
-  <!-- ── Biolume and atmospheric overlays ───────────────────────────────── -->
-  <rect width="1024" height="640" fill="url(#bio_v1)"/>
-  <rect width="1024" height="640" fill="url(#bio_v2)"/>
-  <rect width="1024" height="640" fill="url(#bio_v3)"/>
+  <!-- ── Seam blend overlays ─────────────────────────────────────────────── -->
+  <path d="M0,640 L0,576 C52,558 96,574 146,562 C198,550 238,575 288,560
+           C338,546 380,572 430,558 C486,544 540,574 594,560
+           C652,546 700,570 758,558 C820,546 884,576 940,562
+           C978,552 1004,558 1024,554 L1024,640 Z"
+        fill="url(#bank_transition)"/>
+  <path d="M0,640 L0,584 C64,568 126,580 188,570 C256,558 320,582 384,570
+           C454,556 520,580 592,568 C660,556 724,578 792,566
+           C864,554 936,580 1024,568 L1024,640 Z"
+        fill="url(#bank_transition_tint)"/>
 
   <!-- Ground atmospheric overlay -->
   <rect width="1024" height="640" fill="url(#ground_grad)"/>

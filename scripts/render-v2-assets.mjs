@@ -68,7 +68,7 @@ const LAYERS = [
   { name: 'fg_branches',            w: 1024, h: 640 },
   { name: 'light_rays',             w: 1024, h: 640, sanitize: true, sanitizeThreshold: 20 },
   { name: 'water_reflection_mask',  w: 1024, h: 640 },
-  { name: 'fog_tile_soft',          w:  512, h: 512, sanitize: true, sanitizeThreshold: 12 },
+  { name: 'fog_tile_soft',          w:  512, h: 512, sanitize: true, sanitizeThreshold: 32 },
   { name: 'biolume_glow_splotches', w:  512, h: 512, sanitize: true, sanitizeThreshold: 32 },
 ]
 

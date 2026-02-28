@@ -52,8 +52,8 @@ const BOTTOM_SCRIM_TEX_KEY = 'v2-bottom-scrim'
 /** Render depth: above all background layers (max 0.84), below vignette (0.92). */
 const BOTTOM_SCRIM_DEPTH = 0.91
 
-/** Height of the scrim in game pixels — 18% of GAME_DIMENSIONS.height (640). */
-const BOTTOM_SCRIM_H = 115
+/** Height of the scrim in game pixels — ~20% of GAME_DIMENSIONS.height (640). */
+const BOTTOM_SCRIM_H = 128
 
 /**
  * Key for the programmatic bank-haze canvas texture.
@@ -927,7 +927,7 @@ export class BackgroundSystemV2 extends BackgroundSystem {
     const sparkleMax  = bioCfg.sparkleMax  ?? 14
     const spawnRate   = bioCfg.sparkleSpawnRate ?? 850
     const patchCount  = bioCfg.patches.length
-    if (patchCount === 0) return
+    if (patchCount === 0 || sparkleMax <= 0) return
 
     const maxPerPatch = Math.max(1, Math.floor(sparkleMax / patchCount))
     const emitterDepth = bioCfg.depth + 0.01  // just above biolume glow patches
@@ -1059,11 +1059,10 @@ export class BackgroundSystemV2 extends BackgroundSystem {
         //   lower:  deeper cool-purple shadow anchors the scene
         //   bottom: near-opaque cool shadow at the very bottom edge
         const grad = ctx.createLinearGradient(0, 0, 0, BOTTOM_SCRIM_H)
-        grad.addColorStop(0,    'rgba(8,  12, 30, 0.00)')   // transparent at top
-        grad.addColorStop(0.22, 'rgba(8,  12, 30, 0.08)')   // faint violet-blue haze
-        grad.addColorStop(0.52, 'rgba(6,  9,  24, 0.32)')   // cool-purple mid-shadow
-        grad.addColorStop(0.78, 'rgba(4,  6,  18, 0.58)')   // deeper shadow
-        grad.addColorStop(1,    'rgba(2,  4,  12, 0.80)')   // near-opaque cool edge
+        grad.addColorStop(0,    'rgba(10, 15, 36, 0.00)')   // transparent at top
+        grad.addColorStop(0.38, 'rgba(10, 15, 36, 0.06)')   // faint violet-blue haze
+        grad.addColorStop(0.68, 'rgba(8,  12, 28, 0.18)')   // cool mid-shadow
+        grad.addColorStop(1,    'rgba(5,  8,  20, 0.36)')   // deeper bottom anchor
         ctx.fillStyle = grad
         ctx.fillRect(0, 0, width, BOTTOM_SCRIM_H)
       }

@@ -1,16 +1,35 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="360" height="80" viewBox="0 0 360 80" fill="none">
-  <rect width="360" height="80" fill="#0b0c12" />
-  <path d="M0 20 L20 28 L40 24 L60 30 L80 26 L100 34 L120 30 L140 36 L160 32 L180 38 L200 34 L220 40 L240 36 L260 42 L280 38 L300 44 L320 40 L340 46 L360 42 L360 80 L0 80 Z" fill="#121520" />
-  <path d="M24 24 L16 52" stroke="#2a1b33" stroke-width="2" stroke-linecap="round" />
-  <path d="M60 28 L52 62" stroke="#2a1b33" stroke-width="2" stroke-linecap="round" />
-  <path d="M94 30 L84 68" stroke="#2a1b33" stroke-width="2" stroke-linecap="round" />
-  <path d="M128 32 L118 70" stroke="#2a1b33" stroke-width="2" stroke-linecap="round" />
-  <path d="M166 34 L152 74" stroke="#2a1b33" stroke-width="2" stroke-linecap="round" />
-  <path d="M204 36 L194 72" stroke="#2a1b33" stroke-width="2" stroke-linecap="round" />
-  <path d="M242 38 L230 76" stroke="#2a1b33" stroke-width="2" stroke-linecap="round" />
-  <path d="M280 40 L270 74" stroke="#2a1b33" stroke-width="2" stroke-linecap="round" />
-  <path d="M316 42 L306 70" stroke="#2a1b33" stroke-width="2" stroke-linecap="round" />
-  <circle cx="72" cy="54" r="3" fill="#ff4fa3" opacity="0.6" />
-  <circle cx="210" cy="58" r="2" fill="#ff4fa3" opacity="0.5" />
-  <circle cx="300" cy="60" r="2" fill="#ff4fa3" opacity="0.5" />
+  <defs>
+    <linearGradient id="ground_base" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#122036" stop-opacity="0.00"/>
+      <stop offset="22%" stop-color="#122036" stop-opacity="0.34"/>
+      <stop offset="58%" stop-color="#0e182a" stop-opacity="0.82"/>
+      <stop offset="100%" stop-color="#0a111f" stop-opacity="0.98"/>
+    </linearGradient>
+    <linearGradient id="ground_tint" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#2a3f56" stop-opacity="0.20"/>
+      <stop offset="50%" stop-color="#304c63" stop-opacity="0.14"/>
+      <stop offset="100%" stop-color="#27394f" stop-opacity="0.18"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Transparent-to-dark fill removes hard seam where swamp meets ground. -->
+  <rect width="360" height="80" fill="url(#ground_base)"/>
+
+  <!-- Irregular bank silhouette to avoid a flat strip look. -->
+  <path d="M0 28 L16 30 L34 27 L52 31 L70 29 L88 34 L106 31 L124 36 L142 33 L160 38 L178 35 L196 39 L214 36 L232 40 L250 37 L268 41 L286 38 L304 43 L322 40 L340 45 L360 42 L360 80 L0 80 Z"
+        fill="#111a2a" opacity="0.90"/>
+  <path d="M0 34 L22 37 L46 34 L68 39 L90 36 L114 41 L138 38 L162 43 L186 40 L208 45 L232 42 L256 47 L280 44 L304 49 L332 46 L360 50 L360 80 L0 80 Z"
+        fill="url(#ground_tint)"/>
+
+  <!-- Subtle dark root streaks (no specks/dots). -->
+  <path d="M24 34 L16 58" stroke="#1f2940" stroke-width="2" stroke-linecap="round" opacity="0.55"/>
+  <path d="M60 36 L52 64" stroke="#1f2940" stroke-width="2" stroke-linecap="round" opacity="0.52"/>
+  <path d="M98 38 L90 68" stroke="#1f2940" stroke-width="2" stroke-linecap="round" opacity="0.54"/>
+  <path d="M136 40 L126 70" stroke="#1f2940" stroke-width="2" stroke-linecap="round" opacity="0.50"/>
+  <path d="M176 42 L164 72" stroke="#1f2940" stroke-width="2" stroke-linecap="round" opacity="0.53"/>
+  <path d="M216 44 L204 72" stroke="#1f2940" stroke-width="2" stroke-linecap="round" opacity="0.50"/>
+  <path d="M256 46 L244 74" stroke="#1f2940" stroke-width="2" stroke-linecap="round" opacity="0.52"/>
+  <path d="M296 48 L284 74" stroke="#1f2940" stroke-width="2" stroke-linecap="round" opacity="0.50"/>
+  <path d="M334 49 L322 72" stroke="#1f2940" stroke-width="2" stroke-linecap="round" opacity="0.48"/>
 </svg>
