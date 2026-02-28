@@ -82,7 +82,7 @@ export const applyMinHitArea = (
 // ─── Button feedback ─────────────────────────────────────────────────────────
 
 export const applyButtonFeedback = (
-  button: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Container,
+  button: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Container | Phaser.GameObjects.Graphics,
 ): void => {
   const bx = button.scaleX
   const by = button.scaleY

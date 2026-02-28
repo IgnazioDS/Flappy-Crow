@@ -44,12 +44,15 @@ import {
   applyButtonFeedback,
   applyMinHitArea,
   createButtonBase,
+  createDivider,
   createHudCapsule,
   createHudTopScrim,
   createPanel,
   createPanelBackdrop,
+  createPrimaryButtonBackdrop,
   createSmallButton,
 } from '../ui/uiFactory'
+import { tapPulse } from '../ui/uiMotion'
 import { createSettingsPanel, type SettingsPanelHandle } from '../ui/settingsPanel'
 import {
   buildShareUrl,
@@ -300,6 +303,9 @@ export class PlayScene extends Phaser.Scene {
   private scorePulseTween?: Phaser.Tweens.Tween
   private readyTween?: Phaser.Tweens.Tween
   private gameOverTween?: Phaser.Tweens.Tween
+  private tapPulseTween: Phaser.Tweens.Tween | null = null
+  private tapPromptText: Phaser.GameObjects.Text | null = null
+  private newBestBadge: Phaser.GameObjects.Text | null = null
   private cameraPunchTween?: Phaser.Tweens.Tween
   private visibilityPaused = false
   private perfLowPower = false
@@ -1086,98 +1092,171 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private createReadyOverlay(): void {
-    const panelWidth = this.ui.panelSize.small.width
+    const panelWidth  = this.ui.panelSize.small.width
     const panelHeight = this.ui.panelSize.small.height
     const backdrop = createPanelBackdrop(this, panelWidth, panelHeight)
-    const panel = createPanel(this, this.ui, this.theme, 'small')
-    const title = this.add.text(0, -20, 'GET READY', this.ui.overlayTitleStyle).setOrigin(0.5, 0.5)
-    const subtitle = this.add
-      .text(0, 22, 'Tap or Space to Flap', this.ui.overlayBodyStyle)
+    const panel    = createPanel(this, this.ui, this.theme, 'small')
+
+    // Title — slightly larger than default for visual anchoring
+    const title = this.add
+      .text(0, -panelHeight / 2 + 32, 'GET READY', {
+        ...this.ui.overlayTitleStyle,
+        fontSize: '24px',
+      })
       .setOrigin(0.5, 0.5)
+
+    // Subtle decorative divider line under title
+    const divider = createDivider(this, panelWidth - 32, 0.40)
+    divider.setPosition(0, -panelHeight / 2 + 52)
+
+    // Body — gothic subtitle
+    const subtitle = this.add
+      .text(0, -panelHeight / 2 + 74, this.getReadySubtitle(), this.ui.overlayBodyStyle)
+      .setOrigin(0.5, 0.5)
+
+    // Tap prompt — pulsed separately to draw attention
+    this.tapPromptText = this.add
+      .text(0, panelHeight / 2 - 22, '▼ TAP TO FLY ▼', {
+        ...this.ui.statLabelStyle,
+        fontSize: '11px',
+        color: '#9ef1ff',
+      })
+      .setOrigin(0.5, 0.5)
+      .setAlpha(0.7)
 
     this.readyContainer = this.add.container(this.ui.layout.ready.x, this.ui.layout.ready.y, [
       backdrop,
       panel,
       title,
+      divider,
       subtitle,
+      this.tapPromptText,
     ])
     this.readyContainer.setDepth(5)
     this.readyContainer.setVisible(false)
   }
 
+  /** Returns a short subtitle based on current game mode. */
+  private getReadySubtitle(): string {
+    if (this.practiceEnabled) {
+      return 'Practice Mode'
+    }
+    if (this.seedMode === 'daily') {
+      return 'Daily Challenge'
+    }
+    return 'Tap or Space to Flap'
+  }
+
   private createGameOverOverlay(): void {
-    const panelWidth = this.ui.panelSize.large.width
-    const panelHeight = 240
+    const panelWidth  = this.ui.panelSize.large.width
+    const panelHeight = 264
     const backdrop = createPanelBackdrop(this, panelWidth, panelHeight)
-    const panel = createPanel(this, this.ui, this.theme, 'large', panelWidth, panelHeight)
+    const panel    = createPanel(this, this.ui, this.theme, 'large', panelWidth, panelHeight)
+
+    // ── Title row ──────────────────────────────────────────────────────────
     const title = this.add
-      .text(0, -panelHeight / 2 + 30, 'RUN SUMMARY', this.ui.overlayTitleStyle)
+      .text(0, -panelHeight / 2 + 28, 'RUN SUMMARY', {
+        ...this.ui.overlayTitleStyle,
+        fontSize: '22px',
+      })
       .setOrigin(0.5, 0.5)
 
-    const scoreLabel = this.add
-      .text(-20, -58, 'SCORE', this.ui.statLabelStyle)
-      .setOrigin(0, 0.5)
-    this.finalScoreText = this.add
-      .text(-20, -36, '0', this.ui.statValueStyle)
-      .setOrigin(0, 0.5)
+    // Thin divider under title
+    const titleDivider = createDivider(this, panelWidth - 32, 0.35)
+    titleDivider.setPosition(0, -panelHeight / 2 + 46)
 
+    // ── Score block (centred, prominent numbers) ────────────────────────────
+    const scoreLabel = this.add
+      .text(0, -panelHeight / 2 + 68, 'SCORE', this.ui.statLabelStyle)
+      .setOrigin(0.5, 0.5)
+    this.finalScoreText = this.add
+      .text(0, -panelHeight / 2 + 90, '0', {
+        ...this.ui.statValueStyle,
+        fontSize: '32px',
+      })
+      .setOrigin(0.5, 0.5)
+
+    // ── Mid divider ────────────────────────────────────────────────────────
+    const midDivider = createDivider(this, panelWidth - 64, 0.25)
+    midDivider.setPosition(0, -panelHeight / 2 + 116)
+
+    // ── Best row ───────────────────────────────────────────────────────────
     this.bestLabelText = this.add
-      .text(-20, -8, 'BEST', this.ui.statLabelStyle)
+      .text(-16, -panelHeight / 2 + 134, 'BEST', this.ui.statLabelStyle)
       .setOrigin(0, 0.5)
     this.bestScoreText = this.add
-      .text(-20, 12, String(this.bestScore), this.ui.statValueStyle)
+      .text(-16, -panelHeight / 2 + 154, String(this.bestScore), this.ui.statValueStyle)
       .setOrigin(0, 0.5)
 
+    // "NEW BEST" badge — shown/hidden in triggerGameOver
+    this.newBestBadge = this.add
+      .text(panelWidth / 2 - 8, -panelHeight / 2 + 144, '★ NEW BEST', {
+        fontFamily: this.ui.fonts.title,
+        fontSize: '10px',
+        color: '#f5c842',
+        stroke: '#0a0b12',
+        strokeThickness: 2,
+      })
+      .setOrigin(1, 0.5)
+      .setVisible(false)
+
+    // ── Coins row ──────────────────────────────────────────────────────────
     const coinsLabel = this.add
-      .text(-20, 40, 'COINS', this.ui.statLabelStyle)
+      .text(-16, -panelHeight / 2 + 178, 'COINS', this.ui.statLabelStyle)
       .setOrigin(0, 0.5)
     this.coinsEarnedText = this.add
-      .text(-20, 60, '0', this.ui.statValueStyle)
+      .text(-16, -panelHeight / 2 + 196, '0', this.ui.statValueStyle)
       .setOrigin(0, 0.5)
 
     const totalLabel = this.add
-      .text(-20, 88, 'TOTAL', this.ui.statLabelStyle)
-      .setOrigin(0, 0.5)
+      .text(panelWidth / 2 - 8, -panelHeight / 2 + 178, 'TOTAL', this.ui.statLabelStyle)
+      .setOrigin(1, 0.5)
     this.totalCoinsText = this.add
-      .text(-20, 108, String(this.totalCoins), this.ui.statValueStyle)
-      .setOrigin(0, 0.5)
+      .text(panelWidth / 2 - 8, -panelHeight / 2 + 196, String(this.totalCoins), this.ui.statValueStyle)
+      .setOrigin(1, 0.5)
 
     const overlayItems: Phaser.GameObjects.GameObject[] = [
       backdrop,
       panel,
       title,
+      titleDivider,
       scoreLabel,
       this.finalScoreText,
+      midDivider,
       this.bestLabelText,
       this.bestScoreText,
+      this.newBestBadge,
       coinsLabel,
       this.coinsEarnedText,
       totalLabel,
       this.totalCoinsText,
     ]
 
+    // ── Medal (left accent) ────────────────────────────────────────────────
     const uiAssets = this.theme.visuals.ui
     if (uiAssets.kind === 'atlas' && uiAssets.frames?.medalBronze && uiAssets.atlasKey) {
       this.medalSprite = this.add
-        .image(-110, 8, uiAssets.atlasKey, uiAssets.frames.medalBronze)
-        .setScale(0.9)
+        .image(-panelWidth / 2 + 28, -panelHeight / 2 + 154, uiAssets.atlasKey, uiAssets.frames.medalBronze)
+        .setScale(0.82)
       overlayItems.push(this.medalSprite)
     } else {
       this.medalSprite = null
     }
 
+    // ── Primary action button ──────────────────────────────────────────────
     const playAgainButton = this.createPlayAgainButton()
-    playAgainButton.setPosition(0, panelHeight / 2 + 30)
+    playAgainButton.setPosition(0, panelHeight / 2 + 32)
     overlayItems.push(playAgainButton)
 
+    // ── Secondary actions ──────────────────────────────────────────────────
     const homeButton = createSmallButton(this, this.ui, this.theme, 'HOME', () => this.restart())
-    homeButton.setPosition(-70, panelHeight / 2 + 66)
+    homeButton.setPosition(-70, panelHeight / 2 + 68)
     overlayItems.push(homeButton)
 
     const shareButton = createSmallButton(this, this.ui, this.theme, 'SHARE', () =>
       this.shareRunCard(),
     )
-    shareButton.setPosition(70, panelHeight / 2 + 66)
+    shareButton.setPosition(70, panelHeight / 2 + 68)
     overlayItems.push(shareButton)
 
     this.gameOverContainer = this.add.container(
@@ -1191,15 +1270,23 @@ export class PlayScene extends Phaser.Scene {
 
   private createPlayAgainButton(): Phaser.GameObjects.Container {
     const uiAssets = this.theme.visuals.ui
-    const buttonBase = createButtonBase(this, this.ui, this.theme)
-    applyMinHitArea(buttonBase)
+
+    // Use the improved primary button backdrop when available (hud-aware themes)
+    let buttonBase: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Graphics
+    if (this.ui.hud) {
+      buttonBase = createPrimaryButtonBackdrop(this, this.ui.button.width, this.ui.button.height)
+    } else {
+      buttonBase = createButtonBase(this, this.ui, this.theme)
+    }
+    if (buttonBase instanceof Phaser.GameObjects.Image || buttonBase instanceof Phaser.GameObjects.Rectangle) {
+      applyMinHitArea(buttonBase)
+    }
     applyButtonFeedback(buttonBase)
     buttonBase.on('pointerdown', () => this.restart())
 
     const label = this.add
       .text(0, 0, 'PLAY AGAIN', this.ui.button.textStyle)
       .setOrigin(0.5, 0.5)
-      .setScale(0.92)
 
     const items: Phaser.GameObjects.GameObject[] = [buttonBase, label]
     if (uiAssets.kind === 'atlas' && uiAssets.frames?.iconRestart && uiAssets.atlasKey) {
@@ -1282,10 +1369,11 @@ export class PlayScene extends Phaser.Scene {
   private createSettingsButton(): void {
     const labelStyle = {
       ...this.ui.statLabelStyle,
-      fontSize: '12px',
-      color: this.ui.statValueStyle.color,
+      fontSize: '11px',
+      color: '#9ef1ff',
+      letterSpacing: 1,
     }
-    const label = this.add.text(0, 1, 'SET', labelStyle).setOrigin(0.5, 0.5)
+    const label = this.add.text(0, 1, 'MENU', labelStyle).setOrigin(0.5, 0.5)
 
     // Use the unified HUD capsule when the theme defines hud config (evil-forest),
     // otherwise fall back to the standard atlas/shape button for bright themes.
@@ -3035,7 +3123,10 @@ export class PlayScene extends Phaser.Scene {
 
     this.finalScoreText.setText(String(score))
     this.bestScoreText.setText(String(this.bestScore))
-    this.bestLabelText.setText(isNewBest ? 'NEW BEST' : 'BEST')
+    this.bestLabelText.setText('BEST')
+    if (this.newBestBadge) {
+      this.newBestBadge.setVisible(isNewBest)
+    }
     this.coinsEarnedText.setText(String(this.coinsEarned))
     this.totalCoinsText.setText(String(this.totalCoins))
     this.updateMedal(score)
@@ -3330,8 +3421,16 @@ export class PlayScene extends Phaser.Scene {
       this.updateOverlayLayout()
       this.readyContainer.setVisible(true)
       this.animateOverlay(this.readyContainer, 'ready')
+
+      // Start the tap-prompt pulse after the overlay enters
+      if (this.tapPromptText) {
+        this.tapPulseTween?.stop()
+        this.tapPulseTween = tapPulse(this, this.tapPromptText, this.isMotionReduced())
+      }
     } else {
       this.readyTween?.stop()
+      this.tapPulseTween?.stop()
+      this.tapPulseTween = null
       this.readyContainer.setVisible(false)
     }
   }
