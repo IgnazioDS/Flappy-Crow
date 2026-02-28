@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 56" width="48" height="56">
+  <!-- Platinum / void medal — otherworldly teal-crystal style -->
+
+  <!-- Ribbon top (teal) -->
+  <path d="M16 0 L24 8 L32 0 L32 16 L16 16 Z" fill="#2a7a8c" opacity="0.9"/>
+  <line x1="24" y1="0" x2="24" y2="16" stroke="#48c8d8" stroke-width="1.5" opacity="0.7"/>
+
+  <!-- Medal disc shadow -->
+  <circle cx="25" cy="38" r="18" fill="#000000" opacity="0.50"/>
+
+  <!-- Medal disc — dark obsidian with teal edge -->
+  <circle cx="24" cy="36" r="18" fill="#0a1520"/>
+
+  <!-- Teal rim glow -->
+  <circle cx="24" cy="36" r="18" fill="none" stroke="#48c8d8" stroke-width="2.5" opacity="0.9"/>
+  <circle cx="24" cy="36" r="16" fill="none" stroke="#9ef1ff" stroke-width="1" opacity="0.4"/>
+
+  <!-- Inner crystal fill -->
+  <circle cx="24" cy="36" r="13" fill="#07090f" opacity="0.9"/>
+
+  <!-- Crystal facet lines -->
+  <polygon points="24,24 30,36 24,46 18,36"
+           fill="none" stroke="#48c8d8" stroke-width="1" opacity="0.5"/>
+  <line x1="24" y1="24" x2="24" y2="46" stroke="#9ef1ff" stroke-width="0.75" opacity="0.4"/>
+  <line x1="18" y1="36" x2="30" y2="36" stroke="#9ef1ff" stroke-width="0.75" opacity="0.4"/>
+
+  <!-- Center teal dot -->
+  <circle cx="24" cy="36" r="3" fill="#9ef1ff" opacity="0.8"/>
+</svg>
