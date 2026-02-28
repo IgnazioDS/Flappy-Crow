@@ -5,6 +5,31 @@
 All notable changes to this project will be documented in this file.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [6.1.12] - 2026-02-28
+
+### Fixed
+
+- **Removed sticker-like lower orbs at source** — identified via QA solo mode as
+  slot `[5] Biolume (ADD)` (`v2-biolume` / `biolume_glow_splotches`), then
+  removed from source art by replacing
+  `assets/theme/evil_forest_v2/src/biolume_glow_splotches.svg` with a fully
+  transparent texture and setting V2 biolume `patches: []` so no orb sprites are
+  instantiated at runtime.
+- **Bottom band composition blend** — rebuilt swamp-to-ground transition in
+  `bg_swamp_near.svg` (organic transition shapes + softer near-ground haze) and
+  repainted `assets/theme/ground.svg` to a matching blue-violet swamp palette
+  with transparent top fade to remove the separate-strip seam.
+- **Fog export threshold lock** — set `fog_tile_soft` export sanitization
+  threshold to `32` in `scripts/render-v2-assets.mjs` to match runtime
+  sanitization and keep seam-plate prevention deterministic.
+
+### Verified
+
+- `v2-fog-soft` sanitization threshold remains `32`.
+- biolume sparkle emitters remain disabled (`sparkleMax=0`).
+- Evil Forest V2 ambient `fireflies` + `embers` remain disabled.
+- `assets/theme/ground.svg` contains no magenta decorative dots.
+
 ## [6.1.11] - 2026-02-27
 
 ### Added
@@ -18,6 +43,14 @@ This project follows [Semantic Versioning](https://semver.org/).
 - **Fog tile seam plates** — raised `v2-fog-soft` sanitization threshold to 32 to
   zero low-alpha edge RGB (alpha 18–28) that was showing as rectangular plates
   when fog layered with other overlays.
+- **Random bottom dots** — disabled biolume sparkle emitters (`sparkleMax=0`),
+  removing the random purple specks in the lower playfield while keeping the
+  glow patches.
+- **Ambient V2 specks** — disabled Evil Forest V2 `fireflies` + `embers`
+  emitters to eliminate remaining randomly positioned bottom particles in play.
+- **Ground specks** — removed magenta decorative dots from
+  `assets/theme/ground.svg` (evil forest ground strip) to eliminate the last
+  bottom-edge specks that looked random while scrolling.
 
 ## [6.1.10] - 2026-02-26
 
