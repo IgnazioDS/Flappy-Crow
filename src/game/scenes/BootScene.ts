@@ -52,6 +52,34 @@ export class BootScene extends Phaser.Scene {
         this.load.image(asset.key, path)
       })
     }
+
+    // ── UI v3 assets ───────────────────────────────────────────────────────
+    // Panel border frame: transparent fill + teal rim — used as NineSlice overlay.
+    // Icons: home, share, close (SVGs rasterised at load time by Phaser).
+    // Raster alternatives in v3/raster/ are used when present (faster load).
+    const v3Raster = 'assets/ui/v3/raster'
+    const v3Src    = 'assets/ui/v3/src'
+
+    const loadV3Svg = (key: string, srcFile: string, w: number, h: number): void => {
+      const pngPath  = `${v3Raster}/${srcFile.replace('.svg', '.png')}`
+      const webpPath = `${v3Raster}/${srcFile.replace('.svg', '.webp')}`
+      if (supportsWebp) {
+        // Try WebP raster first; Phaser falls back gracefully if missing
+        this.load.image(key, webpPath)
+      } else {
+        this.load.image(key, pngPath)
+      }
+      // Always queue the SVG under a fallback key in case raster is absent
+      this.load.svg(`${key}_svg`, `${v3Src}/${srcFile}`, { width: w, height: h })
+    }
+
+    // Panel frame (NineSlice border overlay)
+    this.load.svg('ui_v3_panel_frame', `${v3Src}/modal_panel_frame_9slice.svg`,
+      { width: 128, height: 128 })
+    // Icons
+    loadV3Svg('ui_v3_icon_home',  'icon_home.svg',  24, 24)
+    loadV3Svg('ui_v3_icon_share', 'icon_share.svg', 24, 24)
+    loadV3Svg('ui_v3_icon_close', 'icon_close.svg', 24, 24)
   }
 
   create(): void {

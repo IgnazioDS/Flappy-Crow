@@ -202,6 +202,73 @@ export const DT_MOTION = {
   tapPulseAlphaMin: 0.40,
 } as const
 
+// ─── V3 skin tokens ───────────────────────────────────────────────────────────
+
+/**
+ * DT_V3 — premium v3 visual overrides layered on top of the Phase 1 token base.
+ * Consumed by Modal.ts, Chip.ts, Button.ts components and uiMotion.ts.
+ */
+export const DT_V3 = {
+  panel: {
+    /** Corner radius — slightly larger than v2 for a softer look */
+    radius:              14,
+    /** Top gradient colour (slightly lighter) */
+    gradientTop:         '#0d1425',
+    /** Mid gradient transition */
+    gradientMid:         '#090c18',
+    /** Bottom gradient colour (full obsidian) */
+    gradientBot:         '#07090f',
+    /** Teal rim stroke alpha */
+    rimAlpha:            0.72,
+    /** Outer glow alpha (dim halo around the rim) */
+    rimGlowAlpha:        0.14,
+    /** Extra stroke width for glow pass (px) */
+    rimGlowSpread:       4,
+    /** Height of the inner top-edge highlight strip (px) */
+    innerHighlightH:     8,
+    /** Alpha for the inner top-edge highlight */
+    innerHighlightAlpha: 0.05,
+  },
+  chip: {
+    /** Border radius of value chips */
+    radius:   6,
+    /** Fixed chip height (px) */
+    height:   28,
+    /** Minimum chip width before text overflow (px) */
+    minWidth: 62,
+    /** Horizontal padding inside chip (px each side) */
+    paddingX: 14,
+  },
+  button: {
+    /** Primary button height (px) */
+    primaryH:        48,
+    /** Primary button end radius — fully rounded (= primaryH / 2) */
+    primaryRadius:   24,
+    /** Secondary button height (px) */
+    secondaryH:      36,
+    /** Secondary button end radius */
+    secondaryRadius: 18,
+    /** Gap between icon and label in primary button (px) */
+    iconGap:         10,
+  },
+  motion: {
+    /** Modal open animation duration (ms) */
+    modalInMs:      200,
+    /** Modal close animation duration (ms) */
+    modalOutMs:     140,
+    /** Modal slide-in distance (px upward from rest) */
+    modalSlideY:    8,
+    /** Scale origin for modal open animation */
+    modalScaleFrom: 0.97,
+  },
+  typography: {
+    /** Instruction / subtitle text size */
+    instructionSize:       '12px',
+    /** Letter spacing for modal headline text */
+    headlineLetterSpacing: 2,
+  },
+} as const
+
 // ─── Aggregate token bag ──────────────────────────────────────────────────────
 
 export type UITokens = {
@@ -214,6 +281,7 @@ export type UITokens = {
   color:      typeof DT_COLOR
   badge:      typeof DT_BADGE
   motion:     typeof DT_MOTION
+  v3:         typeof DT_V3
 }
 
 /** Pre-built token bag — import this when you need the full set. */
@@ -227,6 +295,7 @@ export const UI_TOKENS: UITokens = {
   color:      DT_COLOR,
   badge:      DT_BADGE,
   motion:     DT_MOTION,
+  v3:         DT_V3,
 }
 
 // ─── Safe area ────────────────────────────────────────────────────────────────
