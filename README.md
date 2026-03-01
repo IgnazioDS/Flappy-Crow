@@ -39,17 +39,59 @@ Environment V1/V2 is used in Evil Forest:
 
 Environment selection is persisted in local storage (`flappy-env`).
 
-## UI Design System (v2)
+## UI Tokens (Phase 1)
 
-All UI tokens live in `src/game/ui/designSystem.ts`:
+All UI tokens live in **`src/game/ui/designTokens.ts`** (Phase 1 canonical file):
 
-| Token group | Key values |
-|-------------|-----------|
-| Color | `obsidian` `#07090f`, `tealRim` `#48c8d8`, `tealBright` `#9ef1ff` |
-| Spacing | 4 / 8 / 12 / 16 / 24 / 32 px (8-pt grid) |
-| Corner radii | capsule 10 px · panel 12 px · overlay 16 px |
-| Typography | Cinzel Decorative (headline/title), Cinzel (body), Space Mono (numbers) |
-| Motion | `overlayIn` 220 ms · `scorePop` 120 ms · `tapPulse` 1400 ms cycle |
+| Token group | Exports | Key values |
+|-------------|---------|-----------|
+| Spacing | `DT_SPACE` | xs=8, sm=12, md=16, lg=24, xl=32 (8-pt grid) |
+| Radii | `DT_RADIUS` | capsule=10, panel=12, overlay=16 |
+| Strokes | `DT_STROKE` | thin=1, normal=2 |
+| Shadows | `DT_SHADOW` | `panelShadow`, `capsuleShadow`, `rimAlpha`, `innerHighlight` |
+| Typography | `DT_TYPOGRAPHY` | `title` / `body` / `caption` / `number` roles |
+| Colors | `DT_COLOR` | `panelFill` 0x07090f, `panelStroke` 0x48c8d8, `textPrimary`, `textMuted` |
+
+### UIContext
+
+Factory functions in `uiFactory.ts` accept an optional `UIContext` object
+(built by `makeUIContext`) that bundles tokens + themeUi + safeArea + reducedMotion
+into a single typed dependency:
+
+```typescript
+import { makeUIContext } from './ui/designTokens'
+
+// In scene create():
+this.uiCtx = makeUIContext(this.ui, this.safeArea, this.reducedMotion)
+
+// Then pass to any factory:
+createPanel(scene, ui, theme, 'large', w, h, this.uiCtx)
+```
+
+### Helpers
+
+| Helper | Signature | Returns |
+|--------|-----------|---------|
+| `getTextStyle` | `(role: TypographyRole, themeUi?)` | Phaser text style object |
+| `getPanelStyle` | `(kind: 'panel'\|'capsule', themeUi?)` | Drawing descriptor for Graphics |
+
+### Token Overrides
+
+Themes can override a subset of tokens via `ThemeUI.tokenOverrides`:
+
+```typescript
+// In a theme definition:
+ui: { ...UI, tokenOverrides: { accentTealNum: 0x8b5cf6, accentTeal: '#8b5cf6' } }
+```
+
+Available override keys: `accentTealNum`, `accentTeal`, `textPrimary`, `textMuted`, `panelFillAlpha`.
+
+### Legacy tokens (v2)
+
+`src/game/ui/designSystem.ts` remains for backward compatibility and contains
+the full v2 token set (`COLOR`, `COLOR_NUM`, `SPACE`, `RADIUS`, `STROKE`, `SHADOW`,
+`FONT`, `MOTION`, `LAYOUT`, `createTextStyle`).  New code should import from
+`designTokens.ts`.
 
 UI assets (original SVG) are in `public/assets/ui/v2/`:
 
