@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 36" width="140" height="36">
+  <!--
+    button_secondary_9slice.svg — Secondary button (HOME / SHARE / CLOSE)
+    Horizontal-only 9-slice: left=18, right=18, top=0, bottom=0.
+    Radius=18 (fully rounded), obsidian fill, dimmer teal stroke.
+    RGB=0 where alpha=0.
+  -->
+  <defs>
+    <linearGradient id="secBtnFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#0e1425" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#07090f" stop-opacity="1"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Drop shadow -->
+  <rect x="3" y="4" width="137" height="32" rx="18" ry="18"
+        fill="#000000" opacity="0.45"/>
+
+  <!-- Button fill -->
+  <rect x="1" y="1" width="138" height="34" rx="17" ry="17"
+        fill="url(#secBtnFill)" opacity="1"/>
+
+  <!-- Teal rim (dimmer than primary) -->
+  <rect x="1" y="1" width="138" height="34" rx="17" ry="17"
+        fill="none" stroke="#48c8d8" stroke-width="1.5" opacity="0.55"/>
+</svg>

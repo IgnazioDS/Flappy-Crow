@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 52" width="200" height="52">
+  <!--
+    button_primary_9slice.svg — Primary CTA (PLAY AGAIN style)
+    Horizontal-only 9-slice: left=26, right=26, top=0, bottom=0.
+    Fully rounded ends (radius=26), obsidianMid fill, bright teal stroke.
+    RGB=0 where alpha=0.
+  -->
+  <defs>
+    <linearGradient id="btnFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#141c30" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#0e1220" stop-opacity="1"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Drop shadow (offset 2,3) -->
+  <rect x="4" y="5" width="196" height="48" rx="26" ry="26"
+        fill="#000000" opacity="0.55"/>
+
+  <!-- Button fill — slightly lighter obsidian for button elevation -->
+  <rect x="2" y="2" width="196" height="48" rx="25" ry="25"
+        fill="url(#btnFill)" opacity="1"/>
+
+  <!-- Inner top sheen (white, subtle) -->
+  <rect x="4" y="4" width="192" height="8" rx="22" ry="22"
+        fill="#ffffff" opacity="0.06"/>
+
+  <!-- Bright teal rim (primary action emphasis) -->
+  <rect x="2" y="2" width="196" height="48" rx="25" ry="25"
+        fill="none" stroke="#48c8d8" stroke-width="2" opacity="0.80"/>
+</svg>

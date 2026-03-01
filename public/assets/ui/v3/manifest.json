@@ -1,0 +1,70 @@
+{
+  "version": "3.0.0",
+  "designSystem": "Obsidian Glass + Teal Rim v3",
+  "material": {
+    "panelFill":    "#07090f",
+    "panelFillTop": "#0d1425",
+    "panelFillMid": "#090c18",
+    "rimColor":     "#48c8d8",
+    "rimAlpha":     0.72,
+    "glowAlpha":    0.14
+  },
+  "assets": {
+    "modal_panel_9slice": {
+      "src":   "src/modal_panel_9slice.svg",
+      "size":  [128, 128],
+      "slice": { "left": 16, "right": 16, "top": 16, "bottom": 16 },
+      "notes": "Full glass panel — design reference. Runtime fill is canvas gradient."
+    },
+    "modal_panel_frame_9slice": {
+      "src":   "src/modal_panel_frame_9slice.svg",
+      "size":  [128, 128],
+      "slice": { "left": 16, "right": 16, "top": 16, "bottom": 16 },
+      "runtimeKey": "ui_v3_panel_frame",
+      "notes": "Transparent fill. Loaded at runtime as NineSlice border overlay."
+    },
+    "chip_9slice": {
+      "src":   "src/chip_9slice.svg",
+      "size":  [80, 32],
+      "slice": { "left": 16, "right": 16, "top": 0, "bottom": 0 },
+      "notes": "Horizontal-only 9-slice. Runtime alpha driven by tone (on/off/neutral)."
+    },
+    "button_primary_9slice": {
+      "src":   "src/button_primary_9slice.svg",
+      "size":  [200, 52],
+      "slice": { "left": 26, "right": 26, "top": 0, "bottom": 0 },
+      "notes": "PLAY AGAIN style. Fully rounded ends (radius=26)."
+    },
+    "button_secondary_9slice": {
+      "src":   "src/button_secondary_9slice.svg",
+      "size":  [140, 36],
+      "slice": { "left": 18, "right": 18, "top": 0, "bottom": 0 },
+      "notes": "HOME / SHARE / CLOSE style. Radius=18, dimmer rim."
+    },
+    "icon_home": {
+      "src":  "src/icon_home.svg",
+      "size": [24, 24],
+      "runtimeKey": "ui_v3_icon_home"
+    },
+    "icon_share": {
+      "src":  "src/icon_share.svg",
+      "size": [24, 24],
+      "runtimeKey": "ui_v3_icon_share"
+    },
+    "icon_close": {
+      "src":  "src/icon_close.svg",
+      "size": [24, 24],
+      "runtimeKey": "ui_v3_icon_close"
+    },
+    "divider": {
+      "src":  "src/divider.svg",
+      "size": [256, 2],
+      "notes": "Design doc only. Runtime uses Phaser Graphics createDivider()."
+    }
+  },
+  "exportNotes": [
+    "Run scripts/build-v3-assets.mjs to export SVGs to raster/.",
+    "Ensure RGB=0 where alpha=0 to avoid additive-blend artifacts.",
+    "Export at 1x and 2x (HiDPI). WebP preferred, PNG fallback."
+  ]
+}

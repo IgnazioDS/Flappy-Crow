@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
+  <!--
+    modal_panel_9slice.svg — Obsidian Glass + Teal Rim v3
+    Full reference panel: dark gradient fill + teal rim + outer glow.
+    Used as design documentation; the runtime fill is a canvas gradient.
+    9-slice borders: 16px on every side.
+    Safe interior: 16..112 × 16..112 (96×96 stretch zone).
+    RGB=0 where alpha=0 to prevent additive-blend artifacts.
+  -->
+  <defs>
+    <linearGradient id="panelFill" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#0d1425" stop-opacity="1"/>
+      <stop offset="40%"  stop-color="#090c18" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#07090f" stop-opacity="1"/>
+    </linearGradient>
+    <!-- Outer glow filter on the teal rim -->
+    <filter id="rimGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- 1. Drop shadow (offset 3,4 — RGB=0, alpha 0.45) -->
+  <rect x="4" y="5" width="124" height="124" rx="14" ry="14"
+        fill="#000000" opacity="0.45"/>
+
+  <!-- 2. Outer glow (wide dim teal stroke) -->
+  <rect x="1" y="1" width="126" height="126" rx="14" ry="14"
+        fill="none" stroke="#48c8d8" stroke-width="6" opacity="0.14"
+        filter="url(#rimGlow)"/>
+
+  <!-- 3. Dark glass fill with gradient -->
+  <rect x="2" y="2" width="124" height="124" rx="13" ry="13"
+        fill="url(#panelFill)" opacity="0.95"/>
+
+  <!-- 4. Inner top-edge highlight (white, very subtle) -->
+  <rect x="3" y="3" width="122" height="8" rx="12" ry="12"
+        fill="#ffffff" opacity="0.05"/>
+
+  <!-- 5. Teal rim stroke (thin, crisp) -->
+  <rect x="2" y="2" width="124" height="124" rx="13" ry="13"
+        fill="none" stroke="#48c8d8" stroke-width="1.5" opacity="0.72"/>
+</svg>

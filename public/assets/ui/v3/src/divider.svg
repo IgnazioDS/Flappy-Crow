@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 2" width="256" height="2">
+  <!--
+    divider.svg — Thin horizontal teal rule.
+    Design doc; runtime uses Phaser Graphics (createDivider from uiFactory).
+    Teal (#48c8d8) at alpha 0.35.
+  -->
+  <line x1="0" y1="1" x2="256" y2="1"
+        stroke="#48c8d8" stroke-width="1" opacity="0.35"/>
+</svg>
