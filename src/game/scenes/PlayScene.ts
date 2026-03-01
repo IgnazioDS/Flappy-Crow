@@ -49,12 +49,14 @@ import {
   createHudTopScrim,
   createPanel,
   createPanelBackdrop,
-  createPrimaryButtonBackdrop,
   createSmallButton,
 } from '../ui/uiFactory'
 import { makeUIContext, type UIContext, DT_COLOR } from '../ui/designTokens'
 import { tapPulse } from '../ui/uiMotion'
 import { createSettingsPanel, type SettingsPanelHandle } from '../ui/settingsPanel'
+import { createModalPanel } from '../ui/components/Modal'
+import { createPrimaryButton } from '../ui/components/Button'
+import { createSecondaryButton } from '../ui/components/Button'
 import {
   buildShareUrl,
   copyShareUrl,
@@ -1161,8 +1163,7 @@ export class PlayScene extends Phaser.Scene {
   private createGameOverOverlay(): void {
     const panelWidth  = this.ui.panelSize.large.width
     const panelHeight = 264
-    const backdrop = createPanelBackdrop(this, panelWidth, panelHeight)
-    const panel    = createPanel(this, this.ui, this.theme, 'large', panelWidth, panelHeight, this.uiCtx)
+    const modalPanel = createModalPanel(this, panelWidth, panelHeight, this.uiCtx)
 
     // ── Title row ──────────────────────────────────────────────────────────
     const title = this.add
@@ -1183,7 +1184,7 @@ export class PlayScene extends Phaser.Scene {
     this.finalScoreText = this.add
       .text(0, -panelHeight / 2 + 90, '0', {
         ...this.ui.statValueStyle,
-        fontSize: '32px',
+        fontSize: '40px',
       })
       .setOrigin(0.5, 0.5)
 
@@ -1203,8 +1204,8 @@ export class PlayScene extends Phaser.Scene {
     this.newBestBadge = this.add
       .text(panelWidth / 2 - 8, -panelHeight / 2 + 144, '★ NEW BEST', {
         fontFamily: this.ui.fonts.title,
-        fontSize: '10px',
-        color: DT_COLOR.gold,
+        fontSize: '11px',
+        color: DT_COLOR.tealBright,
         stroke: DT_COLOR.strokeBg,
         strokeThickness: 2,
       })
@@ -1227,8 +1228,7 @@ export class PlayScene extends Phaser.Scene {
       .setOrigin(1, 0.5)
 
     const overlayItems: Phaser.GameObjects.GameObject[] = [
-      backdrop,
-      panel,
+      modalPanel,
       title,
       titleDivider,
       scoreLabel,
@@ -1260,13 +1260,11 @@ export class PlayScene extends Phaser.Scene {
     overlayItems.push(playAgainButton)
 
     // ── Secondary actions ──────────────────────────────────────────────────
-    const homeButton = createSmallButton(this, this.ui, this.theme, 'HOME', () => this.restart(), this.uiCtx)
+    const homeButton = createSecondaryButton(this, 'HOME', () => this.restart(), this.uiCtx)
     homeButton.setPosition(-70, panelHeight / 2 + 68)
     overlayItems.push(homeButton)
 
-    const shareButton = createSmallButton(this, this.ui, this.theme, 'SHARE', () =>
-      this.shareRunCard(), this.uiCtx,
-    )
+    const shareButton = createSecondaryButton(this, 'SHARE', () => this.shareRunCard(), this.uiCtx)
     shareButton.setPosition(70, panelHeight / 2 + 68)
     overlayItems.push(shareButton)
 
@@ -1281,33 +1279,18 @@ export class PlayScene extends Phaser.Scene {
 
   private createPlayAgainButton(): Phaser.GameObjects.Container {
     const uiAssets = this.theme.visuals.ui
+    const atlasKey  = uiAssets.kind === 'atlas' ? (uiAssets.atlasKey ?? null) : null
+    const iconFrame = uiAssets.kind === 'atlas' ? (uiAssets.frames?.iconRestart ?? null) : null
 
-    // Use the improved primary button backdrop when available (hud-aware themes)
-    let buttonBase: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Graphics
-    if (this.ui.hud) {
-      buttonBase = createPrimaryButtonBackdrop(this, this.ui.button.width, this.ui.button.height)
-    } else {
-      buttonBase = createButtonBase(this, this.ui, this.theme, 1, this.uiCtx)
-    }
-    if (buttonBase instanceof Phaser.GameObjects.Image || buttonBase instanceof Phaser.GameObjects.Rectangle) {
-      applyMinHitArea(buttonBase)
-    }
-    applyButtonFeedback(buttonBase)
-    buttonBase.on('pointerdown', () => this.restart())
-
-    const label = this.add
-      .text(0, 0, 'PLAY AGAIN', this.ui.button.textStyle)
-      .setOrigin(0.5, 0.5)
-
-    const items: Phaser.GameObjects.GameObject[] = [buttonBase, label]
-    if (uiAssets.kind === 'atlas' && uiAssets.frames?.iconRestart && uiAssets.atlasKey) {
-      const icon = this.add.image(-54, 0, uiAssets.atlasKey, uiAssets.frames.iconRestart).setScale(0.9)
-      this.applyIconContrast(icon)
-      items.splice(1, 0, icon)
-      label.setX(18)
-    }
-
-    return this.add.container(0, 0, items)
+    return createPrimaryButton(
+      this,
+      'PLAY AGAIN',
+      this.ui.button.width,
+      atlasKey,
+      iconFrame,
+      () => this.restart(),
+      this.uiCtx,
+    )
   }
 
   private createToggles(): void {
