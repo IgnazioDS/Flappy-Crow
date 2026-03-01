@@ -11,7 +11,7 @@
  */
 import Phaser from 'phaser'
 import { MOTION } from './designSystem'
-import { DT_MOTION } from './designTokens'
+import { DT_MOTION, DT_V3 } from './designTokens'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -177,5 +177,76 @@ export const badgeBounceIn = (
     duration: MOTION.badgeBounce,
     ease:     'Back.easeOut',
     delay:    120,
+  })
+}
+
+// ─── Modal enter / exit (v3) ──────────────────────────────────────────────────
+
+/**
+ * Fade + slide + scale a modal overlay into view (v3 premium motion).
+ * Uses DT_V3.motion timings: 200 ms, Quad.easeOut, slide 8 px up, scale 0.97 → 1.
+ * If reducedMotion, shows instantly with no animation.
+ */
+export const modalIn = (
+  scene: Phaser.Scene,
+  target: MotionTarget,
+  reducedMotion: boolean,
+): Phaser.Tweens.Tween | null => {
+  const scaleFrom = DT_V3.motion.modalScaleFrom
+  const slideY    = DT_V3.motion.modalSlideY
+
+  target.setVisible(true).setAlpha(0).setScale(scaleFrom)
+
+  if (reducedMotion) {
+    target.setAlpha(1).setScale(1)
+    return null
+  }
+
+  const startY = target.y + slideY
+  const endY   = target.y
+  target.setY(startY)
+
+  return scene.tweens.add({
+    targets:  target,
+    alpha:    1,
+    y:        endY,
+    scaleX:   1,
+    scaleY:   1,
+    duration: DT_V3.motion.modalInMs,
+    ease:     'Quad.easeOut',
+    onComplete: () => {
+      target.setY(endY)
+    },
+  })
+}
+
+/**
+ * Fade + scale a modal overlay out, then hide it.
+ * Uses DT_V3.motion timings: 140 ms, Quad.easeIn, scale 1 → 0.98.
+ * If reducedMotion, hides instantly.
+ */
+export const modalOut = (
+  scene: Phaser.Scene,
+  target: MotionTarget,
+  reducedMotion: boolean,
+  onComplete?: () => void,
+): Phaser.Tweens.Tween | null => {
+  if (reducedMotion) {
+    target.setVisible(false).setAlpha(0).setScale(1)
+    onComplete?.()
+    return null
+  }
+
+  return scene.tweens.add({
+    targets:  target,
+    alpha:    0,
+    scaleX:   0.98,
+    scaleY:   0.98,
+    duration: DT_V3.motion.modalOutMs,
+    ease:     'Quad.easeIn',
+    onComplete: () => {
+      target.setVisible(false).setScale(1)
+      onComplete?.()
+    },
   })
 }

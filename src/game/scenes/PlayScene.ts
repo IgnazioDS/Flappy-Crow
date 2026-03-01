@@ -52,7 +52,7 @@ import {
   createSmallButton,
 } from '../ui/uiFactory'
 import { makeUIContext, type UIContext, DT_COLOR } from '../ui/designTokens'
-import { tapPulse } from '../ui/uiMotion'
+import { tapPulse, modalIn, modalOut } from '../ui/uiMotion'
 import { createSettingsPanel, type SettingsPanelHandle } from '../ui/settingsPanel'
 import { createModalPanel } from '../ui/components/Modal'
 import { createPrimaryButton } from '../ui/components/Button'
@@ -2703,7 +2703,12 @@ export class PlayScene extends Phaser.Scene {
       this.toggleShop()
     }
     this.settingsOpen = !this.settingsOpen
-    this.settingsPanel.setVisible(this.settingsOpen)
+    const reducedMotion = this.isMotionReduced()
+    if (this.settingsOpen) {
+      modalIn(this, this.settingsPanel.container, reducedMotion)
+    } else {
+      modalOut(this, this.settingsPanel.container, reducedMotion)
+    }
     this.playSfx(this.theme.audio.sfx?.uiTap)
     if (this.settingsBackdrop) {
       this.settingsBackdrop.setVisible(this.settingsOpen)
@@ -3545,12 +3550,13 @@ export class PlayScene extends Phaser.Scene {
   }
 
   private showGameOverOverlay(visible: boolean): void {
+    const reducedMotion = this.isMotionReduced()
     if (visible) {
-      this.gameOverContainer.setVisible(true)
-      this.animateOverlay(this.gameOverContainer, 'gameover')
+      this.gameOverTween?.stop()
+      this.gameOverTween = modalIn(this, this.gameOverContainer, reducedMotion) ?? undefined
     } else {
       this.gameOverTween?.stop()
-      this.gameOverContainer.setVisible(false)
+      modalOut(this, this.gameOverContainer, reducedMotion)
     }
   }
 
