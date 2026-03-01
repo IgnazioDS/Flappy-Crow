@@ -52,6 +52,7 @@ import {
   createPrimaryButtonBackdrop,
   createSmallButton,
 } from '../ui/uiFactory'
+import { makeUIContext, type UIContext } from '../ui/designTokens'
 import { tapPulse } from '../ui/uiMotion'
 import { createSettingsPanel, type SettingsPanelHandle } from '../ui/settingsPanel'
 import {
@@ -164,6 +165,8 @@ export class PlayScene extends Phaser.Scene {
   private theme = getActiveTheme()
   private ui = this.theme.ui
   private fx = this.theme.fx
+  /** Unified UI creation context — tokens + themeUi + safeArea + reducedMotion. */
+  private uiCtx!: UIContext
   private themeList = listThemes()
   private backgroundSystem: BackgroundSystem | null = null
   private environmentKey: EnvironmentKey | null = null
@@ -367,6 +370,8 @@ export class PlayScene extends Phaser.Scene {
     this.bestScore = this.readBestScore()
     this.isMuted = readStoredBool('flappy-muted', false)
     this.reducedMotion = readStoredBool('flappy-reduced-motion', false)
+    // Build the unified UI context used by factory helpers
+    this.uiCtx = makeUIContext(this.ui, this.safeArea, this.reducedMotion)
     this.analyticsConsent = getTelemetryConsent()
     this.practiceEnabled = readStoredBool('flappy-practice', false)
     this.ghostEnabled = readStoredBool('flappy-ghost', true)
@@ -1101,7 +1106,7 @@ export class PlayScene extends Phaser.Scene {
     const panelWidth  = this.ui.panelSize.small.width
     const panelHeight = this.ui.panelSize.small.height
     const backdrop = createPanelBackdrop(this, panelWidth, panelHeight)
-    const panel    = createPanel(this, this.ui, this.theme, 'small')
+    const panel    = createPanel(this, this.ui, this.theme, 'small', undefined, undefined, this.uiCtx)
 
     // Title — slightly larger than default for visual anchoring
     const title = this.add
@@ -1157,7 +1162,7 @@ export class PlayScene extends Phaser.Scene {
     const panelWidth  = this.ui.panelSize.large.width
     const panelHeight = 264
     const backdrop = createPanelBackdrop(this, panelWidth, panelHeight)
-    const panel    = createPanel(this, this.ui, this.theme, 'large', panelWidth, panelHeight)
+    const panel    = createPanel(this, this.ui, this.theme, 'large', panelWidth, panelHeight, this.uiCtx)
 
     // ── Title row ──────────────────────────────────────────────────────────
     const title = this.add
@@ -1255,12 +1260,12 @@ export class PlayScene extends Phaser.Scene {
     overlayItems.push(playAgainButton)
 
     // ── Secondary actions ──────────────────────────────────────────────────
-    const homeButton = createSmallButton(this, this.ui, this.theme, 'HOME', () => this.restart())
+    const homeButton = createSmallButton(this, this.ui, this.theme, 'HOME', () => this.restart(), this.uiCtx)
     homeButton.setPosition(-70, panelHeight / 2 + 68)
     overlayItems.push(homeButton)
 
     const shareButton = createSmallButton(this, this.ui, this.theme, 'SHARE', () =>
-      this.shareRunCard(),
+      this.shareRunCard(), this.uiCtx,
     )
     shareButton.setPosition(70, panelHeight / 2 + 68)
     overlayItems.push(shareButton)
@@ -1282,7 +1287,7 @@ export class PlayScene extends Phaser.Scene {
     if (this.ui.hud) {
       buttonBase = createPrimaryButtonBackdrop(this, this.ui.button.width, this.ui.button.height)
     } else {
-      buttonBase = createButtonBase(this, this.ui, this.theme)
+      buttonBase = createButtonBase(this, this.ui, this.theme, 1, this.uiCtx)
     }
     if (buttonBase instanceof Phaser.GameObjects.Image || buttonBase instanceof Phaser.GameObjects.Rectangle) {
       applyMinHitArea(buttonBase)
@@ -1394,7 +1399,7 @@ export class PlayScene extends Phaser.Scene {
       hitW = 52
       hitH = 44  // minimum comfortable touch target
     } else {
-      backing = createButtonBase(this, this.ui, this.theme, 0.42)
+      backing = createButtonBase(this, this.ui, this.theme, 0.42, this.uiCtx)
       hitW = Math.max(backing.displayWidth, 44)
       hitH = Math.max(backing.displayHeight, 44)
     }
@@ -1646,7 +1651,7 @@ export class PlayScene extends Phaser.Scene {
     backdrop.disableInteractive()
     this.shopBackdrop = backdrop
 
-    const panel = createPanel(this, this.ui, this.theme, 'large', panelWidth, panelHeight)
+    const panel = createPanel(this, this.ui, this.theme, 'large', panelWidth, panelHeight, this.uiCtx)
     panel.setInteractive()
     panel.on(
       'pointerdown',
@@ -1699,7 +1704,7 @@ export class PlayScene extends Phaser.Scene {
     this.iapRestoreContainer = restoreButton.container
 
     const closeButton = createSmallButton(this, this.ui, this.theme, 'CLOSE', () =>
-      this.toggleShop(),
+      this.toggleShop(), this.uiCtx,
     )
     closeButton.setPosition(0, panelHeight / 2 - 18)
     content.add(closeButton)
@@ -1841,7 +1846,7 @@ export class PlayScene extends Phaser.Scene {
     base: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle
     label: Phaser.GameObjects.Text
   } {
-    const base = createButtonBase(this, this.ui, this.theme, 0.36)
+    const base = createButtonBase(this, this.ui, this.theme, 0.36, this.uiCtx)
     applyMinHitArea(base)
     applyButtonFeedback(base)
 
@@ -2340,7 +2345,7 @@ export class PlayScene extends Phaser.Scene {
     backdrop.disableInteractive()
     this.dailyRewardBackdrop = backdrop
 
-    const panel = createPanel(this, this.ui, this.theme, 'large', panelWidth, panelHeight)
+    const panel = createPanel(this, this.ui, this.theme, 'large', panelWidth, panelHeight, this.uiCtx)
     panel.setInteractive()
     panel.on(
       'pointerdown',
@@ -2541,7 +2546,7 @@ export class PlayScene extends Phaser.Scene {
     backdrop.disableInteractive()
     this.debugMenuBackdrop = backdrop
 
-    const panel = createPanel(this, this.ui, this.theme, 'large', panelWidth, panelHeight)
+    const panel = createPanel(this, this.ui, this.theme, 'large', panelWidth, panelHeight, this.uiCtx)
     panel.setInteractive()
     panel.on(
       'pointerdown',
@@ -2562,10 +2567,10 @@ export class PlayScene extends Phaser.Scene {
     body.setWordWrapWidth(panelWidth - 30)
 
     const resetButton = createSmallButton(this, this.ui, this.theme, 'RESET SAVE', () =>
-      this.resetSaveState(),
+      this.resetSaveState(), this.uiCtx,
     )
     const closeButton = createSmallButton(this, this.ui, this.theme, 'CLOSE', () =>
-      this.toggleDebugMenu(),
+      this.toggleDebugMenu(), this.uiCtx,
     )
     resetButton.setPosition(-70, 48)
     closeButton.setPosition(70, 48)
@@ -2650,7 +2655,7 @@ export class PlayScene extends Phaser.Scene {
       },
     )
 
-    const panel = createPanel(this, this.ui, this.theme, 'large', panelWidth, panelHeight)
+    const panel = createPanel(this, this.ui, this.theme, 'large', panelWidth, panelHeight, this.uiCtx)
 
     const title = this.add
       .text(0, -50, 'ANALYTICS', this.ui.overlayTitleStyle)
@@ -2662,10 +2667,10 @@ export class PlayScene extends Phaser.Scene {
     body.setWordWrapWidth(panelWidth - 30)
 
     const allowButton = createSmallButton(this, this.ui, this.theme, 'ALLOW', () =>
-      this.setAnalyticsConsent('granted'),
+      this.setAnalyticsConsent('granted'), this.uiCtx,
     )
     const declineButton = createSmallButton(this, this.ui, this.theme, 'DECLINE', () =>
-      this.setAnalyticsConsent('denied'),
+      this.setAnalyticsConsent('denied'), this.uiCtx,
     )
     allowButton.setPosition(-70, 48)
     declineButton.setPosition(70, 48)

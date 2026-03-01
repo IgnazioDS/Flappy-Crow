@@ -1,10 +1,19 @@
 /**
  * uiFactory.ts — Phaser game-object factories for the obsidian-glass UI system.
- * All visual constants are sourced from designSystem.ts.
+ *
+ * All visual constants come from designTokens.ts (Phase 1 token system).
+ * Legacy imports from designSystem.ts are kept for backward compat while
+ * callers migrate to UIContext.
  */
 import Phaser from 'phaser'
 import type { ThemeDefinition, ThemeUI } from '../theme/types'
 import { COLOR_NUM, PANEL_ALPHA, RADIUS, SHADOW, STROKE } from './designSystem'
+import {
+  DT_SHADOW,
+  DT_STROKE,
+  getPanelStyle,
+  type UIContext,
+} from './designTokens'
 
 // ─── Canvas-texture keys ─────────────────────────────────────────────────────
 const HUD_SCRIM_KEY = 'hud-top-scrim'
@@ -18,9 +27,12 @@ export const createPanel = (
   size: 'small' | 'large',
   widthOverride?: number,
   heightOverride?: number,
+  /** Optional UIContext — when provided its themeUi and tokens take precedence. */
+  ctx?: UIContext,
 ): Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle => {
+  const resolvedUi = ctx?.themeUi ?? ui
   const uiAssets = theme.visuals.ui
-  const panelSize = ui.panelSize[size]
+  const panelSize = resolvedUi.panelSize[size]
   const panelWidth  = widthOverride  ?? panelSize.width
   const panelHeight = heightOverride ?? panelSize.height
 
@@ -36,9 +48,10 @@ export const createPanel = (
       .setDisplaySize(panelWidth, panelHeight)
   }
 
+  const ps = getPanelStyle('panel', resolvedUi)
   return scene.add
-    .rectangle(0, 0, panelWidth, panelHeight, ui.panel.fill, ui.panel.alpha)
-    .setStrokeStyle(ui.panel.strokeThickness, ui.panel.stroke)
+    .rectangle(0, 0, panelWidth, panelHeight, ps.fillColor, ps.fillAlpha)
+    .setStrokeStyle(ps.strokeWidth, ps.strokeColor)
 }
 
 // ─── Button base ─────────────────────────────────────────────────────────────
@@ -48,7 +61,10 @@ export const createButtonBase = (
   ui: ThemeUI,
   theme: ThemeDefinition,
   scale = 1,
+  /** Optional UIContext — when provided its themeUi and tokens take precedence. */
+  ctx?: UIContext,
 ): Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle => {
+  const resolvedUi = ctx?.themeUi ?? ui
   const uiAssets = theme.visuals.ui
   if (uiAssets.kind === 'atlas' && uiAssets.atlasKey && uiAssets.frames?.button) {
     const image = scene.add.image(0, 0, uiAssets.atlasKey, uiAssets.frames.button)
@@ -56,11 +72,12 @@ export const createButtonBase = (
     return image
   }
 
-  const width  = ui.button.width  * scale
-  const height = ui.button.height * scale
+  const width  = resolvedUi.button.width  * scale
+  const height = resolvedUi.button.height * scale
+  const ps = getPanelStyle('panel', resolvedUi)
   return scene.add
-    .rectangle(0, 0, width, height, ui.panel.fill, ui.panel.alpha)
-    .setStrokeStyle(ui.panel.strokeThickness, ui.panel.stroke)
+    .rectangle(0, 0, width, height, ps.fillColor, ps.fillAlpha)
+    .setStrokeStyle(ps.strokeWidth, ps.strokeColor)
 }
 
 // ─── Hit area helpers ─────────────────────────────────────────────────────────
@@ -103,13 +120,16 @@ export const createSmallButton = (
   theme: ThemeDefinition,
   label: string,
   onClick: () => void,
+  /** Optional UIContext — when provided its themeUi and tokens take precedence. */
+  ctx?: UIContext,
 ): Phaser.GameObjects.Container => {
-  const buttonImage = createButtonBase(scene, ui, theme, 0.4)
+  const resolvedUi = ctx?.themeUi ?? ui
+  const buttonImage = createButtonBase(scene, ui, theme, 0.4, ctx)
   applyMinHitArea(buttonImage)
   applyButtonFeedback(buttonImage)
 
   const text = scene.add
-    .text(0, 1, label, ui.button.textStyle)
+    .text(0, 1, label, resolvedUi.button.textStyle)
     .setOrigin(0.5, 0.5)
     .setScale(0.75)
 
@@ -216,7 +236,7 @@ export const createPanelBackdrop = (
   g.fillRoundedRect(-hw + SHADOW.dropSoft.dx, -hh + SHADOW.dropSoft.dy, width, height, r)
 
   // 2. Inner highlight (very subtle top-edge light)
-  g.fillStyle(0xffffff, 0.03)
+  g.fillStyle(DT_SHADOW.innerHighlight.color, DT_SHADOW.innerHighlight.alpha)
   g.fillRoundedRect(-hw, -hh, width, 4, { tl: r, tr: r, bl: 0, br: 0 })
 
   // 3. Obsidian fill
@@ -247,8 +267,8 @@ export const createPrimaryButtonBackdrop = (
   const hh = height / 2
 
   // Shadow
-  g.fillStyle(COLOR_NUM.shadow, 0.5)
-  g.fillRoundedRect(-hw + 2, -hh + 3, width, height, r)
+  g.fillStyle(COLOR_NUM.shadow, DT_SHADOW.capsuleShadow.alpha)
+  g.fillRoundedRect(-hw + DT_SHADOW.capsuleShadow.offsetX, -hh + DT_SHADOW.capsuleShadow.offsetY, width, height, r)
 
   // Fill — slightly lighter obsidian for buttons
   g.fillStyle(COLOR_NUM.obsidianMid, PANEL_ALPHA.fill)
@@ -270,10 +290,10 @@ export const createPrimaryButtonBackdrop = (
 export const createDivider = (
   scene: Phaser.Scene,
   width: number,
-  alpha = 0.35,
+  alpha: number = DT_SHADOW.rimAlpha.divider,
 ): Phaser.GameObjects.Graphics => {
   const g = scene.add.graphics()
-  g.lineStyle(STROKE.hairline, COLOR_NUM.tealRim, alpha)
+  g.lineStyle(DT_STROKE.thin, COLOR_NUM.tealRim, alpha)
   g.beginPath()
   g.moveTo(-width / 2, 0)
   g.lineTo( width / 2, 0)
