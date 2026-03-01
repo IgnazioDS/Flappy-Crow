@@ -1,8 +1,15 @@
 import Phaser from 'phaser'
 import { GAME_DIMENSIONS } from '../config'
 import type { ThemeDefinition, ThemeUI } from '../theme/types'
-import { createPanel, createSmallButton } from './uiFactory'
-import { DT_BADGE, type UIContext } from './designTokens'
+import {
+  DT_V3,
+  DT_COLOR,
+  DT_FONT,
+  type UIContext,
+} from './designTokens'
+import { createModalPanel } from './components/Modal'
+import { createChip, updateChip, type ChipTone } from './components/Chip'
+import { createSecondaryButton } from './components/Button'
 
 type SettingsRow = {
   label: string
@@ -30,30 +37,27 @@ type SettingsPanelOptions = {
 }
 
 export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPanelHandle => {
-  const { scene, ui, theme, position, rows, onClose, panelHeightOffset = 0, ctx } = options
+  const { scene, ui, position, rows, onClose, panelHeightOffset = 0, ctx } = options
   const panelWidth = Math.round(GAME_DIMENSIONS.width * (2 / 3))
   const panelHeight = Math.round(GAME_DIMENSIONS.height * (2 / 3)) + Math.max(0, panelHeightOffset)
   const horizontalPadding = Math.max(18, Math.round(panelWidth * 0.08))
   const rowWidth = panelWidth - horizontalPadding * 2
   const baseLabelFontSize = parseFontSize(ui.statLabelStyle.fontSize, 13)
-  const baseValueFontSize = parseFontSize(ui.statValueStyle.fontSize, 15)
-  const baseRowFontSize = Math.max(baseLabelFontSize, baseValueFontSize)
-  const badgeMinWidth = DT_BADGE.minWidth
-  const badgePaddingX = DT_BADGE.paddingX
-  const labelValueGap = DT_BADGE.paddingX  // same gap as badge padding
-  const menuTextScale = 0.85
+  const baseRowFontSize = baseLabelFontSize
   const titlePaddingTop = 10
   const titleHintGap = 2
   const hintRowsGap = 6
   const rowsBottomGap = 6
   const bottomPadding = 14
-  const hintFontScale = 0.9
   const hintWrapWidth = panelWidth - 24
-  const hintLineSpacing = 2
 
-  const panel = createPanel(scene, ui, theme, 'large', panelWidth, panelHeight, ctx)
-  panel.setInteractive()
-  panel.on(
+  // ── V3 panel (gradient fill + teal rim) ──────────────────────────────────────
+  const panelContainer = createModalPanel(scene, panelWidth, panelHeight, ctx)
+  panelContainer.setInteractive(
+    new Phaser.Geom.Rectangle(-panelWidth / 2, -panelHeight / 2, panelWidth, panelHeight),
+    Phaser.Geom.Rectangle.Contains,
+  )
+  panelContainer.on(
     'pointerdown',
     (
       _pointer: Phaser.Input.Pointer,
@@ -65,25 +69,32 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
     },
   )
 
+  // ── Title ────────────────────────────────────────────────────────────────────
+  const menuTextScale = 0.85
   const titleStyle = {
     ...ui.overlayTitleStyle,
     fontSize: scaleFontSize(ui.overlayTitleStyle.fontSize, menuTextScale),
+    letterSpacing: DT_V3.typography.headlineLetterSpacing,
   }
   const title = scene.add.text(0, 0, 'SETTINGS', titleStyle).setOrigin(0.5, 0.5)
   title.setPosition(0, -panelHeight / 2 + titlePaddingTop)
 
-  const hintStyle = {
-    ...ui.overlayBodyStyle,
-    fontSize: scaleFontSize(ui.overlayBodyStyle.fontSize, menuTextScale * hintFontScale),
-  }
+  // ── Instruction subtitle ─────────────────────────────────────────────────────
   const hint = scene.add
-    .text(0, 0, 'Tap a row to toggle. Tap outside to close.', hintStyle)
+    .text(0, 0, 'Tap a row to toggle. Tap outside to close.', {
+      fontFamily:      DT_FONT.body,
+      fontSize:        DT_V3.typography.instructionSize,
+      color:           DT_COLOR.textMuted,
+      stroke:          DT_COLOR.strokeBg,
+      strokeThickness: 1,
+      align:           'center',
+      wordWrap:        { width: hintWrapWidth },
+    })
     .setOrigin(0.5, 0.5)
-  hint.setWordWrapWidth(hintWrapWidth)
-  hint.setLineSpacing(hintLineSpacing)
-  hint.setAlpha(0.78)
+    .setAlpha(0.78)
   hint.setPosition(0, title.y + title.height / 2 + titleHintGap + hint.height / 2)
 
+  // ── Row layout geometry ──────────────────────────────────────────────────────
   const rowsTop = hint.y + hint.height / 2 + hintRowsGap
   const closeButtonY = panelHeight / 2 - bottomPadding
   const rowsBottom = closeButtonY - rowsBottomGap
@@ -107,34 +118,21 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
   const rowsOverflow = rowsHeight - rowsAreaHeight
   const rowStartY =
     rowsTop + rowHeight / 2 + (rowsOverflow > 0 ? 0 : Math.max(0, (rowsAreaHeight - rowsHeight) / 2))
-  const badgeHeight = Math.max(DT_BADGE.minHeight, rowHeight - 2)
   const badgeRightX = rowWidth / 2 - 4
   const rowTextScaleBase =
     rowHeight < baseRowFontSize + 2
       ? Math.min(1, Math.max(0.6, (rowHeight - 4) / baseRowFontSize))
       : 1
   const rowTextScale = Math.max(0.55, Math.min(0.9, rowTextScaleBase * menuTextScale))
-  const maxValueFontPx = Math.floor((badgeHeight - 10) * 0.38)
   const maxLabelFontSize = Math.floor(rowHeight * 0.6)
   const labelStyle = {
     ...ui.statLabelStyle,
     fontSize: clampFontSize(scaleFontSize(ui.statLabelStyle.fontSize, rowTextScale), maxLabelFontSize),
   }
-  const valueFontPx = Math.min(
-    parseFontSize(scaleFontSize(ui.statValueStyle.fontSize, rowTextScale), maxValueFontPx),
-    maxValueFontPx,
-  )
-  const valueStrokeThickness = Math.max(0, Math.round((ui.statValueStyle.strokeThickness ?? 0) * 0.5))
-  const valueStyle = {
-    ...ui.statValueStyle,
-    fontSize: `${Math.max(10, valueFontPx)}px`,
-    strokeThickness: valueStrokeThickness,
-  }
 
+  // ── Rows state ───────────────────────────────────────────────────────────────
   let rowIndex = 0
-  const valueTexts: Phaser.GameObjects.Text[] = []
-  const valueBadges: Phaser.GameObjects.Rectangle[] = []
-  const valueMaxWidths: number[] = []
+  const valueChips: Phaser.GameObjects.Container[] = []
   let settingsPanel: Phaser.GameObjects.Container
   const rowsContainer = scene.add.container(0, 0)
   const maxScroll = Math.max(0, rowsHeight - rowsAreaHeight)
@@ -148,9 +146,9 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
   const isPointerInRowsArea = (pointer: Phaser.Input.Pointer): boolean => {
     const x = pointer.worldX ?? pointer.x
     const y = pointer.worldY ?? pointer.y
-    const left = position.x - rowWidth / 2
-    const right = position.x + rowWidth / 2
-    const top = position.y + rowsTop
+    const left   = position.x - rowWidth / 2
+    const right  = position.x + rowWidth / 2
+    const top    = position.y + rowsTop
     const bottom = position.y + rowsBottom
     return x >= left && x <= right && y >= top && y <= bottom
   }
@@ -160,127 +158,26 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
     rowsContainer.y = -scrollOffset
   }
 
-  const resolveBadgeTone = (value: string): 'on' | 'off' | 'neutral' => {
+  const resolveBadgeTone = (value: string): ChipTone => {
     const upper = value.trim().toUpperCase()
-    if (upper === 'ON') {
-      return 'on'
-    }
-    if (upper === 'OFF') {
-      return 'off'
-    }
+    if (upper === 'ON')  return 'on'
+    if (upper === 'OFF') return 'off'
     return 'neutral'
   }
 
-  const getBadgeFill = (tone: 'on' | 'off' | 'neutral'): number => {
-    if (tone === 'on') {
-      return theme.paletteNum.panelStroke
-    }
-    if (tone === 'off') {
-      return theme.paletteNum.shadow
-    }
-    return theme.paletteNum.panel
-  }
-
-  const getBadgeAlpha = (tone: 'on' | 'off' | 'neutral'): number => {
-    if (tone === 'on')  return DT_BADGE.fillOn
-    if (tone === 'off') return DT_BADGE.fillOff
-    return DT_BADGE.fillNeutral
-  }
-
-  const getBadgeStrokeAlpha = (tone: 'on' | 'off' | 'neutral'): number => {
-    if (tone === 'on')  return DT_BADGE.strokeOn
-    if (tone === 'off') return DT_BADGE.strokeOff
-    return DT_BADGE.strokeNeutral
-  }
-
-  const computeBadgeWidth = (
-    text: Phaser.GameObjects.Text,
-    minWidth: number,
-    maxWidth: number,
-  ): number => {
-    if (maxWidth <= 0) {
-      return 0
-    }
-    const targetWidth = Math.max(minWidth, text.width + badgePaddingX * 2)
-    return Math.min(maxWidth, targetWidth)
-  }
-
-  const fitValueText = (
-    text: Phaser.GameObjects.Text,
-    value: string,
-    maxWidth: number,
-  ): string => {
-    if (maxWidth <= 0) {
-      text.setText('')
-      return ''
-    }
-    text.setText(value)
-    if (text.width <= maxWidth) {
-      return value
-    }
-    let trimmed = value
-    while (trimmed.length > 3) {
-      trimmed = trimmed.slice(0, -1)
-      const candidate = `${trimmed}...`
-      text.setText(candidate)
-      if (text.width <= maxWidth) {
-        return candidate
-      }
-    }
-    text.setText(value)
-    return value
-  }
-
-  const applyBadgeStyle = (
-    badge: Phaser.GameObjects.Rectangle,
-    valueText: Phaser.GameObjects.Text,
-    value: string,
-  ): void => {
-    const tone = resolveBadgeTone(value)
-    badge.setFillStyle(getBadgeFill(tone), getBadgeAlpha(tone))
-    badge.setStrokeStyle(1, theme.paletteNum.panelStroke, getBadgeStrokeAlpha(tone))
-    if (tone === 'off') {
-      valueText.setColor(ui.statLabelStyle.color)
-    } else {
-      valueText.setColor(ui.statValueStyle.color)
-    }
-  }
-
-  const layoutValue = (
-    valueText: Phaser.GameObjects.Text,
-    badge: Phaser.GameObjects.Rectangle,
-    value: string,
-    maxBadgeWidth: number,
-  ): void => {
-    if (maxBadgeWidth <= 0) {
-      valueText.setText('')
-      badge.setSize(0, badgeHeight)
-      badge.setPosition(badgeRightX, valueText.y)
-      return
-    }
-    const maxValueWidth = Math.max(0, maxBadgeWidth - badgePaddingX * 2)
-    const displayValue = fitValueText(valueText, value, maxValueWidth)
-    const minBadgeWidth = Math.min(badgeMinWidth, maxBadgeWidth)
-    const badgeWidth = computeBadgeWidth(valueText, minBadgeWidth, maxBadgeWidth)
-    const badgeX = badgeRightX - badgeWidth / 2
-    badge.setSize(badgeWidth, badgeHeight)
-    badge.setPosition(badgeX, valueText.y)
-    const valueInset = Math.min(badgePaddingX, Math.max(2, maxBadgeWidth / 2))
-    valueText.setPosition(badgeRightX - valueInset, valueText.y)
-    applyBadgeStyle(badge, valueText, displayValue)
-  }
+  // ── Row factory ──────────────────────────────────────────────────────────────
 
   const createRow = (row: SettingsRow): void => {
     const y = rowStartY + rowIndex * rowGap
     rowIndex += 1
 
-    const highlightColor = theme.paletteNum.shadow ?? 0x000000
+    // Teal hover highlight (replaces old shadow-coloured highlight)
     const hit = scene.add
-      .rectangle(0, y, rowWidth, rowHeight, highlightColor, 0)
+      .rectangle(0, y, rowWidth, rowHeight, DT_COLOR.accentTealNum, 0)
       .setInteractive({ useHandCursor: true })
-    hit.on('pointerover', () => hit.setFillStyle(highlightColor, 0.18))
-    hit.on('pointerout', () => hit.setFillStyle(highlightColor, 0))
-    hit.on('pointerupoutside', () => hit.setFillStyle(highlightColor, 0))
+    hit.on('pointerover',     () => hit.setFillStyle(DT_COLOR.accentTealNum, 0.06))
+    hit.on('pointerout',      () => hit.setFillStyle(DT_COLOR.accentTealNum, 0))
+    hit.on('pointerupoutside',() => hit.setFillStyle(DT_COLOR.accentTealNum, 0))
     hit.on(
       'pointerdown',
       (
@@ -289,11 +186,9 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
         _localY: number,
         event: Phaser.Types.Input.EventData,
       ) => {
-        if (!isPointerInRowsArea(_pointer)) {
-          return
-        }
+        if (!isPointerInRowsArea(_pointer)) return
         event.stopPropagation()
-        hit.setFillStyle(highlightColor, 0.28)
+        hit.setFillStyle(DT_COLOR.accentTealNum, 0.12)
       },
     )
     hit.on(
@@ -304,43 +199,34 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
         _localY: number,
         event: Phaser.Types.Input.EventData,
       ) => {
-        if (!isPointerInRowsArea(_pointer)) {
-          return
-        }
+        if (!isPointerInRowsArea(_pointer)) return
         event.stopPropagation()
-        hit.setFillStyle(highlightColor, 0)
-        if (!dragMoved) {
-          row.onToggle()
-        }
+        hit.setFillStyle(DT_COLOR.accentTealNum, 0)
+        if (!dragMoved) row.onToggle()
       },
     )
 
-    const labelText = scene.add.text(-rowWidth / 2 + 6, y, row.label, labelStyle).setOrigin(0, 0.5)
-    const valueText = scene.add.text(0, y, row.getValue(), valueStyle).setOrigin(1, 0.5)
-    const labelRightX = labelText.x + labelText.width
-    const maxBadgeWidth = Math.max(0, badgeRightX - labelRightX - labelValueGap)
-    const initialBadgeWidth = Math.min(badgeMinWidth, maxBadgeWidth)
-    const badge = scene.add.rectangle(
-      badgeRightX - initialBadgeWidth / 2,
-      y,
-      initialBadgeWidth,
-      badgeHeight,
-      theme.paletteNum.panel,
-      DT_BADGE.fillNeutral,
-    )
-    layoutValue(valueText, badge, row.getValue(), maxBadgeWidth)
+    // Label
+    const labelText = scene.add
+      .text(-rowWidth / 2 + 6, y, row.label, labelStyle)
+      .setOrigin(0, 0.5)
 
-    valueTexts.push(valueText)
-    valueBadges.push(badge)
-    valueMaxWidths.push(maxBadgeWidth)
-    rowsContainer.add([hit, labelText, badge, valueText])
+    // Value chip (right-aligned)
+    const value = row.getValue()
+    const chip = createChip(scene, value, resolveBadgeTone(value), ctx)
+    chip.setPosition(badgeRightX - DT_V3.chip.minWidth / 2, y)
+
+    valueChips.push(chip)
+    rowsContainer.add([hit, labelText, chip])
   }
 
-  const items: Phaser.GameObjects.GameObject[] = [panel, title, hint, rowsContainer]
+  // ── Assemble container ───────────────────────────────────────────────────────
+  const items: Phaser.GameObjects.GameObject[] = [panelContainer, title, hint, rowsContainer]
   settingsPanel = scene.add.container(position.x, position.y, items)
   settingsPanel.setDepth(6)
   settingsPanel.setVisible(false)
 
+  // Scroll mask for rows area
   if (rowsAreaHeight > 0) {
     const rowsMask = scene.add.graphics()
     rowsMask.fillStyle(0xffffff, 1)
@@ -352,44 +238,32 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
   rows.forEach((row) => createRow(row))
   applyScroll(0)
 
-  const closeButton = createSmallButton(scene, ui, theme, 'CLOSE', onClose, ctx)
+  // ── Close button ─────────────────────────────────────────────────────────────
+  const closeButton = createSecondaryButton(scene, 'CLOSE', onClose, ctx)
   closeButton.setPosition(0, closeButtonY)
   settingsPanel.add(closeButton)
 
+  // ── Scroll / drag input ───────────────────────────────────────────────────────
   const handlePointerDown = (pointer: Phaser.Input.Pointer): void => {
-    if (!settingsPanel.visible || maxScroll <= 0) {
-      return
-    }
-    if (!isPointerInRowsArea(pointer)) {
-      return
-    }
-    dragPointerId = pointer.id
-    dragStartY = pointer.worldY ?? pointer.y
+    if (!settingsPanel.visible || maxScroll <= 0) return
+    if (!isPointerInRowsArea(pointer)) return
+    dragPointerId  = pointer.id
+    dragStartY     = pointer.worldY ?? pointer.y
     dragStartOffset = scrollOffset
-    dragMoved = false
+    dragMoved      = false
   }
 
   const handlePointerMove = (pointer: Phaser.Input.Pointer): void => {
-    if (!settingsPanel.visible || maxScroll <= 0) {
-      return
-    }
-    if (dragPointerId !== pointer.id) {
-      return
-    }
+    if (!settingsPanel.visible || maxScroll <= 0) return
+    if (dragPointerId !== pointer.id) return
     const currentY = pointer.worldY ?? pointer.y
-    const delta = currentY - dragStartY
-    if (Math.abs(delta) > dragThreshold) {
-      dragMoved = true
-    }
-    if (dragMoved) {
-      applyScroll(dragStartOffset - delta)
-    }
+    const delta    = currentY - dragStartY
+    if (Math.abs(delta) > dragThreshold) dragMoved = true
+    if (dragMoved) applyScroll(dragStartOffset - delta)
   }
 
   const handlePointerUp = (pointer: Phaser.Input.Pointer): void => {
-    if (dragPointerId === pointer.id) {
-      dragPointerId = null
-    }
+    if (dragPointerId === pointer.id) dragPointerId = null
   }
 
   const handleWheel = (
@@ -398,42 +272,37 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
     _deltaX: number,
     deltaY: number,
   ): void => {
-    if (!settingsPanel.visible || maxScroll <= 0) {
-      return
-    }
-    if (!isPointerInRowsArea(pointer)) {
-      return
-    }
+    if (!settingsPanel.visible || maxScroll <= 0) return
+    if (!isPointerInRowsArea(pointer)) return
     applyScroll(scrollOffset + deltaY * 0.45)
   }
 
   scene.input.on('pointerdown', handlePointerDown)
   scene.input.on('pointermove', handlePointerMove)
-  scene.input.on('pointerup', handlePointerUp)
-  scene.input.on('wheel', handleWheel)
+  scene.input.on('pointerup',   handlePointerUp)
+  scene.input.on('wheel',       handleWheel)
 
+  // ── Public handle ─────────────────────────────────────────────────────────────
   const updateValues = (): void => {
     for (let i = 0; i < rows.length; i += 1) {
       const value = rows[i].getValue()
-      const valueText = valueTexts[i]
-      const badge = valueBadges[i]
-      layoutValue(valueText, badge, value, valueMaxWidths[i])
+      updateChip(valueChips[i], value, resolveBadgeTone(value))
     }
   }
 
   return {
-    container: settingsPanel,
+    container:  settingsPanel,
     updateValues,
     setVisible: (visible: boolean) => settingsPanel.setVisible(visible),
-    isVisible: () => settingsPanel.visible,
+    isVisible:  () => settingsPanel.visible,
   }
 }
 
+// ─── Font helpers ─────────────────────────────────────────────────────────────
+
 const scaleFontSize = (value: string, multiplier: number): string => {
   const match = value.match(/^(\d+(?:\.\d+)?)px$/)
-  if (!match) {
-    return value
-  }
+  if (!match) return value
   const next = Math.max(10, Math.round(Number(match[1]) * multiplier))
   return `${next}px`
 }
@@ -446,9 +315,7 @@ const clampFontSize = (value: string, maxPx: number): string => {
 
 const parseFontSize = (value: string, fallback: number): number => {
   const match = value.match(/^(\d+(?:\.\d+)?)px$/)
-  if (!match) {
-    return fallback
-  }
+  if (!match) return fallback
   const parsed = Number(match[1])
   return Number.isFinite(parsed) ? parsed : fallback
 }
