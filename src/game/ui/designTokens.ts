@@ -143,8 +143,14 @@ export const DT_COLOR = {
   textMuted:        '#9fb2c1',  // secondary / labels
 
   // Accent (both forms for convenience)
-  accentTeal:       '#48c8d8',  // CSS string
+  accentTeal:       '#48c8d8',  // CSS string — rim / border
   accentTealNum:    0x48c8d8,   // Phaser numeric
+
+  // Additional accent colors (CSS + numeric pairs)
+  tealBright:       '#9ef1ff',  // bright teal — icon tints, highlights, glows
+  tealBrightNum:    0x9ef1ff,   // Phaser numeric
+  gold:             '#f5c842',  // gold medal / "NEW BEST" badge text
+  goldNum:          0xf5c842,   // Phaser numeric
 
   // Alpha presets
   panelFillAlpha:   0.93,
@@ -152,6 +158,48 @@ export const DT_COLOR = {
 
   // Text stroke background
   strokeBg:         '#0a0b12',
+} as const
+
+// ─── Badge / state-indicator tokens ──────────────────────────────────────────
+
+/**
+ * Fill and stroke alpha levels for toggle-state badges in the settings panel.
+ * Also provides standard sizing constants for the badge shape.
+ */
+export const DT_BADGE = {
+  /** Fill alpha — feature enabled / ON */
+  fillOn:        0.22,
+  /** Fill alpha — feature disabled / OFF */
+  fillOff:       0.18,
+  /** Fill alpha — neutral / non-binary value */
+  fillNeutral:   0.20,
+  /** Stroke alpha — feature enabled / ON */
+  strokeOn:      0.70,
+  /** Stroke alpha — feature disabled / OFF */
+  strokeOff:     0.40,
+  /** Stroke alpha — neutral */
+  strokeNeutral: 0.55,
+  /** Minimum badge width (px) */
+  minWidth:      56,
+  /** Horizontal padding inside badge (px) */
+  paddingX:      12,
+  /** Minimum badge height (px) */
+  minHeight:     28,
+} as const
+
+// ─── Motion / animation tuning ────────────────────────────────────────────────
+
+/**
+ * Spatial and scale constants for UI animations.
+ * Timing durations live in designSystem.ts MOTION; this covers the rest.
+ */
+export const DT_MOTION = {
+  /** Overlay slide-in start offset (px upward from resting position) */
+  overlaySlideY:    14,
+  /** Scale multiplier for score-pop burst (scaleX = base × this) */
+  scorePopScale:    1.18,
+  /** Minimum alpha for tap-prompt pulse loop */
+  tapPulseAlphaMin: 0.40,
 } as const
 
 // ─── Aggregate token bag ──────────────────────────────────────────────────────
@@ -164,6 +212,8 @@ export type UITokens = {
   font:       typeof DT_FONT
   typography: typeof DT_TYPOGRAPHY
   color:      typeof DT_COLOR
+  badge:      typeof DT_BADGE
+  motion:     typeof DT_MOTION
 }
 
 /** Pre-built token bag — import this when you need the full set. */
@@ -175,6 +225,8 @@ export const UI_TOKENS: UITokens = {
   font:       DT_FONT,
   typography: DT_TYPOGRAPHY,
   color:      DT_COLOR,
+  badge:      DT_BADGE,
+  motion:     DT_MOTION,
 }
 
 // ─── Safe area ────────────────────────────────────────────────────────────────
