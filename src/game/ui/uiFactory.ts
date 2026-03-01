@@ -114,6 +114,25 @@ export const applyButtonFeedback = (
   button.on('pointerupoutside',() => { button.setScale(bx, by) })
 }
 
+// ─── Button feedback v3 ───────────────────────────────────────────────────────
+
+/**
+ * Minimal scale press feedback (0.98 on down, restore on up).
+ * isReduced is evaluated at event time so toggling reducedMotion at runtime
+ * is respected without rebinding.  If isReduced() returns true, no scale
+ * change is applied.
+ */
+export const applyButtonFeedbackV3 = (
+  button:    Phaser.GameObjects.Image | Phaser.GameObjects.Container | Phaser.GameObjects.Graphics,
+  isReduced: () => boolean,
+): void => {
+  const bx = button.scaleX
+  const by = button.scaleY
+  button.on('pointerdown',     () => { if (!isReduced()) button.setScale(bx * 0.98, by * 0.98) })
+  button.on('pointerup',       () => { button.setScale(bx, by) })
+  button.on('pointerupoutside',() => { button.setScale(bx, by) })
+}
+
 // ─── Small text button ────────────────────────────────────────────────────────
 
 export const createSmallButton = (
