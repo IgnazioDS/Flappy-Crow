@@ -243,7 +243,6 @@ export class BackgroundSystem {
    * QA: Solo the layer at `index`. Override in subclasses for full solo support.
    * Base implementation is a no-op (subclass controls V2-specific sprites).
    */
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   toggleSoloLayer(_index: number): void {
     /* overridden in BackgroundSystemV2 */
   }

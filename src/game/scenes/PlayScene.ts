@@ -45,10 +45,9 @@ import {
   applyMinHitArea,
   createButtonBase,
   createDivider,
-  createHudCapsule,
+  createHudCapsuleV3,
   createHudTopScrim,
   createPanel,
-  createPanelBackdrop,
   createSmallButton,
 } from '../ui/uiFactory'
 import { makeUIContext, type UIContext, DT_COLOR } from '../ui/designTokens'
@@ -188,8 +187,6 @@ export class PlayScene extends Phaser.Scene {
   private parallaxLayers: ParallaxLayer[] = []
   private fogLayer: Phaser.GameObjects.TileSprite | null = null
   private vignette: Phaser.GameObjects.Image | null = null
-  /** Unified obsidian capsule behind the score frame (depth 3.98). */
-  private scoreCapsuleBackdrop: Phaser.GameObjects.Graphics | null = null
   /** Unified obsidian capsule behind the mute + motion icon pair. */
   private iconClusterBackdrop: Phaser.GameObjects.Graphics | null = null
   private screenFlash: ScreenFlash | null = null
@@ -204,7 +201,7 @@ export class PlayScene extends Phaser.Scene {
   private obstacleVariantIndex = 0
   private obstacleSwayClock = 0
 
-  private scoreFrame!: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle
+  private scoreFrame!: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Graphics
   private scoreText!: Phaser.GameObjects.Text
   private readyContainer!: Phaser.GameObjects.Container
   private gameOverContainer!: Phaser.GameObjects.Container
@@ -1040,37 +1037,17 @@ export class PlayScene extends Phaser.Scene {
     }
   }
 
-  private createScoreFrame(): Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle {
-    // Unified HUD capsule backdrop behind the score frame (depth 3.98 → below
-    // scoreFrame at 4).  Only created for themes that define ui.hud (evil-forest).
-    if (this.ui.hud) {
-      this.scoreCapsuleBackdrop = createHudCapsule(
-        this,
-        this.ui.scoreFrameSize.width,
-        this.ui.scoreFrameSize.height,
-      )
-        .setPosition(this.ui.score.x, this.ui.score.y)
-        .setDepth(3.98)
-    }
-
-    const uiAssets = this.theme.visuals.ui
-    if (uiAssets.kind === 'atlas' && uiAssets.atlasKey && uiAssets.frames?.scoreFrame) {
-      return this.add
-        .image(this.ui.score.x, this.ui.score.y, uiAssets.atlasKey, uiAssets.frames.scoreFrame)
-        .setDepth(4)
-    }
-
-    return this.add
-      .rectangle(
-        this.ui.score.x,
-        this.ui.score.y,
-        this.ui.scoreFrameSize.width,
-        this.ui.scoreFrameSize.height,
-        this.ui.panel.fill,
-        this.ui.panel.alpha,
-      )
-      .setStrokeStyle(this.ui.panel.strokeThickness, this.ui.panel.stroke)
-      .setDepth(4)
+  private createScoreFrame(): Phaser.GameObjects.Graphics {
+    // V3 pill capsule replaces both the legacy scoreCapsuleBackdrop + atlas/rectangle
+    // scoreFrame. Applies to ALL themes — no ui.hud gate needed.
+    // Initial Y is set here; runtime safe-area updates flow through updateSafeAreaLayout().
+    const capsule = createHudCapsuleV3(
+      this,
+      this.ui.scoreFrameSize.width,
+      this.ui.scoreFrameSize.height,
+    )
+    capsule.setPosition(this.ui.score.x, 28 + this.safeArea.top).setDepth(4)
+    return capsule
   }
 
   private setBirdVisual(state: BirdVisualState): void {
@@ -1107,8 +1084,7 @@ export class PlayScene extends Phaser.Scene {
   private createReadyOverlay(): void {
     const panelWidth  = this.ui.panelSize.small.width
     const panelHeight = this.ui.panelSize.small.height
-    const backdrop = createPanelBackdrop(this, panelWidth, panelHeight)
-    const panel    = createPanel(this, this.ui, this.theme, 'small', undefined, undefined, this.uiCtx)
+    const modalPanel  = createModalPanel(this, panelWidth, panelHeight, this.uiCtx)
 
     // Title — slightly larger than default for visual anchoring
     const title = this.add
@@ -1138,8 +1114,7 @@ export class PlayScene extends Phaser.Scene {
       .setAlpha(0.7)
 
     this.readyContainer = this.add.container(this.ui.layout.ready.x, this.ui.layout.ready.y, [
-      backdrop,
-      panel,
+      modalPanel,
       title,
       divider,
       subtitle,
@@ -1340,14 +1315,14 @@ export class PlayScene extends Phaser.Scene {
       this.muteIcon.on('pointerdown', () => this.toggleMute())
       this.applyIconContrast(this.muteIcon)
 
-      // Unified capsule backdrop behind the icon pair (depth 4.15 → below
-      // icons at 4.2, above HUD scrim at 3.95).
-      if (this.ui.hud) {
+      // V3 pill capsule backdrop behind the icon pair (depth 4.15 → below
+      // icons at 4.2, above HUD scrim at 3.95). Applied to all themes.
+      {
         const iconSize = this.ui.icon.size
         const spacing = iconSize + 10   // gap between icon centres (36 px)
         const clusterW = spacing + iconSize + 16  // left-pad + right-pad (78 px)
         const clusterH = iconSize + 14             // vertical pad each side (40 px)
-        this.iconClusterBackdrop = createHudCapsule(this, clusterW, clusterH)
+        this.iconClusterBackdrop = createHudCapsuleV3(this, clusterW, clusterH)
           .setDepth(4.15)
         // Initial position will be set by applyHandednessLayout() below.
       }
@@ -1369,23 +1344,12 @@ export class PlayScene extends Phaser.Scene {
     }
     const label = this.add.text(0, 1, 'MENU', labelStyle).setOrigin(0.5, 0.5)
 
-    // Use the unified HUD capsule when the theme defines hud config (evil-forest),
-    // otherwise fall back to the standard atlas/shape button for bright themes.
-    let backing: Phaser.GameObjects.Image | Phaser.GameObjects.Rectangle | Phaser.GameObjects.Graphics
-    let hitW: number
-    let hitH: number
-
-    if (this.ui.hud) {
-      const capsuleW = 52
-      const capsuleH = 30
-      backing = createHudCapsule(this, capsuleW, capsuleH)
-      hitW = 52
-      hitH = 44  // minimum comfortable touch target
-    } else {
-      backing = createButtonBase(this, this.ui, this.theme, 0.42, this.uiCtx)
-      hitW = Math.max(backing.displayWidth, 44)
-      hitH = Math.max(backing.displayHeight, 44)
-    }
+    // V3 pill capsule for MENU button — applies to all themes.
+    const capsuleW = 52
+    const capsuleH = 30
+    const backing: Phaser.GameObjects.Graphics = createHudCapsuleV3(this, capsuleW, capsuleH)
+    const hitW = capsuleW
+    const hitH = 44  // minimum comfortable touch target
 
     this.settingsButton = this.add.container(this.ui.icon.padding + 34, 28, [backing, label])
     this.settingsButton.setDepth(4.2)
@@ -2269,12 +2233,14 @@ export class PlayScene extends Phaser.Scene {
       }
       return
     }
-
-    const fill = item?.tint ?? this.ui.panel.fill
-    const stroke = item?.tint ?? this.ui.panel.stroke
-    this.scoreFrame
-      .setFillStyle(fill, this.ui.panel.alpha)
-      .setStrokeStyle(this.ui.panel.strokeThickness, stroke)
+    if (this.scoreFrame instanceof Phaser.GameObjects.Rectangle) {
+      const fill = item?.tint ?? this.ui.panel.fill
+      const stroke = item?.tint ?? this.ui.panel.stroke
+      this.scoreFrame
+        .setFillStyle(fill, this.ui.panel.alpha)
+        .setStrokeStyle(this.ui.panel.strokeThickness, stroke)
+    }
+    // Graphics (v3 capsule): styled at creation time — cosmetic tinting not supported.
   }
 
   private inventoryEquals(
@@ -3924,10 +3890,9 @@ export class PlayScene extends Phaser.Scene {
       left: left / scaleX,
     }
 
-    const scoreY = this.ui.score.y + this.safeArea.top
+    const scoreY = 28 + this.safeArea.top
     this.scoreFrame?.setPosition(this.ui.score.x, scoreY)
     this.scoreText?.setPosition(this.ui.score.x, scoreY + 2)
-    this.scoreCapsuleBackdrop?.setPosition(this.ui.score.x, scoreY)
     this.applyHandednessLayout()
     this.updateOverlayLayout()
   }

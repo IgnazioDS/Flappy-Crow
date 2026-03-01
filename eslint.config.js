@@ -21,6 +21,11 @@ export default [
     rules: {
       ...tseslint.configs.recommended.rules,
       ...prettierConfig.rules,
+      // Allow underscore-prefixed parameters as intentionally unused (reserved/placeholder).
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { vars: 'all', args: 'all', argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
     },
   },
 ]
