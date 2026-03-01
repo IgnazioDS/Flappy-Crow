@@ -1,6 +1,15 @@
 /**
  * theme/ui.ts — Default UI config built on the v2 design system tokens.
+ *
  * All values come from designSystem.ts; no bare magic numbers.
+ *
+ * Token overrides: themes can add a `tokenOverrides` object to their ThemeUI
+ * to selectively override design tokens (accent color, fill alpha, text colors)
+ * without touching the base token constants.  See src/game/ui/designTokens.ts
+ * for the full token definition and the ThemeUI.tokenOverrides shape in types.ts.
+ *
+ * Example (in a custom theme):
+ *   ui: { ...UI, tokenOverrides: { accentTealNum: 0x8b5cf6, accentTeal: '#8b5cf6' } }
  */
 import {
   COLOR,

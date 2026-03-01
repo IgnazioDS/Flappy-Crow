@@ -70,6 +70,24 @@ export type ThemeUI = {
     md: number  // 16
     lg: number  // 24
   }
+  /**
+   * Optional token-level overrides for this theme.
+   * Takes precedence over the base design tokens in designTokens.ts.
+   * All fields are optional — omitting a field falls back to the default token.
+   * Backwards compatible: themes that don't set this field are unaffected.
+   */
+  tokenOverrides?: {
+    /** Override the teal accent color for Phaser Graphics (numeric 0x hex). */
+    accentTealNum?: number
+    /** Override the teal accent color for CSS / text (hex string). */
+    accentTeal?: string
+    /** Override primary text color (hex string). */
+    textPrimary?: string
+    /** Override muted / secondary text color (hex string). */
+    textMuted?: string
+    /** Override panel fill alpha (0–1). */
+    panelFillAlpha?: number
+  }
 }
 
 export type ThemeFx = {
