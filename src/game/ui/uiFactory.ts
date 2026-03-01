@@ -9,6 +9,8 @@ import Phaser from 'phaser'
 import type { ThemeDefinition, ThemeUI } from '../theme/types'
 import { COLOR_NUM, PANEL_ALPHA, RADIUS, SHADOW, STROKE } from './designSystem'
 import {
+  DT_V3,
+  DT_COLOR,
   DT_SHADOW,
   DT_STROKE,
   getPanelStyle,
@@ -206,6 +208,48 @@ export const createHudCapsule = (
 
   // 3. Teal rim
   g.lineStyle(STROKE.panel, COLOR_NUM.tealRim, SHADOW.rimAlpha.dim)
+  g.strokeRoundedRect(-hw, -hh, width, height, r)
+
+  return g
+}
+
+// ─── HUD capsule v3 ───────────────────────────────────────────────────────────
+
+/**
+ * V3 HUD capsule — pill/stadium shape with obsidian fill + teal rim (muted).
+ * Rim alpha = DT_SHADOW.rimAlpha.muted (0.65) vs old capsule's dim (0.45).
+ * Adds outer glow + inner top highlight matching the v3 modal vocabulary.
+ * Radius = height/2 (fully rounded pill ends).
+ */
+export const createHudCapsuleV3 = (
+  scene: Phaser.Scene,
+  width: number,
+  height: number,
+): Phaser.GameObjects.Graphics => {
+  const g  = scene.add.graphics()
+  const r  = height / 2
+  const hw = width  / 2
+  const hh = height / 2
+  const sh = DT_SHADOW.capsuleShadow
+
+  // 1. Drop shadow
+  g.fillStyle(sh.color, sh.alpha)
+  g.fillRoundedRect(-hw + sh.offsetX, -hh + sh.offsetY, width, height, r)
+
+  // 2. Outer glow (wide dim teal stroke beneath the rim)
+  g.lineStyle(DT_STROKE.normal + DT_V3.panel.rimGlowSpread, DT_COLOR.accentTealNum, DT_V3.panel.rimGlowAlpha)
+  g.strokeRoundedRect(-hw, -hh, width, height, r)
+
+  // 3. Obsidian fill
+  g.fillStyle(DT_COLOR.panelFill, DT_COLOR.panelFillAlpha)
+  g.fillRoundedRect(-hw, -hh, width, height, r)
+
+  // 4. Inner top highlight strip
+  g.fillStyle(DT_SHADOW.innerHighlight.color, DT_V3.panel.innerHighlightAlpha)
+  g.fillRoundedRect(-hw, -hh, width, Math.min(height * 0.15, 6), { tl: r, tr: r, bl: 0, br: 0 })
+
+  // 5. Teal rim (muted — slightly brighter than old dim capsule)
+  g.lineStyle(DT_STROKE.normal, DT_COLOR.accentTealNum, DT_SHADOW.rimAlpha.muted)
   g.strokeRoundedRect(-hw, -hh, width, height, r)
 
   return g
