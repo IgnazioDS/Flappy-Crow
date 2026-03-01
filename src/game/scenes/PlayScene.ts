@@ -50,7 +50,7 @@ import {
   createPanel,
   createSmallButton,
 } from '../ui/uiFactory'
-import { makeUIContext, type UIContext, DT_COLOR } from '../ui/designTokens'
+import { makeUIContext, type UIContext, DT_COLOR, DT_FONT } from '../ui/designTokens'
 import { tapPulse, modalIn, modalOut } from '../ui/uiMotion'
 import { createSettingsPanel, type SettingsPanelHandle } from '../ui/settingsPanel'
 import { createModalPanel } from '../ui/components/Modal'
@@ -432,7 +432,10 @@ export class PlayScene extends Phaser.Scene {
 
     this.scoreFrame = this.createScoreFrame()
     this.scoreText = this.add
-      .text(this.ui.score.x, this.ui.score.y + 2, '0', this.ui.scoreTextStyle)
+      .text(this.ui.score.x, 28 + this.safeArea.top + 2, '0', {
+        ...this.ui.scoreTextStyle,
+        fontFamily: DT_FONT.number, // Space Mono — monospace digits, consistent across themes
+      })
       .setOrigin(0.5, 0.5)
       .setDepth(4.1)
     this.applyCosmetics()
@@ -1420,6 +1423,13 @@ export class PlayScene extends Phaser.Scene {
         this.motionIcon.y,
       )
     }
+
+    // Keep score capsule + text pinned to the unified HUD top baseline.
+    // updateSafeAreaLayout() handles safe-area recalculation; this covers
+    // handedness toggles and other re-layout calls that bypass that path.
+    const hudTopY = 28 + this.safeArea.top
+    this.scoreFrame?.setPosition(this.ui.score.x, hudTopY)
+    this.scoreText?.setPosition(this.ui.score.x, hudTopY + 2)
   }
 
   private createSettingsPanel(): void {
