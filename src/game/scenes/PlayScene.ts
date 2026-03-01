@@ -52,7 +52,7 @@ import {
   createPrimaryButtonBackdrop,
   createSmallButton,
 } from '../ui/uiFactory'
-import { makeUIContext, type UIContext } from '../ui/designTokens'
+import { makeUIContext, type UIContext, DT_COLOR } from '../ui/designTokens'
 import { tapPulse } from '../ui/uiMotion'
 import { createSettingsPanel, type SettingsPanelHandle } from '../ui/settingsPanel'
 import {
@@ -1130,7 +1130,7 @@ export class PlayScene extends Phaser.Scene {
       .text(0, panelHeight / 2 - 22, '▼ TAP TO FLY ▼', {
         ...this.ui.statLabelStyle,
         fontSize: '11px',
-        color: '#9ef1ff',
+        color: DT_COLOR.tealBright,
       })
       .setOrigin(0.5, 0.5)
       .setAlpha(0.7)
@@ -1204,8 +1204,8 @@ export class PlayScene extends Phaser.Scene {
       .text(panelWidth / 2 - 8, -panelHeight / 2 + 144, '★ NEW BEST', {
         fontFamily: this.ui.fonts.title,
         fontSize: '10px',
-        color: '#f5c842',
-        stroke: '#0a0b12',
+        color: DT_COLOR.gold,
+        stroke: DT_COLOR.strokeBg,
         strokeThickness: 2,
       })
       .setOrigin(1, 0.5)
@@ -1381,7 +1381,7 @@ export class PlayScene extends Phaser.Scene {
     const labelStyle = {
       ...this.ui.statLabelStyle,
       fontSize: '11px',
-      color: '#9ef1ff',
+      color: DT_COLOR.tealBright,
       letterSpacing: 1,
     }
     const label = this.add.text(0, 1, 'MENU', labelStyle).setOrigin(0.5, 0.5)
@@ -1433,7 +1433,7 @@ export class PlayScene extends Phaser.Scene {
     if (this.theme.id !== 'evil-forest') {
       return
     }
-    icon.setTint(0x9ef1ff)
+    icon.setTint(DT_COLOR.tealBrightNum)
   }
 
   private applyHandednessLayout(): void {
@@ -1605,6 +1605,7 @@ export class PlayScene extends Phaser.Scene {
       },
       rows,
       onClose: () => this.toggleSettingsPanel(),
+      ctx: this.uiCtx,
     })
     this.updateSettingsValues()
   }
@@ -3400,14 +3401,14 @@ export class PlayScene extends Phaser.Scene {
         .setDepth(1.05)
         .setBlendMode(Phaser.BlendModes.SCREEN)
         .setAlpha(0.26)
-        .setTint(0x9ef1ff)
+        .setTint(DT_COLOR.tealBrightNum)
       bottomGlow = this.add
         .image(0, 0, obstacles.key, obstacles.bottomKey ?? obstacles.bottomFrames?.[0])
         .setOrigin(0, 0)
         .setDepth(1.05)
         .setBlendMode(Phaser.BlendModes.SCREEN)
         .setAlpha(0.26)
-        .setTint(0x9ef1ff)
+        .setTint(DT_COLOR.tealBrightNum)
       if (obstacles.type === 'image' && obstacles.flipTop) {
         topGlow.setFlipY(true)
       }

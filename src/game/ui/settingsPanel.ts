@@ -2,6 +2,7 @@ import Phaser from 'phaser'
 import { GAME_DIMENSIONS } from '../config'
 import type { ThemeDefinition, ThemeUI } from '../theme/types'
 import { createPanel, createSmallButton } from './uiFactory'
+import { DT_BADGE, type UIContext } from './designTokens'
 
 type SettingsRow = {
   label: string
@@ -24,10 +25,12 @@ type SettingsPanelOptions = {
   rows: SettingsRow[]
   onClose: () => void
   panelHeightOffset?: number
+  /** Optional UIContext — when provided its themeUi and tokens are forwarded to factory helpers. */
+  ctx?: UIContext
 }
 
 export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPanelHandle => {
-  const { scene, ui, theme, position, rows, onClose, panelHeightOffset = 0 } = options
+  const { scene, ui, theme, position, rows, onClose, panelHeightOffset = 0, ctx } = options
   const panelWidth = Math.round(GAME_DIMENSIONS.width * (2 / 3))
   const panelHeight = Math.round(GAME_DIMENSIONS.height * (2 / 3)) + Math.max(0, panelHeightOffset)
   const horizontalPadding = Math.max(18, Math.round(panelWidth * 0.08))
@@ -35,9 +38,9 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
   const baseLabelFontSize = parseFontSize(ui.statLabelStyle.fontSize, 13)
   const baseValueFontSize = parseFontSize(ui.statValueStyle.fontSize, 15)
   const baseRowFontSize = Math.max(baseLabelFontSize, baseValueFontSize)
-  const badgeMinWidth = 56
-  const badgePaddingX = 12
-  const labelValueGap = 12
+  const badgeMinWidth = DT_BADGE.minWidth
+  const badgePaddingX = DT_BADGE.paddingX
+  const labelValueGap = DT_BADGE.paddingX  // same gap as badge padding
   const menuTextScale = 0.85
   const titlePaddingTop = 10
   const titleHintGap = 2
@@ -48,7 +51,7 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
   const hintWrapWidth = panelWidth - 24
   const hintLineSpacing = 2
 
-  const panel = createPanel(scene, ui, theme, 'large', panelWidth, panelHeight)
+  const panel = createPanel(scene, ui, theme, 'large', panelWidth, panelHeight, ctx)
   panel.setInteractive()
   panel.on(
     'pointerdown',
@@ -104,7 +107,7 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
   const rowsOverflow = rowsHeight - rowsAreaHeight
   const rowStartY =
     rowsTop + rowHeight / 2 + (rowsOverflow > 0 ? 0 : Math.max(0, (rowsAreaHeight - rowsHeight) / 2))
-  const badgeHeight = Math.max(28, rowHeight - 2)
+  const badgeHeight = Math.max(DT_BADGE.minHeight, rowHeight - 2)
   const badgeRightX = rowWidth / 2 - 4
   const rowTextScaleBase =
     rowHeight < baseRowFontSize + 2
@@ -179,23 +182,15 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
   }
 
   const getBadgeAlpha = (tone: 'on' | 'off' | 'neutral'): number => {
-    if (tone === 'on') {
-      return 0.22
-    }
-    if (tone === 'off') {
-      return 0.18
-    }
-    return 0.2
+    if (tone === 'on')  return DT_BADGE.fillOn
+    if (tone === 'off') return DT_BADGE.fillOff
+    return DT_BADGE.fillNeutral
   }
 
   const getBadgeStrokeAlpha = (tone: 'on' | 'off' | 'neutral'): number => {
-    if (tone === 'on') {
-      return 0.7
-    }
-    if (tone === 'off') {
-      return 0.4
-    }
-    return 0.55
+    if (tone === 'on')  return DT_BADGE.strokeOn
+    if (tone === 'off') return DT_BADGE.strokeOff
+    return DT_BADGE.strokeNeutral
   }
 
   const computeBadgeWidth = (
@@ -331,7 +326,7 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
       initialBadgeWidth,
       badgeHeight,
       theme.paletteNum.panel,
-      0.2,
+      DT_BADGE.fillNeutral,
     )
     layoutValue(valueText, badge, row.getValue(), maxBadgeWidth)
 
@@ -357,7 +352,7 @@ export const createSettingsPanel = (options: SettingsPanelOptions): SettingsPane
   rows.forEach((row) => createRow(row))
   applyScroll(0)
 
-  const closeButton = createSmallButton(scene, ui, theme, 'CLOSE', onClose)
+  const closeButton = createSmallButton(scene, ui, theme, 'CLOSE', onClose, ctx)
   closeButton.setPosition(0, closeButtonY)
   settingsPanel.add(closeButton)
 

@@ -11,6 +11,7 @@
  */
 import Phaser from 'phaser'
 import { MOTION } from './designSystem'
+import { DT_MOTION } from './designTokens'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -36,7 +37,7 @@ export const overlayIn = (
   scene: Phaser.Scene,
   target: MotionTarget,
   reducedMotion: boolean,
-  slideY = 14,
+  slideY = DT_MOTION.overlaySlideY,
 ): Phaser.Tweens.Tween | null => {
   target.setVisible(true)
   target.setAlpha(0)
@@ -113,8 +114,8 @@ export const scorePop = (
 
   return scene.tweens.add({
     targets:  target,
-    scaleX:   base * 1.18,
-    scaleY:   base * 1.18,
+    scaleX:   base * DT_MOTION.scorePopScale,
+    scaleY:   base * DT_MOTION.scorePopScale,
     duration: MOTION.scorePop,
     ease:     'Back.easeOut',
     yoyo:     true,
@@ -143,7 +144,7 @@ export const tapPulse = (
 
   return scene.tweens.add({
     targets:  target,
-    alpha:    { from: 0.4, to: 1 },
+    alpha:    { from: DT_MOTION.tapPulseAlphaMin, to: 1 },
     duration: MOTION.tapPulse / 2,
     ease:     'Sine.easeInOut',
     yoyo:     true,
