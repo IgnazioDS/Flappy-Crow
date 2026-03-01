@@ -42,6 +42,7 @@ import { SaveSystem } from '../persistence/SaveSystem'
 import type { SaveState } from '../persistence/saveState'
 import {
   applyButtonFeedback,
+  applyButtonFeedbackV3,
   applyMinHitArea,
   createButtonBase,
   createDivider,
@@ -1304,6 +1305,7 @@ export class PlayScene extends Phaser.Scene {
         .setInteractive(hitConfig)
       this.motionIcon.on('pointerdown', () => this.toggleReducedMotion())
       this.applyIconContrast(this.motionIcon)
+      applyButtonFeedbackV3(this.motionIcon, () => this.reducedMotion)
 
       this.muteIcon = this.add
         .image(
@@ -1317,6 +1319,7 @@ export class PlayScene extends Phaser.Scene {
         .setInteractive(hitConfig)
       this.muteIcon.on('pointerdown', () => this.toggleMute())
       this.applyIconContrast(this.muteIcon)
+      applyButtonFeedbackV3(this.muteIcon, () => this.reducedMotion)
 
       // V3 pill capsule backdrop behind the icon pair (depth 4.15 → below
       // icons at 4.2, above HUD scrim at 3.95). Applied to all themes.
