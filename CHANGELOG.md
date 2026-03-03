@@ -5,6 +5,40 @@
 All notable changes to this project will be documented in this file.
 This project follows [Semantic Versioning](https://semver.org/).
 
+## [6.3.1] - 2026-03-03
+
+### Added
+
+- **UI Upscale v7 foundation** (branch `feat/ui-upscale-v7`, 5 commits):
+  design token system baseline, `uiFactory` token refactor, premium UI kit v2
+  assets, HUD/overlay redesign wiring, and UI QA guides (`VITE_ART_QA=true`).
+- **Art Upscale phase 1** (branch `feat/art-upscale-v1`, 4 commits):
+  atlas source/build pipeline plus SVG upgrades for Classic, Emerald, and Evil
+  Forest V1 theme layers/obstacles.
+- **Token plumbing phase 1** (branch `feat/ui-upscale-phase-1-tokens`,
+  6 commits): tokenized theme UI overrides, removal of UI magic numbers,
+  `UIContext` routing through `PlayScene`, and token adoption in
+  `settingsPanel`/`uiMotion`.
+- **V3 reference modals** (branch `feat/ui-v3-reference-modals`, 6 commits):
+  v3 UI asset manifest + loader, new Modal/Chip/Button v3 components, and
+  Settings + Run Summary rebuilt with modal motion wiring.
+- **V3 HUD polish** (branch `feat/ui-v3-hud-polish`, 4 commits):
+  v3 capsule HUD surfaces, unified HUD typography/spacing, and
+  `applyButtonFeedbackV3` wiring with reduced-motion gating.
+
+### Changed
+
+- Stacked upgrade path from `v6.1.13` to `v6.3.0` merged to `main` as 25
+  commits (rebase merges, no squash).
+- Release patch bump to `v6.3.1` as canonical mainline release tag point.
+
+### Fixed
+
+- No gameplay mechanic changes introduced: physics, hitboxes, collision,
+  scoring, spawn timing, and state transitions remain unchanged.
+
+---
+
 ## [6.2.0] - 2026-02-28
 
 ### Added
